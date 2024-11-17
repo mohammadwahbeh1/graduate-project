@@ -1,9 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 import 'dart:convert';
+import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import './loginPage.dart';
 import './terminalDetailsPage.dart';
-import 'package:flutter_secure_storage/flutter_secure_storage.dart';
+import 'package:untitled/Pages/reservationPage.dart';
+import 'bookingTaxi.dart';
 
 class homePage extends StatefulWidget {
   @override
@@ -11,23 +13,34 @@ class homePage extends StatefulWidget {
 }
 
 class _homePageState extends State<homePage> {
-  List<Map<String, String>> terminals = []; // Update to store terminal names and ids
+  List<Map<String, String>> terminals = [];
   bool isLoading = true;
-  final storage = FlutterSecureStorage(); // Ensure you have the secure storage initialized
+  final storage = FlutterSecureStorage();
+  List<String> notifications = [];
+  int notificationCount = 0;  // Start notification count from 0
+
+  void addNotification(String notification) {
+    setState(() {
+      notifications.add(notification);
+      notificationCount++;
+    });
+  }
 
   @override
   void initState() {
     super.initState();
     fetchTerminals();
+    fetchNotifications();  // Fetch notifications when the page is initialized
   }
 
+  // Fetch terminals
   Future<void> fetchTerminals() async {
     try {
       String? token = await storage.read(key: 'jwt_token');
 
       if (token != null) {
         final response = await http.get(
-          Uri.parse('http://192.168.1.3:3000/api/v1/terminals'),
+          Uri.parse('http://192.168.1.8:3000/api/v1/terminals'),
           headers: {
             'Authorization': 'Bearer $token',
           },
@@ -49,7 +62,7 @@ class _homePageState extends State<homePage> {
           setState(() {
             isLoading = false;
           });
-          throw Exception('Failed to load terminals');
+          throw Exception('Failed to load terminals ${response.statusCode}');
         }
       } else {
         throw Exception('Token is null');
@@ -62,65 +75,79 @@ class _homePageState extends State<homePage> {
     }
   }
 
-  @override
-  Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(
-        title: const Text(
-          "Terminals",
-          style: TextStyle(fontWeight: FontWeight.w500),
-        ),
-        backgroundColor: Colors.yellow,
-        centerTitle: true,
-        actions: [
-          IconButton(
-            icon: const Icon(
-              Icons.person,
-              size: 30,
-              color: Colors.black,
-            ),
-            onPressed: () {
-              _showProfileOptions(context);
-            },
-          ),
-        ],
-      ),
-      drawer: buildDrawer(context),
-      body: isLoading
-          ? const Center(child: CircularProgressIndicator())
-          : Padding(
-        padding: const EdgeInsets.only(top: 20.0),
-        child: ListView.builder(
-          itemCount: terminals.length,
-          itemBuilder: (context, index) {
-            return Column(
-              children: [
-                buildCard(
-                  context,
-                  terminals[index]['terminal_name']!, // Pass terminal name
-                  'assets/terminal.jpg',
-                      () {
-                    // Navigate to TerminalDetailsPage and pass both terminal_id and terminal_name
-                    Navigator.push(
-                      context,
-                      MaterialPageRoute(
-                        builder: (context) => TerminalDetailsPage(
-                          terminalId: terminals[index]['terminal_id']!,
-                          terminalName: terminals[index]['terminal_name']!,
-                        ),
-                      ),
-                    );
+  // Function to fetch unread notifications
+  Future<void> fetchNotifications() async {
+    try {
+      String? token = await storage.read(key: 'jwt_token');
+
+      if (token != null) {
+        final response = await http.get(
+          Uri.parse('http://192.168.1.8:3000/api/v1/notifications'),
+          headers: {
+            'Authorization': 'Bearer $token',
+          },
+        );
+
+        if (response.statusCode == 200) {
+          final List<dynamic> data = jsonDecode(response.body)['data'];
+
+          setState(() {
+            notifications = List<String>.from(data.map((notif) => notif['message']));
+            notificationCount = notifications.length; // Update the notification count
+          });
+        } else {
+          throw Exception('Failed to fetch notifications');
+        }
+      } else {
+        throw Exception('Token is null');
+      }
+    } catch (e) {
+      print('Error fetching notifications: $e');
+    }
+  }
+
+  // Show notifications in a dialog
+  void _showNotifications(BuildContext context) {
+    showDialog(
+      context: context,
+      builder: (BuildContext context) {
+        return AlertDialog(
+          title: const Text('Notifications'),
+          content: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: notifications.isEmpty
+                ? [const Text('No new notifications.')]
+                : notifications.map((notification) {
+              return ListTile(
+                leading: const Icon(Icons.notification_important),
+                title: Text(notification),
+                trailing: IconButton(
+                  icon: const Icon(Icons.delete, color: Colors.red),
+                  onPressed: () {
+                    setState(() {
+                      notifications.remove(notification); // Remove the notification
+                      notificationCount = notifications.length; // Update count
+                    });
+                    Navigator.pop(context); // Close dialog
                   },
                 ),
-                const SizedBox(height: 20),
-              ],
-            );
-          },
-        ),
-      ),
+              );
+            }).toList(),
+          ),
+          actions: [
+            TextButton(
+              onPressed: () {
+                Navigator.of(context).pop();
+              },
+              child: const Text('Close'),
+            ),
+          ],
+        );
+      },
     );
   }
 
+  // Show profile options in a dialog
   void _showProfileOptions(BuildContext context) {
     showDialog(
       context: context,
@@ -151,6 +178,7 @@ class _homePageState extends State<homePage> {
     );
   }
 
+  // Build drawer menu
   Widget buildDrawer(BuildContext context) {
     return Drawer(
       child: ListView(
@@ -204,6 +232,21 @@ class _homePageState extends State<homePage> {
             title: const Text('Reservation'),
             onTap: () {
               Navigator.pop(context);
+              Navigator.push(
+                context,
+                MaterialPageRoute(builder: (context) => ReservationsPage()),
+              );
+            },
+          ),
+          ListTile(
+            leading: const Icon(Icons.event_available),
+            title: const Text('Book A Taxi'),
+            onTap: () {
+              Navigator.pop(context);
+              Navigator.push(
+                context,
+                MaterialPageRoute(builder: (context) => BookTaxiPage()),
+              );
             },
           ),
           const Divider(),
@@ -214,7 +257,7 @@ class _homePageState extends State<homePage> {
               Navigator.pop(context);
               Navigator.pushReplacement(
                 context,
-                MaterialPageRoute(builder: (context) => LoginPage()), // Navigate to login page
+                MaterialPageRoute(builder: (context) => LoginPage()),
               );
             },
           ),
@@ -223,9 +266,10 @@ class _homePageState extends State<homePage> {
     );
   }
 
+  // Build terminal card UI
   Widget buildCard(BuildContext context, String terminalName, String imagePath, VoidCallback onTap) {
     return GestureDetector(
-      onTap: onTap, // Trigger on tap
+      onTap: onTap,
       child: Card(
         margin: const EdgeInsets.symmetric(horizontal: 20),
         shape: RoundedRectangleBorder(
@@ -253,20 +297,7 @@ class _homePageState extends State<homePage> {
                   fontSize: 20,
                   fontWeight: FontWeight.bold,
                   color: Colors.white,
-                  shadows: <Shadow>[
-                    Shadow(
-                      offset: Offset(2.0, 2.0),
-                      blurRadius: 3.0,
-                      color: Color.fromARGB(255, 0, 0, 0),
-                    ),
-                    Shadow(
-                      offset: Offset(2.0, 2.0),
-                      blurRadius: 8.0,
-                      color: Color.fromARGB(125, 0, 0, 255),
-                    ),
-                  ],
                 ),
-                textAlign: TextAlign.center,
               ),
             ),
           ],
@@ -275,9 +306,98 @@ class _homePageState extends State<homePage> {
     );
   }
 
-  void main() {
-    runApp(MaterialApp(
-      home: homePage(),
-    ));
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      appBar: AppBar(
+        title: const Text(
+          "Terminals",
+          style: TextStyle(fontWeight: FontWeight.w500),
+        ),
+        backgroundColor: Colors.yellow,
+        centerTitle: true,
+        actions: [
+          Stack(
+            children: [
+              IconButton(
+                icon: Image.asset(
+                  'assets/notification.png',  // Custom notification icon
+                  width: 30,
+                  height: 30,
+                ),
+                onPressed: () {
+                  _showNotifications(context); // Show notification list
+                },
+              ),
+              Positioned(
+                right: 8,
+                top: 8,
+                child: Container(
+                  padding: const EdgeInsets.all(2),
+                  decoration: BoxDecoration(
+                    color: Colors.red,
+                    borderRadius: BorderRadius.circular(10),
+                  ),
+                  constraints: const BoxConstraints(
+                    minWidth: 16,
+                    minHeight: 16,
+                  ),
+                  child: Text(
+                    '$notificationCount',
+                    style: const TextStyle(
+                      color: Colors.white,
+                      fontSize: 12,
+                    ),
+                    textAlign: TextAlign.center,
+                  ),
+                ),
+              ),
+            ],
+          ),
+          IconButton(
+            icon: const Icon(
+              Icons.person,
+              size: 30,
+              color: Colors.black,
+            ),
+            onPressed: () {
+              _showProfileOptions(context);
+            },
+          ),
+        ],
+      ),
+      drawer: buildDrawer(context),
+      body: isLoading
+          ? const Center(child: CircularProgressIndicator())
+          : Padding(
+        padding: const EdgeInsets.only(top: 20.0),
+        child: ListView.builder(
+          itemCount: terminals.length,
+          itemBuilder: (context, index) {
+            return Column(
+              children: [
+                buildCard(
+                  context,
+                  terminals[index]['terminal_name']!,
+                  'assets/terminal.jpg',
+                      () {
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (context) => TerminalDetailsPage(
+                          terminalId: terminals[index]['terminal_id']!,
+                          terminalName: terminals[index]['terminal_name']!,
+                        ),
+                      ),
+                    );
+                  },
+                ),
+                const SizedBox(height: 20),
+              ],
+            );
+          },
+        ),
+      ),
+    );
   }
 }

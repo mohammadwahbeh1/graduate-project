@@ -37,7 +37,7 @@ class _LoginPageState extends State<LoginPage> {
       });
 
       // Backend URL for login
-      var url = Uri.parse('http://192.168.1.3:3000/api/v1/login'); // Replace with your actual API URL
+      var url = Uri.parse('http://192.168.1.8:3000/api/v1/login'); // Replace with your actual API URL
 
       // Prepare the body of the POST request
       var body = json.encode({
@@ -55,15 +55,19 @@ class _LoginPageState extends State<LoginPage> {
           body: body,
         );
 
+
         if (response.statusCode == 200) {
           // Successful login (200 status)
           var jsonResponse = jsonDecode(response.body);
+          print('Login response: $jsonResponse');
           var token = jsonResponse['data']['token'];
+          var userId = jsonResponse['data']['user']['user_id'];
 
-          DateTime expirationTime = DateTime.now().add(Duration(seconds: 1));
+          DateTime expirationTime = DateTime.now().add(Duration(minutes: 2));
           // Save token securely using flutter_secure_storage
-
+          print(userId);
           await storage.write(key: 'jwt_token', value: token);
+          await storage.write(key: 'user_id', value: userId.toString());
           await storage.write(key: 'token_expiration', value: expirationTime.toIso8601String());
 
           // Navigate to home page
@@ -72,6 +76,7 @@ class _LoginPageState extends State<LoginPage> {
             MaterialPageRoute(builder: (context) => homePage()),
           );
         } else {
+          print('Token is null');
           // Invalid login (e.g., wrong email/password)
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(content: Text('Invalid email or password')),

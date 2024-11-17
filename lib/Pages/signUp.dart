@@ -36,7 +36,7 @@ class _SignUpState extends State<SignUp> {
         password = passwordcontroller.text;
       });
 
-      var url = Uri.parse('http://192.168.1.3:3000/api/v1/register'); // Adjust API URL
+      var url = Uri.parse('http://192.168.1.8:3000/api/v1/register'); // Adjust API URL
 
       var body = json.encode({
         'username': name,
