@@ -14,23 +14,30 @@ class homePage extends StatefulWidget {
 
 class _homePageState extends State<homePage> {
   List<Map<String, String>> terminals = [];
+  bool _isHovered = false;
   bool isLoading = true;
   final storage = FlutterSecureStorage();
-  List<String> notifications = [];
-  int notificationCount = 0;  // Start notification count from 0
+  List<Map<String, dynamic>> notifications = [];
+  int notificationCount = 0; // Start notification count from 0
 
-  void addNotification(String notification) {
+  void addNotification(Map<String, dynamic> notification) {
     setState(() {
       notifications.add(notification);
       notificationCount++;
     });
   }
 
+
   @override
   void initState() {
     super.initState();
     fetchTerminals();
-    fetchNotifications();  // Fetch notifications when the page is initialized
+  }
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    fetchNotifications(); // Fetch notifications whenever the widget is reloaded
   }
 
   // Fetch terminals
@@ -92,8 +99,15 @@ class _homePageState extends State<homePage> {
           final List<dynamic> data = jsonDecode(response.body)['data'];
 
           setState(() {
-            notifications = List<String>.from(data.map((notif) => notif['message']));
-            notificationCount = notifications.length; // Update the notification count
+            notifications = data.map((notif) {
+              return {
+                'id': notif['notification_id'],
+                'message': notif['message'],
+                'isRead': notif['is_read'],
+                'createdAt': notif['created_at'],
+              };
+            }).toList();
+            notificationCount = notifications.length;
           });
         } else {
           throw Exception('Failed to fetch notifications');
@@ -106,46 +120,152 @@ class _homePageState extends State<homePage> {
     }
   }
 
-  // Show notifications in a dialog
+  Future<void> markNotificationAsRead(int notificationId) async {
+    try {
+      String? token = await storage.read(key: 'jwt_token');
+      if (token != null) {
+        final response = await http.patch(
+          Uri.parse('http://192.168.1.8:3000/api/v1/notifications/$notificationId'),
+          headers: {
+            'Authorization': 'Bearer $token',
+            'Content-Type': 'application/json',
+          },
+        );
+        print('notiiii ');
+        if (response.statusCode == 200) {
+          print('notiiii senddddd');
+
+          setState(() {
+            notifications.removeWhere((notif) => notif == notificationId); // Remove notification from the list
+            notificationCount--; // Update the notification count
+          });
+        } else {
+          print('Failed to mark notification as read: ${response.statusCode}');
+        }
+      } else {
+        throw Exception('Token is null');
+      }
+    } catch (e) {
+      print('Error marking notification as read: $e');
+    }
+  }
+  Future<void> _handleMarkAsRead(int notificationId) async {
+    try {
+      // Call the API to mark the notification as read
+      await markNotificationAsRead(notificationId); // Replace with actual API implementation
+      setState(() {
+        notifications.removeWhere((notif) => notif['id'] == notificationId); // Remove globally
+        notificationCount = notifications.length; // Update global count
+      });
+    } catch (e) {
+      print('Error marking notification as read: $e');
+    }
+  }
+
+  void _removeNotification(int notificationId) {
+    setState(() {
+      notifications.removeWhere((notification) => notification['id'] == notificationId);
+      notificationCount = notifications.length; // Update the count
+    });
+  }
+
   void _showNotifications(BuildContext context) {
     showDialog(
       context: context,
       builder: (BuildContext context) {
-        return AlertDialog(
-          title: const Text('Notifications'),
-          content: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: notifications.isEmpty
-                ? [const Text('No new notifications.')]
-                : notifications.map((notification) {
-              return ListTile(
-                leading: const Icon(Icons.notification_important),
-                title: Text(notification),
-                trailing: IconButton(
-                  icon: const Icon(Icons.delete, color: Colors.red),
-                  onPressed: () {
-                    setState(() {
-                      notifications.remove(notification); // Remove the notification
-                      notificationCount = notifications.length; // Update count
-                    });
-                    Navigator.pop(context); // Close dialog
-                  },
+        return StatefulBuilder(
+          builder: (BuildContext context, StateSetter setDialogState) {
+            return AlertDialog(
+              title: const Text('Notifications'),
+              content: notifications.isEmpty
+                  ? const Text('No new notifications.')
+                  : SizedBox(
+                width: double.maxFinite, // Ensure ListView takes up the full width
+                child: ListView(
+                  shrinkWrap: true, // Makes ListView only take the space it needs
+                  children: notifications.map((notification) {
+                    return ListTile(
+                      leading: const Icon(Icons.notification_important),
+                      title: Text(notification['message']), // Access and display the message
+                      trailing: Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          MouseRegion(
+                            onEnter: (_) {
+                              setState(() {
+                                _isHovered = true;
+                              });
+                            },
+                            onExit: (_) {
+                              setState(() {
+                                _isHovered = false;
+                              });
+                            },
+                            child: Column(
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                MouseRegion(
+                                  onEnter: (_) {
+                                    setState(() {
+                                      _isHovered = true;
+                                    });
+                                  },
+                                  onExit: (_) {
+                                    setState(() {
+                                      _isHovered = false;
+                                    });
+                                  },
+                                  child: IconButton(
+                                    icon: const Icon(Icons.check, color: Colors.grey),
+                                    onPressed: () async {
+                                      int notificationId = notification['id']; // Get notification ID
+
+                                      try {
+                                        // Call _handleMarkAsRead and update the state
+                                        await _handleMarkAsRead(notificationId);
+
+                                        // Update state inside the dialog to reflect changes immediately
+                                        setDialogState(() {
+                                          notifications.removeWhere((notif) => notif['id'] == notificationId);
+                                        });
+                                      } catch (e) {
+                                        print('Error handling notification: $e');
+                                      }
+                                    },
+                                  ),
+                                ),
+                                if (_isHovered)
+                                  const Text(
+                                    'Mark as Read',
+                                    style: TextStyle(fontSize: 12, color: Colors.grey),
+                                  ),
+                              ],
+                            ),
+                          ),
+                        ],
+                      ),
+                    );
+                  }).toList(),
                 ),
-              );
-            }).toList(),
-          ),
-          actions: [
-            TextButton(
-              onPressed: () {
-                Navigator.of(context).pop();
-              },
-              child: const Text('Close'),
-            ),
-          ],
+              ),
+              actions: [
+                TextButton(
+                  onPressed: () {
+                    Navigator.of(context).pop();
+                  },
+                  child: const Text('Close'),
+                ),
+              ],
+            );
+          },
         );
       },
     );
   }
+
+
+
+
 
   // Show profile options in a dialog
   void _showProfileOptions(BuildContext context) {
@@ -154,24 +274,25 @@ class _homePageState extends State<homePage> {
       builder: (BuildContext context) {
         return AlertDialog(
           title: const Text('Profile Options'),
-          content: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: <Widget>[
-              ListTile(
-                leading: const Icon(Icons.visibility),
-                title: const Text('View Profile'),
-                onTap: () {
-                  Navigator.pop(context);
-                },
-              ),
-              ListTile(
-                leading: const Icon(Icons.edit),
-                title: const Text('Edit Profile'),
-                onTap: () {
-                  Navigator.pop(context);
-                },
-              ),
-            ],
+          content: SingleChildScrollView( // Wrap the content in a SingleChildScrollView
+            child: ListBody( // Use ListBody instead of Column for more efficient layout
+              children: <Widget>[
+                ListTile(
+                  leading: const Icon(Icons.visibility),
+                  title: const Text('View Profile'),
+                  onTap: () {
+                    Navigator.pop(context);
+                  },
+                ),
+                ListTile(
+                  leading: const Icon(Icons.edit),
+                  title: const Text('Edit Profile'),
+                  onTap: () {
+                    Navigator.pop(context);
+                  },
+                ),
+              ],
+            ),
           ),
         );
       },
@@ -268,42 +389,47 @@ class _homePageState extends State<homePage> {
 
   // Build terminal card UI
   Widget buildCard(BuildContext context, String terminalName, String imagePath, VoidCallback onTap) {
+
     return GestureDetector(
       onTap: onTap,
-      child: Card(
-        margin: const EdgeInsets.symmetric(horizontal: 20),
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(15.0),
-          side: const BorderSide(
-            color: Colors.grey,
-            width: 1,
-          ),
-        ),
-        clipBehavior: Clip.antiAlias,
-        elevation: 5,
-        child: Stack(
-          alignment: Alignment.center,
-          children: [
-            Image.asset(
-              imagePath,
-              height: 200,
-              width: double.infinity,
-              fit: BoxFit.cover,
+      child: Padding(
+        padding: const EdgeInsets.only(top: 20,right: 5,left: 5),
+        child: Card(
+          margin: const EdgeInsets.symmetric(horizontal: 20),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(15.0),
+            side: const BorderSide(
+              color: Colors.grey,
+              width: 1,
             ),
-            Positioned(
-              child: Text(
-                terminalName,
-                style: const TextStyle(
-                  fontSize: 20,
-                  fontWeight: FontWeight.bold,
-                  color: Colors.white,
+          ),
+          clipBehavior: Clip.antiAlias,
+          elevation: 5,
+          child: Stack(
+            alignment: Alignment.center,
+            children: [
+              Image.asset(
+                imagePath,
+                height: 200,
+                width: double.infinity,
+                fit: BoxFit.cover,
+              ),
+              Positioned(
+                child: Text(
+                  terminalName,
+                  style: const TextStyle(
+                    fontSize: 20,
+                    fontWeight: FontWeight.bold,
+                    color: Colors.white,
+                  ),
                 ),
               ),
-            ),
-          ],
+            ],
+          ),
         ),
       ),
     );
+
   }
 
   @override
@@ -321,12 +447,12 @@ class _homePageState extends State<homePage> {
             children: [
               IconButton(
                 icon: Image.asset(
-                  'assets/notification.png',  // Custom notification icon
+                  'assets/notification.png',
                   width: 30,
                   height: 30,
                 ),
                 onPressed: () {
-                  _showNotifications(context); // Show notification list
+                  _showNotifications(context);
                 },
               ),
               Positioned(
@@ -361,42 +487,35 @@ class _homePageState extends State<homePage> {
               color: Colors.black,
             ),
             onPressed: () {
-              _showProfileOptions(context);
+              _showProfileOptions(context); // Show profile options
             },
           ),
         ],
       ),
       drawer: buildDrawer(context),
       body: isLoading
-          ? const Center(child: CircularProgressIndicator())
-          : Padding(
-        padding: const EdgeInsets.only(top: 20.0),
-        child: ListView.builder(
-          itemCount: terminals.length,
-          itemBuilder: (context, index) {
-            return Column(
-              children: [
-                buildCard(
-                  context,
-                  terminals[index]['terminal_name']!,
-                  'assets/terminal.jpg',
-                      () {
-                    Navigator.push(
-                      context,
-                      MaterialPageRoute(
-                        builder: (context) => TerminalDetailsPage(
-                          terminalId: terminals[index]['terminal_id']!,
-                          terminalName: terminals[index]['terminal_name']!,
-                        ),
-                      ),
-                    );
-                  },
+          ? const Center(
+        child: CircularProgressIndicator(),
+      )
+          : ListView.builder(
+        itemCount: terminals.length,
+        itemBuilder: (context, index) {
+          return buildCard(
+            context,
+            terminals[index]['terminal_name']!,
+            'assets/terminal.jpg',
+                () {
+              Navigator.push(
+                context,
+                MaterialPageRoute(
+                  builder: (context) => TerminalDetailsPage(
+                    terminalId: terminals[index]['terminal_id']!, terminalName: '',
+                  ),
                 ),
-                const SizedBox(height: 20),
-              ],
-            );
-          },
-        ),
+              );
+            },
+          );
+        },
       ),
     );
   }

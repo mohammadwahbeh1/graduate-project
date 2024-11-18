@@ -25,7 +25,7 @@ class _TerminalDetailsPageState extends State<TerminalDetailsPage> {
   void initState() {
     super.initState();
     fetchLines();
-    timer = Timer.periodic(const Duration(minutes: 1), (Timer t) {
+    timer = Timer.periodic(const Duration(hours: 5), (Timer t) {
       fetchLines();
     });
   }
