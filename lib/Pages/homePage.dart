@@ -2,10 +2,13 @@ import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 import 'dart:convert';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
+import 'package:untitled/Pages/reviewPage.dart';
 import './loginPage.dart';
 import './terminalDetailsPage.dart';
 import 'package:untitled/Pages/reservationPage.dart';
 import 'bookingTaxi.dart';
+const String ip ="192.168.1.172";
+
 
 class homePage extends StatefulWidget {
   @override
@@ -47,7 +50,7 @@ class _homePageState extends State<homePage> {
 
       if (token != null) {
         final response = await http.get(
-          Uri.parse('http://192.168.1.8:3000/api/v1/terminals'),
+          Uri.parse('http://$ip:3000/api/v1/terminals'),
           headers: {
             'Authorization': 'Bearer $token',
           },
@@ -89,7 +92,7 @@ class _homePageState extends State<homePage> {
 
       if (token != null) {
         final response = await http.get(
-          Uri.parse('http://192.168.1.8:3000/api/v1/notifications'),
+          Uri.parse('http://$ip:3000/api/v1/notifications'),
           headers: {
             'Authorization': 'Bearer $token',
           },
@@ -125,7 +128,7 @@ class _homePageState extends State<homePage> {
       String? token = await storage.read(key: 'jwt_token');
       if (token != null) {
         final response = await http.patch(
-          Uri.parse('http://192.168.1.8:3000/api/v1/notifications/$notificationId'),
+          Uri.parse('http://$ip:3000/api/v1/notifications/$notificationId'),
           headers: {
             'Authorization': 'Bearer $token',
             'Content-Type': 'application/json',
@@ -381,6 +384,7 @@ class _homePageState extends State<homePage> {
                 MaterialPageRoute(builder: (context) => LoginPage()),
               );
             },
+
           ),
         ],
       ),
@@ -388,12 +392,18 @@ class _homePageState extends State<homePage> {
   }
 
   // Build terminal card UI
-  Widget buildCard(BuildContext context, String terminalName, String imagePath, VoidCallback onTap) {
-
+  Widget buildCard(BuildContext context, String terminalName, String imagePath, String terminalId) {
     return GestureDetector(
-      onTap: onTap,
+      onTap: () {
+        Navigator.push(
+          context,
+          MaterialPageRoute(
+            builder: (context) => TerminalDetailsPage(terminalId: terminalId, terminalName: terminalName),
+          ),
+        );
+      },
       child: Padding(
-        padding: const EdgeInsets.only(top: 20,right: 5,left: 5),
+        padding: const EdgeInsets.only(top: 20, right: 5, left: 5),
         child: Card(
           margin: const EdgeInsets.symmetric(horizontal: 20),
           shape: RoundedRectangleBorder(
@@ -424,12 +434,25 @@ class _homePageState extends State<homePage> {
                   ),
                 ),
               ),
+              Positioned(
+                bottom: 10,
+                child: ElevatedButton(
+                  onPressed: () {
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (context) => ReviewPage(terminalId: terminalId),
+                      ),
+                    );
+                  },
+                  child: Text("View Reviews"),
+                ),
+              ),
             ],
           ),
         ),
       ),
     );
-
   }
 
   @override
@@ -504,19 +527,9 @@ class _homePageState extends State<homePage> {
             context,
             terminals[index]['terminal_name']!,
             'assets/terminal.jpg',
-                () {
-              Navigator.push(
-                context,
-                MaterialPageRoute(
-                  builder: (context) => TerminalDetailsPage(
-                    terminalId: terminals[index]['terminal_id']!, terminalName: '',
-                  ),
-                ),
-              );
-            },
+            terminals[index]['terminal_id']!,
           );
         },
       ),
     );
-  }
-}
+  } }
