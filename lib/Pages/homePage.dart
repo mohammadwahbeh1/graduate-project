@@ -6,6 +6,7 @@ import './loginPage.dart';
 import './terminalDetailsPage.dart';
 import 'package:untitled/Pages/reservationPage.dart';
 import 'bookingTaxi.dart';
+import 'profilePage.dart';
 
 class homePage extends StatefulWidget {
   @override
@@ -274,23 +275,21 @@ class _homePageState extends State<homePage> {
       builder: (BuildContext context) {
         return AlertDialog(
           title: const Text('Profile Options'),
-          content: SingleChildScrollView( // Wrap the content in a SingleChildScrollView
-            child: ListBody( // Use ListBody instead of Column for more efficient layout
+          content: SingleChildScrollView(
+            child: ListBody(
               children: <Widget>[
                 ListTile(
                   leading: const Icon(Icons.visibility),
                   title: const Text('View Profile'),
                   onTap: () {
                     Navigator.pop(context);
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(builder: (context) => ProfilePage()),
+                    );
                   },
                 ),
-                ListTile(
-                  leading: const Icon(Icons.edit),
-                  title: const Text('Edit Profile'),
-                  onTap: () {
-                    Navigator.pop(context);
-                  },
-                ),
+                // Removed "Edit Profile" option for now
               ],
             ),
           ),
