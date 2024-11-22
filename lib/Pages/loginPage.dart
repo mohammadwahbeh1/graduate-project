@@ -6,6 +6,8 @@ import 'package:untitled/Pages/homePage.dart';
 import 'package:untitled/Pages/signUp.dart';
 import 'Forgot_password.dart';
 
+const String ip ="192.168.1.8";
+
 // Create a secure storage instance
 final storage = FlutterSecureStorage();
 
@@ -37,7 +39,7 @@ class _LoginPageState extends State<LoginPage> {
       });
 
       // Backend URL for login
-      var url = Uri.parse('http://192.168.1.8:3000/api/v1/login'); // Replace with your actual API URL
+      var url = Uri.parse('http://$ip:3000/api/v1/login'); // Replace with your actual API URL
 
       // Prepare the body of the POST request
       var body = json.encode({

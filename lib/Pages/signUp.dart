@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http; // For making HTTP requests
 import 'dart:convert'; // For encoding/decoding JSON
 import 'package:flutter_secure_storage/flutter_secure_storage.dart'; // For secure storage
-import 'loginPage.dart';
+import 'loginPage.dart'; // Navigate to login page after successful sign-up
 
 // Create a secure storage instance
 final storage = FlutterSecureStorage();
@@ -15,11 +15,14 @@ class SignUp extends StatefulWidget {
 }
 
 class _SignUpState extends State<SignUp> {
-  String email = "", password = "", confirmPassword = "", name = "";
+  String email = "", password = "", confirmPassword = "", name = "", address = "", gender = "", dateOfBirth = "";
   TextEditingController namecontroller = TextEditingController();
   TextEditingController passwordcontroller = TextEditingController();
   TextEditingController mailcontroller = TextEditingController();
   TextEditingController confirmPasswordController = TextEditingController();
+  TextEditingController addressController = TextEditingController();
+  TextEditingController dateOfBirthController = TextEditingController();
+  TextEditingController genderController = TextEditingController();
 
   final _formkey = GlobalKey<FormState>();
 
@@ -34,6 +37,9 @@ class _SignUpState extends State<SignUp> {
         email = mailcontroller.text;
         name = namecontroller.text;
         password = passwordcontroller.text;
+        address = addressController.text;
+        gender = genderController.text;
+        dateOfBirth = dateOfBirthController.text;
       });
 
       var url = Uri.parse('http://192.168.1.8:3000/api/v1/register'); // Adjust API URL
@@ -42,9 +48,11 @@ class _SignUpState extends State<SignUp> {
         'username': name,
         'email': email,
         'password': password,
-        "phone_number":"0568243138",
-        "role":"user",
-
+        'phone_number': "0568243138",
+        'role': "user",
+        'address': address,
+        'gender': gender,
+        'date_of_birth': dateOfBirth,
       });
 
       try {
@@ -56,9 +64,9 @@ class _SignUpState extends State<SignUp> {
           body: body,
         );
 
+
         if (response.statusCode == 201) {
           var jsonResponse = jsonDecode(response.body);
-
 
           ScaffoldMessenger.of(context).showSnackBar(
             const SnackBar(content: Text('Signup successful!')),
@@ -70,6 +78,7 @@ class _SignUpState extends State<SignUp> {
             MaterialPageRoute(builder: (context) => const LoginPage()),
           );
         } else {
+
           var errorResponse = json.decode(response.body);
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(content: Text('Error: ${errorResponse['message']}')),
@@ -197,6 +206,78 @@ class _SignUpState extends State<SignUp> {
                             hintStyle: TextStyle(
                                 color: Color(0xFFb2b7bf), fontSize: 18.0)),
                         obscureText: true,
+                      ),
+                    ),
+                    const SizedBox(height: 30.0),
+
+                    // Address input field with validation
+                    Container(
+                      padding: const EdgeInsets.symmetric(
+                          vertical: 2.0, horizontal: 30.0),
+                      decoration: BoxDecoration(
+                          color: const Color(0xFFedf0f8),
+                          borderRadius: BorderRadius.circular(30)),
+                      child: TextFormField(
+                        validator: (value) {
+                          if (value == null || value.isEmpty) {
+                            return 'Please Enter Address';
+                          }
+                          return null;
+                        },
+                        controller: addressController,
+                        decoration: const InputDecoration(
+                            border: InputBorder.none,
+                            hintText: "Address",
+                            hintStyle: TextStyle(
+                                color: Color(0xFFb2b7bf), fontSize: 18.0)),
+                      ),
+                    ),
+                    const SizedBox(height: 30.0),
+
+                    // Gender input field with validation
+                    Container(
+                      padding: const EdgeInsets.symmetric(
+                          vertical: 2.0, horizontal: 30.0),
+                      decoration: BoxDecoration(
+                          color: const Color(0xFFedf0f8),
+                          borderRadius: BorderRadius.circular(30)),
+                      child: TextFormField(
+                        validator: (value) {
+                          if (value == null || value.isEmpty) {
+                            return 'Please Enter Gender';
+                          }
+                          return null;
+                        },
+                        controller: genderController,
+                        decoration: const InputDecoration(
+                            border: InputBorder.none,
+                            hintText: "Gender",
+                            hintStyle: TextStyle(
+                                color: Color(0xFFb2b7bf), fontSize: 18.0)),
+                      ),
+                    ),
+                    const SizedBox(height: 30.0),
+
+                    // Date of Birth input field with validation
+                    Container(
+                      padding: const EdgeInsets.symmetric(
+                          vertical: 2.0, horizontal: 30.0),
+                      decoration: BoxDecoration(
+                          color: const Color(0xFFedf0f8),
+                          borderRadius: BorderRadius.circular(30)),
+                      child: TextFormField(
+                        validator: (value) {
+                          if (value == null || value.isEmpty) {
+                            return 'Please Enter Date of Birth';
+                          }
+                          return null;
+                        },
+                        controller: dateOfBirthController,
+                        decoration: const InputDecoration(
+                            border: InputBorder.none,
+                            hintText: "Date of Birth (YYYY-MM-DD)",
+                            hintStyle: TextStyle(
+                                color: Color(0xFFb2b7bf), fontSize: 18.0)),
                       ),
                     ),
                     const SizedBox(height: 30.0),

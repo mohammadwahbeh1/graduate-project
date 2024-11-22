@@ -29,14 +29,27 @@ environment:
 # versions available, run `flutter pub outdated`.
 dependencies:
 
+  network_info_plus: ^2.1.0
+
+
   flutter:
     sdk: flutter
+
+
+
+
+
 
   web_socket_channel: ^2.1.0
   sizer: ^2.0.15
   intl: ^0.17.0
   http: ^1.2.0
   flutter_secure_storage: ^8.0.0
+  flutter_rating_bar: ^4.0.0
+  jwt_decoder: ^2.0.1
+
+
+
   cupertino_icons: ^1.0.2
   flutter_svg: ^1.0.0
 uses-material-design: true
