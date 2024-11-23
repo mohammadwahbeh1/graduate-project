@@ -4,8 +4,10 @@ import 'dart:convert';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:flutter_rating_bar/flutter_rating_bar.dart';
 import 'package:jwt_decoder/jwt_decoder.dart';
+import 'package:flutter_slidable/flutter_slidable.dart';
 
-const String ip = "192.168.1.172";
+
+const String ip ="192.168.1.18";
 
 class ReviewPage extends StatefulWidget {
   final String terminalId;
@@ -101,6 +103,7 @@ class _ReviewPageState extends State<ReviewPage> {
           ScaffoldMessenger.of(context).showSnackBar(
             const SnackBar(content: Text('Review added successfully!')),
           );
+          Navigator.pop(context); // إغلاق نافذة الـ Dialog
         } else {
           throw Exception(
               'Failed to add review. Status Code: ${response.statusCode}');
@@ -258,6 +261,8 @@ class _ReviewPageState extends State<ReviewPage> {
     );
   }
 
+
+
   Widget buildReviewCard(Map<String, dynamic> review) {
     bool isUserReview = review['user_id'].toString() == currentUserId.toString();
 
@@ -265,99 +270,118 @@ class _ReviewPageState extends State<ReviewPage> {
       margin: const EdgeInsets.symmetric(vertical: 8, horizontal: 16),
       elevation: 4,
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(15)),
-      child: Padding(
-        padding: const EdgeInsets.all(16.0),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
+      child: isUserReview
+          ? Slidable(
+        key: ValueKey(review['id']),
+        startActionPane: ActionPane(
+          motion: const StretchMotion(),
           children: [
-            Row(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                const CircleAvatar(
-                  backgroundImage: AssetImage('assets/commenter-1.jpg'),
-                  radius: 30,
-                ),
-                SizedBox(width: 16),
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        review['username'],
-                        style: const TextStyle(
-                          fontSize: 16,
-                          fontWeight: FontWeight.bold,
-                        ),
-                        maxLines: 1,
-                        overflow: TextOverflow.ellipsis,
-                      ),
-                      SizedBox(height: 4),
-                      Row(
-                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                        children: [
-                          RatingBarIndicator(
-                            rating: review['rating'].toDouble(),
-                            itemBuilder: (context, index) => const Icon(
-                              Icons.star,
-                              color: Colors.amber,
-                            ),
-                            itemCount: 5,
-                            itemSize: 20.0,
-                            direction: Axis.horizontal,
-                          ),
-                          Text(
-                            review['created_at'],
-                            style: const TextStyle(color: Colors.grey, fontSize: 12),
-                            maxLines: 1,
-                            overflow: TextOverflow.ellipsis,
-                          ),
-                        ],
-                      ),
-                    ],
-                  ),
-                ),
-              ],
-            ),
-            const SizedBox(height: 16),
-            Row(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                Expanded(
-                  child: Text(
-                    review['comment'],
-                    style: const TextStyle(
-                      fontSize: 16,
-                      fontWeight: FontWeight.bold,
-                      color: Colors.black87,
-                      height: 1.4,
-                      letterSpacing: 0.5,
-                    ),
-                    maxLines: 3,
-                    overflow: TextOverflow.ellipsis,
-                  ),
-                ),
-                if (isUserReview)
-                  Row(
-                    children: [
-                      IconButton(
-                        icon: const Icon(Icons.edit, color: Colors.blue),
-                        onPressed: () => editReview(review['id'].toString(), review['comment']),
-                      ),
-                      IconButton(
-                        icon: const Icon(Icons.delete, color: Colors.red),
-                        onPressed: () => deleteReview(review['id'].toString()),
-                      ),
-                    ],
-                  ),
-              ],
+            SlidableAction(
+              onPressed: (_) =>
+                  editReview(review['id'].toString(), review['comment']),
+              backgroundColor: Colors.blue,
+              foregroundColor: Colors.white,
+              icon: Icons.edit,
+              label: 'edit',
+              borderRadius: BorderRadius.circular(10),
             ),
           ],
         ),
-      ),
+        endActionPane: ActionPane(
+          motion: const StretchMotion(),
+          children: [
+            SlidableAction(
+              onPressed: (_) => deleteReview(review['id'].toString()),
+              backgroundColor: Colors.red,
+              foregroundColor: Colors.white,
+              icon: Icons.delete,
+              label: 'Delete',
+              borderRadius: BorderRadius.circular(10),
+            ),
+          ],
+        ),
+        child: buildReviewContent(review),
+      )
+          : buildReviewContent(review),
     );
   }
 
+  Widget buildReviewContent(Map<String, dynamic> review) {
+    return Padding(
+      padding: const EdgeInsets.all(16.0),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              const CircleAvatar(
+                backgroundImage: AssetImage('assets/commenter-1.jpg'),
+                radius: 30,
+              ),
+              const SizedBox(width: 16),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      review['username'],
+                      style: const TextStyle(
+                        fontSize: 16,
+                        fontWeight: FontWeight.bold,
+                      ),
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                    const SizedBox(height: 8),
+                    Row(
+                      children: [
+                        RatingBarIndicator(
+                          rating: review['rating'].toDouble(),
+                          itemBuilder: (context, index) => const Icon(
+                            Icons.star,
+                            color: Colors.amber,
+                          ),
+                          itemCount: 5,
+                          itemSize: 18.0,
+                          direction: Axis.horizontal,
+                        ),
+                        const SizedBox(width: 10),
+                        Text(
+                          review['created_at'],
+                          style: const TextStyle(
+                            color: Colors.grey,
+                            fontSize: 12,
+                          ),
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                        ),
+                      ],
+                    ),
+                  ],
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 16),
+          Divider(
+            color: Colors.grey[300],
+            thickness: 1,
+          ),
+          const SizedBox(height: 8),
+          Text(
+            review['comment'],
+            style: const TextStyle(
+              fontSize: 14,
+              color: Colors.black87,
+              height: 1.5,
+            ),
+            textAlign: TextAlign.left,
+          ),
+        ],
+      ),
+    );
+  }
 
 
 
@@ -365,7 +389,7 @@ class _ReviewPageState extends State<ReviewPage> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        backgroundColor: Colors.amber, // Changing to a pleasant color
+        backgroundColor: Colors.amber,
         title: const Text(
           'Reviews',
           style: TextStyle(
@@ -374,7 +398,7 @@ class _ReviewPageState extends State<ReviewPage> {
             color: Colors.white,
           ),
         ),
-        elevation: 4, // Adding subtle shadow effect
+        elevation: 4,
       ),
       body: isLoading
           ? const Center(child: CircularProgressIndicator())
@@ -391,12 +415,12 @@ class _ReviewPageState extends State<ReviewPage> {
             builder: (context) {
               return AlertDialog(
                 shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(16), // Rounding corners
+                  borderRadius: BorderRadius.circular(16),
                 ),
                 title: const Text(
                   'Add Review',
                   style: TextStyle(
-                    color:  Colors.amber, // Custom color for the title
+                    color: Colors.amber,
                     fontSize: 18,
                     fontWeight: FontWeight.bold,
                   ),
@@ -410,10 +434,8 @@ class _ReviewPageState extends State<ReviewPage> {
                       decoration: InputDecoration(
                         labelText: 'Write your comment',
                         labelStyle: const TextStyle(color: Colors.teal),
-                        // Custom label color
                         border: OutlineInputBorder(
                           borderRadius: BorderRadius.circular(12),
-                          // Rounded corners
                           borderSide: const BorderSide(color: Colors.amber, width: 1),
                         ),
                         focusedBorder: OutlineInputBorder(
@@ -423,6 +445,7 @@ class _ReviewPageState extends State<ReviewPage> {
                       ),
                       maxLines: 3,
                       style: const TextStyle(fontSize: 16),
+                      keyboardType: TextInputType.text, // دعم الإيموجي
                     ),
                     const SizedBox(height: 16),
                     RatingBar.builder(
@@ -432,10 +455,7 @@ class _ReviewPageState extends State<ReviewPage> {
                       allowHalfRating: false,
                       itemCount: 5,
                       itemBuilder: (context, _) =>
-                          const Icon(
-                            Icons.star,
-                            color: Colors.amber,
-                          ),
+                      const Icon(Icons.star, color: Colors.amber),
                       onRatingUpdate: (rating) {
                         setState(() {
                           _rating = rating;
@@ -457,14 +477,14 @@ class _ReviewPageState extends State<ReviewPage> {
                       elevation: 4,
                       textStyle: const TextStyle(
                         fontSize: 16,
-                        fontWeight: FontWeight.bold, // خط عريض
+                        fontWeight: FontWeight.bold,
                       ),
                     ),
                     child: const Text('Submit'),
                   ),
                   TextButton(
                     onPressed: () {
-                      Navigator.pop(context);
+                      Navigator.pop(context); // إغلاق النافذة عند الضغط على إلغاء
                     },
                     child: const Text(
                       'Cancel',
@@ -478,11 +498,10 @@ class _ReviewPageState extends State<ReviewPage> {
         },
         backgroundColor: Colors.amber,
         child: const Icon(
-          Icons.add ,
+          Icons.add,
           size: 30,
           color: Colors.white,
-
-        ), // Custom color for floating button
+        ),
       ),
     );
   }

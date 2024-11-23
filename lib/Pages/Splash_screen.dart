@@ -1,8 +1,13 @@
+//SplashScreen
 import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
+import 'package:jwt_decode/jwt_decode.dart';
 import 'package:untitled/Pages/loginPage.dart';
-import 'package:untitled/Pages/homePage.dart'; // Import your home page
+import 'package:untitled/Pages/homePage.dart';
+import 'package:untitled/Pages/driverPage.dart';
+import 'package:untitled/Pages/lineManagerPage.dart';
+import 'package:untitled/Pages/adminPage.dart';
 
 final storage = FlutterSecureStorage();
 
@@ -17,43 +22,70 @@ class _SplashScreenState extends State<SplashScreen> {
   @override
   void initState() {
     super.initState();
-    _checkLoginStatus(); // Check login status when the screen initializes
+    _checkLoginStatus(); // التحقق من حالة تسجيل الدخول عند بدء الشاشة
   }
 
   Future<void> _checkLoginStatus() async {
-    // Wait for 4 seconds before checking
-    await Future.delayed(const Duration(seconds: 4));
+    await Future.delayed(const Duration(seconds: 3));
 
-    final token = await storage.read(key: 'jwt_token');
-    final expirationString = await storage.read(key: 'token_expiration');
+    try {
+      final token = await storage.read(key: 'jwt_token');
+      final expirationString = await storage.read(key: 'token_expiration');
 
+      if (token != null && expirationString != null) {
+        DateTime expirationTime = DateTime.parse(expirationString);
 
+        if (DateTime.now().isBefore(expirationTime)) {
+          Map<String, dynamic> decodedToken = Jwt.parseJwt(token);
 
-    if (token != null && expirationString != null) {
-      DateTime expirationTime = DateTime.parse(expirationString);
-      if (DateTime.now().isBefore(expirationTime)) {
-        // Token is valid
-        Navigator.pushAndRemoveUntil(
-          context,
-          MaterialPageRoute(builder: (context) =>  homePage()), // Navigate to home page
-              (route) => false,
-        );
+          String role = decodedToken['role']?.trim() ?? '';
+          _navigateBasedOnRole(role);
+        } else {
+          _navigateToLogin();
+        }
       } else {
-        // Token is expired or not valid
-        Navigator.pushAndRemoveUntil(
-          context,
-          MaterialPageRoute(builder: (context) => const LoginPage()), // Navigate to login page
-              (route) => false,
-        );
+        _navigateToLogin();
       }
-    } else {
-      // Token doesn't exist
-      Navigator.pushAndRemoveUntil(
-        context,
-        MaterialPageRoute(builder: (context) => const LoginPage()), // Navigate to login page
-            (route) => false,
-      );
+    } catch (e) {
+      _navigateToLogin();
     }
+  }
+
+  void _navigateBasedOnRole(String role) {
+    Widget targetPage;
+
+    switch (role) {
+      case 'user':
+        targetPage = homePage();
+        break;
+      case 'driver':
+        targetPage = DriverPage();
+        break;
+      case 'line_manager':
+        targetPage = LineManagerPage();
+        break;
+      case 'admin':
+        targetPage = ManagerPage();
+        break;
+      default:
+        targetPage = const LoginPage();
+        break;
+    }
+
+    Navigator.pushAndRemoveUntil(
+      context,
+      MaterialPageRoute(builder: (context) => targetPage),
+          (route) => false,
+    );
+  }
+
+
+  void _navigateToLogin() {
+    Navigator.pushAndRemoveUntil(
+      context,
+      MaterialPageRoute(builder: (context) => const LoginPage()),
+          (route) => false,
+    );
   }
 
   @override

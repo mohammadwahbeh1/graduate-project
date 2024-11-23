@@ -4,6 +4,8 @@ import 'dart:convert';
 import 'package:http/http.dart' as http;
 import 'dart:async';
 import 'Splash_screen.dart';
+const String ip ="192.168.1.18";
+
 
 class TerminalDetailsPage extends StatefulWidget {
   final String terminalName;
@@ -33,7 +35,7 @@ class _TerminalDetailsPageState extends State<TerminalDetailsPage> {
   Future<void> fetchLines() async {
     String? token = await storage.read(key: 'jwt_token');
     final response = await http.get(
-      Uri.parse('http://192.168.1.8:3000/api/v1/terminals/${widget.terminalId}/lines'),
+      Uri.parse('http://$ip:3000/api/v1/terminals/${widget.terminalId}/lines'),
       headers: {
         'Authorization': 'Bearer $token',
       },
