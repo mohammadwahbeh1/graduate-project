@@ -6,8 +6,7 @@ import 'package:flutter_rating_bar/flutter_rating_bar.dart';
 import 'package:jwt_decoder/jwt_decoder.dart';
 import 'package:flutter_slidable/flutter_slidable.dart';
 
-
-const String ip ="192.168.1.18";
+const String ip = "192.168.1.8";
 
 class ReviewPage extends StatefulWidget {
   final String terminalId;
@@ -103,7 +102,6 @@ class _ReviewPageState extends State<ReviewPage> {
           ScaffoldMessenger.of(context).showSnackBar(
             const SnackBar(content: Text('Review added successfully!')),
           );
-          Navigator.pop(context); // إغلاق نافذة الـ Dialog
         } else {
           throw Exception(
               'Failed to add review. Status Code: ${response.statusCode}');
@@ -261,8 +259,6 @@ class _ReviewPageState extends State<ReviewPage> {
     );
   }
 
-
-
   Widget buildReviewCard(Map<String, dynamic> review) {
     bool isUserReview = review['user_id'].toString() == currentUserId.toString();
 
@@ -385,6 +381,7 @@ class _ReviewPageState extends State<ReviewPage> {
 
 
 
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -434,8 +431,10 @@ class _ReviewPageState extends State<ReviewPage> {
                       decoration: InputDecoration(
                         labelText: 'Write your comment',
                         labelStyle: const TextStyle(color: Colors.teal),
+                        // Custom label color
                         border: OutlineInputBorder(
                           borderRadius: BorderRadius.circular(12),
+                          // Rounded corners
                           borderSide: const BorderSide(color: Colors.amber, width: 1),
                         ),
                         focusedBorder: OutlineInputBorder(

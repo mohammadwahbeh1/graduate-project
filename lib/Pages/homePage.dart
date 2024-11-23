@@ -1,5 +1,3 @@
-import 'dart:ui';
-
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 import 'dart:convert';
@@ -9,7 +7,12 @@ import './loginPage.dart';
 import './terminalDetailsPage.dart';
 import 'package:untitled/Pages/reservationPage.dart';
 import 'bookingTaxi.dart';
+import 'profilePage.dart';
+
 const String ip ="192.168.1.18";
+
+
+
 
 
 class homePage extends StatefulWidget {
@@ -279,21 +282,18 @@ class _homePageState extends State<homePage> {
       builder: (BuildContext context) {
         return AlertDialog(
           title: const Text('Profile Options'),
-          content: SingleChildScrollView( // Wrap the content in a SingleChildScrollView
-            child: ListBody( // Use ListBody instead of Column for more efficient layout
+          content: SingleChildScrollView(
+            child: ListBody(
               children: <Widget>[
                 ListTile(
                   leading: const Icon(Icons.visibility),
                   title: const Text('View Profile'),
                   onTap: () {
                     Navigator.pop(context);
-                  },
-                ),
-                ListTile(
-                  leading: const Icon(Icons.edit),
-                  title: const Text('Edit Profile'),
-                  onTap: () {
-                    Navigator.pop(context);
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(builder: (context) => ProfilePage()),
+                    );
                   },
                 ),
               ],
@@ -393,7 +393,7 @@ class _homePageState extends State<homePage> {
     );
   }
 
-
+  // Build terminal card UI
   Widget buildCard(BuildContext context, String terminalName, String imagePath, String terminalId) {
     return GestureDetector(
       onTap: () {
@@ -427,67 +427,27 @@ class _homePageState extends State<homePage> {
                 fit: BoxFit.cover,
               ),
               Positioned(
-                bottom: 0,
-                left: 0,
-                right: 0,
-                child: ClipRRect(
-                  borderRadius: BorderRadius.vertical(bottom: Radius.circular(15)),
-                  child: BackdropFilter(
-                    filter: ImageFilter.blur(sigmaX: 5.0, sigmaY: 5.0),  // Slightly reduced blur intensity
-                    child: Container(
-                      height: 70,  // Adjusted height for better balance
-                      alignment: Alignment.center,
-                      color: Colors.black.withOpacity(0.4),  // Slightly lighter opacity
-                      child: Row(
-                        mainAxisAlignment: MainAxisAlignment.spaceBetween,  // Spread the items across the row
-                        children: [
-                          // Terminal name on the left
-                          Padding(
-                            padding: const EdgeInsets.only(left: 15),  // Added padding to the left for better spacing
-                            child: Text(
-                              terminalName,
-                              style: const TextStyle(
-                                fontSize: 20,  // Slightly smaller and thinner font size
-                                fontWeight: FontWeight.w300,  // Lighter font weight for a refined look
-                                color: Colors.white,
-                                fontFamily: 'Roboto',  // Font set to 'Roboto', but can be replaced with any lightweight font
-                              ),
-                            ),
-                          ),
-                          // Review button on the right with slight offset
-                          Padding(
-                            padding: const EdgeInsets.only(right: 20),  // Added some space from the right edge
-                            child: ElevatedButton(
-                              onPressed: () {
-                                Navigator.push(
-                                  context,
-                                  MaterialPageRoute(
-                                    builder: (context) => ReviewPage(terminalId: terminalId),
-                                  ),
-                                );
-                              },
-                              style: ElevatedButton.styleFrom(
-                                backgroundColor: Colors.transparent,  // Transparent background
-                                side: BorderSide(color: Colors.white, width: 2),  // White border
-                                shape: RoundedRectangleBorder(
-                                  borderRadius: BorderRadius.circular(20),  // Rounded corners for the button
-                                ),
-                                padding: EdgeInsets.symmetric(horizontal: 25, vertical: 10),  // Button padding
-                              ),
-                              child: const Text(
-                                "View Reviews",
-                                style: TextStyle(
-                                  fontSize: 16,
-                                  color: Colors.white,  // White text color
-                                  fontFamily: 'Roboto',  // Consistent font
-                                ),
-                              ),
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
+                child: Text(
+                  terminalName,
+                  style: const TextStyle(
+                    fontSize: 20,
+                    fontWeight: FontWeight.bold,
+                    color: Colors.white,
                   ),
+                ),
+              ),
+              Positioned(
+                bottom: 10,
+                child: ElevatedButton(
+                  onPressed: () {
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (context) => ReviewPage(terminalId: terminalId),
+                      ),
+                    );
+                  },
+                  child: Text("View Reviews"),
                 ),
               ),
             ],

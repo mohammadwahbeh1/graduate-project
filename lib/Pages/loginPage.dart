@@ -1,4 +1,3 @@
-//loginPage
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'dart:convert'; // For encoding/decoding JSON
 import 'package:flutter/material.dart';
@@ -11,7 +10,7 @@ import 'adminPage.dart';
 import 'driverPage.dart';
 import 'lineManagerPage.dart';
 
-const String ip ="192.168.1.18";
+const String ip ="192.168.1.8";
 
 // Create a secure storage instance
 const storage = FlutterSecureStorage();
@@ -43,21 +42,30 @@ class _LoginPageState extends State<LoginPage> {
         isLoading = true;
       });
 
-      var url = Uri.parse('http://$ip:3000/api/v1/login');
+      // Backend URL for login
+      var url = Uri.parse('http://$ip:3000/api/v1/login'); // Replace with your actual API URL
+
+      // Prepare the body of the POST request
       var body = json.encode({
         'email': email,
-        'password': password,
+        'password': password, // Match this with backend field name
       });
 
       try {
+        // Make the POST request
         var response = await http.post(
           url,
-          headers: {'Content-Type': 'application/json'},
+          headers: {
+            'Content-Type': 'application/json',
+          },
           body: body,
         );
 
+
         if (response.statusCode == 200) {
+          // Successful login (200 status)
           var jsonResponse = jsonDecode(response.body);
+          print('Login response: $jsonResponse');
           var token = jsonResponse['data']['token'];
           var userId = jsonResponse['data']['user']['user_id'];
 
@@ -73,11 +81,14 @@ class _LoginPageState extends State<LoginPage> {
           // Navigate based on the role
           _navigateBasedOnRole(role);
         } else {
+          print('Token is null');
+          // Invalid login (e.g., wrong email/password)
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(content: Text('Invalid email or password')),
           );
         }
       } catch (e) {
+        // Handle error (e.g., network issues)
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(content: Text('Error: $e')),
         );
