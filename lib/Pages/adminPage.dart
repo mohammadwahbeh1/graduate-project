@@ -1,8 +1,12 @@
 import 'package:flutter/material.dart';
 
+import 'DriversAndLinesPage.dart';
+import 'LinesAndManagersPage.dart';
 import 'loginPage.dart';
 
 class ManagerPage extends StatelessWidget {
+  const ManagerPage({super.key});
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -15,8 +19,8 @@ class ManagerPage extends StatelessWidget {
         centerTitle: true,
       ),
       drawer: buildDrawer(context, 'Manager'),
-      body: Center(
-        child: const Text(
+      body: const Center(
+        child: Text(
           "Welcome to the Manager's Page",
           style: TextStyle(fontSize: 24),
         ),
@@ -70,6 +74,27 @@ class ManagerPage extends StatelessWidget {
               Navigator.pop(context);
             },
           ),
+          ListTile(
+            leading: const Icon(Icons.directions_car),
+            title: const Text('View Drivers and Lines'),
+            onTap: () {
+              Navigator.push(
+                context,
+                MaterialPageRoute(builder: (context) => const DriversAndLinesPage()),
+              );
+            },
+          ),
+          ListTile(
+            leading: const Icon(Icons.manage_accounts),
+            title: const Text('View Lines and Managers'),
+            onTap: () {
+              Navigator.push(
+                context,
+                MaterialPageRoute(builder: (context) => const LinesAndManagersPage()),
+              );
+            },
+          ),
+
           const Divider(),
           ListTile(
             leading: const Icon(Icons.logout),
@@ -78,7 +103,7 @@ class ManagerPage extends StatelessWidget {
               Navigator.pop(context);
               Navigator.pushReplacement(
                 context,
-                MaterialPageRoute(builder: (context) => LoginPage()),
+                MaterialPageRoute(builder: (context) => const LoginPage()),
               );
             },
           ),

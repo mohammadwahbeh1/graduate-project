@@ -4,7 +4,7 @@ import 'dart:convert'; // For encoding/decoding JSON
 import 'package:flutter_secure_storage/flutter_secure_storage.dart'; // For secure storage
 import 'loginPage.dart'; // Navigate to login page after successful sign-up
 
-const String ip ="192.168.1.18";
+const String ip ="192.168.1.2";
 
 
 // Create a secure storage instance

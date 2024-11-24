@@ -4,6 +4,9 @@ import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:http/http.dart' as http;
 import './EditProfilePage.dart';
 
+const String ip = "192.168.1.2";
+
+
 class ProfilePage extends StatefulWidget {
   const ProfilePage({Key? key}) : super(key: key);
 
@@ -29,7 +32,7 @@ class _ProfilePageState extends State<ProfilePage> {
 
       if (token != null) {
         final response = await http.get(
-          Uri.parse('http://192.168.1.8:3000/api/v1/users/profile'),
+          Uri.parse('http://$ip:3000/api/v1/users/profile'),
           headers: {
             'Authorization': 'Bearer $token',
           },
