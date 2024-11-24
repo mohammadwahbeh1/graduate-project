@@ -8,6 +8,7 @@ import './terminalDetailsPage.dart';
 import 'package:untitled/Pages/reservationPage.dart';
 import 'bookingTaxi.dart';
 
+import 'closestPointPage.dart';
 import 'profilePage.dart';
 
 const String ip ="192.168.1.8";
@@ -344,6 +345,10 @@ class _homePageState extends State<homePage> {
             title: const Text('The Closest Point'),
             onTap: () {
               Navigator.pop(context);
+              Navigator.push(
+                context,
+                MaterialPageRoute(builder: (context) => ClosestPointPage()),
+              );
             },
           ),
           ListTile(
