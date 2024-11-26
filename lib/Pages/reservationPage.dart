@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 import 'dart:convert';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
+const String ip ="192.168.1.8";
 
 // Create a secure storage instance
 final storage = FlutterSecureStorage();
@@ -26,7 +27,7 @@ class _ReservationsPageState extends State<ReservationsPage> {
     String? token = await storage.read(key: 'jwt_token'); // Retrieve JWT token
     if (userId != null && token != null) {
       final response = await http.get(
-        Uri.parse('http://192.168.1.8:3000/api/v1/reservation/user/$userId'),
+        Uri.parse('http://$ip:3000/api/v1/reservation/user/$userId'),
         headers: {
           'Content-Type': 'application/json',
           'Authorization': 'Bearer $token', // Include the token here
@@ -63,7 +64,7 @@ class _ReservationsPageState extends State<ReservationsPage> {
   void _cancelReservation(int reservationId) async {
     String? token = await storage.read(key: 'jwt_token'); // Retrieve JWT token
     final response = await http.delete(
-      Uri.parse('http://192.168.1.8:3000/api/v1/reservation/$reservationId'),
+      Uri.parse('http://$ip:3000/api/v1/reservation/$reservationId'),
       headers: {
         'Content-Type': 'application/json',
         'Authorization': 'Bearer $token', // Include the token here

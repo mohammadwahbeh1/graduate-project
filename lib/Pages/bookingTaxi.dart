@@ -4,6 +4,7 @@ import 'package:intl/intl.dart';
 import 'dart:convert';
 
 import 'Splash_screen.dart';
+const String ip ="192.168.1.2";
 
 class BookTaxiPage extends StatefulWidget {
   const BookTaxiPage({Key? key}) : super(key: key);
@@ -315,7 +316,7 @@ class _BookTaxiPageState extends State<BookTaxiPage> {
     var notificationDetails = {'message': message};
 
     final response = await http.post(
-      Uri.parse('http://192.168.1.8:3000/api/v1/notifications'),
+      Uri.parse('http:$ip:3000/api/v1/notifications'),
       headers: {
         'Content-Type': 'application/json',
         'Authorization': 'Bearer $token',
@@ -347,7 +348,7 @@ class _BookTaxiPageState extends State<BookTaxiPage> {
     if (token == null) return;
 
     final response = await http.post(
-      Uri.parse('http://192.168.1.8:3000/api/v1/reservation'),
+      Uri.parse('http://$ip:3000/api/v1/reservation'),
       headers: {
         'Content-Type': 'application/json',
         'Authorization': 'Bearer $token',

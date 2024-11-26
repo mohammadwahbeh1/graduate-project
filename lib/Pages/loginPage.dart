@@ -2,14 +2,18 @@ import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'dart:convert'; // For encoding/decoding JSON
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
+import 'package:jwt_decode/jwt_decode.dart';
 import 'package:untitled/Pages/homePage.dart';
 import 'package:untitled/Pages/signUp.dart';
 import 'Forgot_password.dart';
+import 'adminPage.dart';
+import 'driverPage.dart';
+import 'lineManagerPage.dart';
 
-const String ip ="192.168.1.8";
+const String ip = "192.168.1.8";
 
 // Create a secure storage instance
-final storage = FlutterSecureStorage();
+const storage = FlutterSecureStorage();
 
 class LoginPage extends StatefulWidget {
   const LoginPage({super.key});
@@ -66,17 +70,16 @@ class _LoginPageState extends State<LoginPage> {
           var userId = jsonResponse['data']['user']['user_id'];
 
           DateTime expirationTime = DateTime.now().add(Duration(minutes: 2));
-          // Save token securely using flutter_secure_storage
-          print(userId);
           await storage.write(key: 'jwt_token', value: token);
           await storage.write(key: 'user_id', value: userId.toString());
           await storage.write(key: 'token_expiration', value: expirationTime.toIso8601String());
 
-          // Navigate to home page
-          Navigator.pushReplacement(
-            context,
-            MaterialPageRoute(builder: (context) => homePage()),
-          );
+          // Decode the token to get the role
+          Map<String, dynamic> decodedToken = Jwt.parseJwt(token);
+          String role = decodedToken['role']?.trim() ?? '';
+
+          // Navigate based on the role
+          _navigateBasedOnRole(role);
         } else {
           print('Token is null');
           // Invalid login (e.g., wrong email/password)
@@ -89,13 +92,41 @@ class _LoginPageState extends State<LoginPage> {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(content: Text('Error: $e')),
         );
-      }finally {
+      } finally {
         setState(() {
-          isLoading = false; // Reset loading state
+          isLoading = false;
         });
       }
     }
   }
+
+  void _navigateBasedOnRole(String role) {
+    Widget targetPage;
+
+    switch (role) {
+      case 'user':
+        targetPage = homePage();
+        break;
+      case 'driver':
+        targetPage = DriverPage();
+        break;
+      case 'line_manager':
+        targetPage = LineManagerPage();
+        break;
+      case 'admin':
+        targetPage = ManagerPage();
+        break;
+      default:
+        targetPage = const LoginPage();
+        break;
+    }
+
+    Navigator.pushReplacement(
+      context,
+      MaterialPageRoute(builder: (context) => targetPage),
+    );
+  }
+
 
   // Retrieve the token (you might need this in future for authenticated requests)
   Future<String?> getToken() async {

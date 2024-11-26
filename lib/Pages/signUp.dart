@@ -4,6 +4,9 @@ import 'dart:convert'; // For encoding/decoding JSON
 import 'package:flutter_secure_storage/flutter_secure_storage.dart'; // For secure storage
 import 'loginPage.dart'; // Navigate to login page after successful sign-up
 
+const String ip ="192.168.1.2";
+
+
 // Create a secure storage instance
 final storage = FlutterSecureStorage();
 
@@ -42,7 +45,7 @@ class _SignUpState extends State<SignUp> {
         dateOfBirth = dateOfBirthController.text;
       });
 
-      var url = Uri.parse('http://192.168.1.8:3000/api/v1/register'); // Adjust API URL
+      var url = Uri.parse('http://$ip:3000/api/v1/register'); // Adjust API URL
 
       var body = json.encode({
         'username': name,
