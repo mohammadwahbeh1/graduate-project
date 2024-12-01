@@ -31,7 +31,6 @@ dependencies:
 
   network_info_plus: ^2.1.0
 
-  google_maps_flutter: ^2.2.3
 
   flutter:
     sdk: flutter

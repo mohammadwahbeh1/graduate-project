@@ -6,6 +6,7 @@ import 'TerminalsPage.dart';
 import 'UsersManagementPage.dart';
 import 'VehiclePage.dart';
 import 'loginPage.dart';
+import 'linePage.dart';
 
 class ManagerPage extends StatelessWidget {
   const ManagerPage({super.key});
@@ -102,10 +103,10 @@ class ManagerPage extends StatelessWidget {
                     builder: (context) => const DriversAndLinesPage()),
               );
             },
-          ),
+          ),  //LineManagementPage
           ListTile(
             leading: const Icon(Icons.car_repair),
-            title: const Text('View Vehicle'),
+            title: const Text('Vehicle'),
             onTap: () {
               Navigator.push(
                 context,
@@ -114,6 +115,18 @@ class ManagerPage extends StatelessWidget {
               );
             },
           ),
+          ListTile(
+            leading: const Icon(Icons.edit_road),
+            title: const Text('line'),
+            onTap: () {
+              Navigator.push(
+                context,
+                MaterialPageRoute(
+                    builder: (context) =>  const LinePage() ),
+              );
+            },
+          ),
+
           ListTile(
             leading: const Icon(Icons.manage_accounts),
             title: const Text('View Lines and Managers'),
