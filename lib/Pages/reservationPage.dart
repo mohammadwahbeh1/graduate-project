@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 import 'dart:convert';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
-const String ip ="192.168.1.2";
+const String ip ="192.168.1.8";
 
 // Create a secure storage instance
 final storage = FlutterSecureStorage();

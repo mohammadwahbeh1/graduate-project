@@ -4,7 +4,7 @@ import 'dart:convert';
 
 import 'Splash_screen.dart';
 
-const String ip = "192.168.1.2";
+const String ip = "192.168.1.8";
 
 class LineManagerCall extends StatefulWidget {
   const LineManagerCall({super.key});

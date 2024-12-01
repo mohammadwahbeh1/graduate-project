@@ -4,7 +4,7 @@ import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:http/http.dart' as http;
 import './EditProfilePage.dart';
 
-const String ip = "192.168.1.2";
+const String ip = "192.168.1.8";
 
 
 class ProfilePage extends StatefulWidget {

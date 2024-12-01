@@ -4,7 +4,7 @@ import 'dart:convert';
 import 'package:http/http.dart' as http;
 import 'dart:async';
 import 'Splash_screen.dart';
-const String ip ="192.168.1.18";
+const String ip ="192.168.1.8";
 
 
 class TerminalDetailsPage extends StatefulWidget {

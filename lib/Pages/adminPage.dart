@@ -2,6 +2,9 @@ import 'package:flutter/material.dart';
 
 import 'DriversAndLinesPage.dart';
 import 'LinesAndManagersPage.dart';
+import 'TerminalsPage.dart';
+import 'UsersManagementPage.dart';
+import 'VehiclePage.dart';
 import 'loginPage.dart';
 
 class ManagerPage extends StatelessWidget {
@@ -64,7 +67,22 @@ class ManagerPage extends StatelessWidget {
             leading: const Icon(Icons.supervised_user_circle),
             title: const Text('Manage Users'),
             onTap: () {
-              Navigator.pop(context);
+              Navigator.push(
+                context,
+                MaterialPageRoute(
+                    builder: (context) => const UsersManagementPage()),
+              );
+            },
+          ),
+          ListTile(
+            leading: const Icon(Icons.admin_panel_settings),
+            title: const Text('Terminals'),
+            onTap: () {
+              Navigator.push(
+                context,
+                MaterialPageRoute(
+                    builder: (context) => TerminalPage()),
+              );
             },
           ),
           ListTile(
@@ -75,12 +93,24 @@ class ManagerPage extends StatelessWidget {
             },
           ),
           ListTile(
-            leading: const Icon(Icons.directions_car),
+            leading: const Icon(Icons.drive_eta_rounded),
             title: const Text('View Drivers and Lines'),
             onTap: () {
               Navigator.push(
                 context,
-                MaterialPageRoute(builder: (context) => const DriversAndLinesPage()),
+                MaterialPageRoute(
+                    builder: (context) => const DriversAndLinesPage()),
+              );
+            },
+          ),
+          ListTile(
+            leading: const Icon(Icons.car_repair),
+            title: const Text('View Vehicle'),
+            onTap: () {
+              Navigator.push(
+                context,
+                MaterialPageRoute(
+                    builder: (context) => const VehiclePage()),
               );
             },
           ),
@@ -90,11 +120,11 @@ class ManagerPage extends StatelessWidget {
             onTap: () {
               Navigator.push(
                 context,
-                MaterialPageRoute(builder: (context) => const LinesAndManagersPage()),
+                MaterialPageRoute(
+                    builder: (context) => const LinesAndManagersPage()),
               );
             },
           ),
-
           const Divider(),
           ListTile(
             leading: const Icon(Icons.logout),
