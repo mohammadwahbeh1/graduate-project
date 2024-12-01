@@ -19,6 +19,7 @@ class _EditProfilePageState extends State<EditProfilePage> {
   late TextEditingController dateOfBirthController;
   late TextEditingController genderController;
   late TextEditingController addressController;
+  late TextEditingController licenseNumberController; // For license number
 
   final storage = const FlutterSecureStorage(); // For storing JWT token
   bool isLoading = false; // To track loading state
@@ -35,6 +36,13 @@ class _EditProfilePageState extends State<EditProfilePage> {
     dateOfBirthController = TextEditingController(text: widget.userData['date_of_birth']);
     genderController = TextEditingController(text: widget.userData['gender']);
     addressController = TextEditingController(text: widget.userData['address']);
+
+    // Initialize the license number controller only if the user is a driver
+    if (widget.userData.containsKey('license_number')) {
+      licenseNumberController = TextEditingController(text: widget.userData['license_number']);
+    } else {
+      licenseNumberController = TextEditingController(); // Set an empty controller if not a driver
+    }
   }
 
   @override
@@ -46,6 +54,7 @@ class _EditProfilePageState extends State<EditProfilePage> {
     dateOfBirthController.dispose();
     genderController.dispose();
     addressController.dispose();
+    licenseNumberController.dispose();
     super.dispose();
   }
 
@@ -71,6 +80,9 @@ class _EditProfilePageState extends State<EditProfilePage> {
             'date_of_birth': dateOfBirthController.text,
             'gender': genderController.text,
             'address': addressController.text,
+            // Only include license_number if the user is a driver
+            if (widget.userData.containsKey('license_number'))
+              'license_number': licenseNumberController.text,
           }),
         );
 
@@ -112,6 +124,9 @@ class _EditProfilePageState extends State<EditProfilePage> {
                 'date_of_birth': dateOfBirthController.text,
                 'gender': genderController.text,
                 'address': addressController.text,
+                // Return the license number if available
+                if (widget.userData.containsKey('license_number'))
+                  'license_number': licenseNumberController.text,
               });
             },
           ),
@@ -184,6 +199,10 @@ class _EditProfilePageState extends State<EditProfilePage> {
             _buildInputField('Date of Birth', dateOfBirthController, Icons.calendar_today),
             _buildInputField('Gender', genderController, Icons.accessibility),
             _buildInputField('Address', addressController, Icons.location_on),
+
+            // License Number field for drivers (only visible for drivers)
+            if (widget.userData.containsKey('license_number'))
+              _buildInputField('License Number', licenseNumberController, Icons.badge),
 
             const SizedBox(height: 30),
 

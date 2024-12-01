@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:untitled/Pages/profilePage.dart';
 import 'DriverCall.dart';
 
 import 'loginPage.dart';
@@ -76,7 +77,7 @@ class LineManagerPage extends StatelessWidget {
             leading: const Icon(Icons.directions_bus),
             title: const Text('Manage Lines'),
             onTap: () {
-              // عرض صفحة إدارة الخطوط
+
               Navigator.pop(context);
             },
           ),
@@ -128,15 +129,23 @@ class LineManagerPage extends StatelessWidget {
       builder: (BuildContext context) {
         return AlertDialog(
           title: const Text('Profile Options'),
-          content: const Text('View or Edit your profile here'),
-          actions: [
-            TextButton(
-              onPressed: () {
-                Navigator.of(context).pop();
-              },
-              child: const Text('Close'),
+          content: SingleChildScrollView(
+            child: ListBody(
+              children: <Widget>[
+                ListTile(
+                  leading: const Icon(Icons.visibility),
+                  title: const Text('View Profile'),
+                  onTap: () {
+                    Navigator.pop(context);
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(builder: (context) => const ProfilePage()),
+                    );
+                  },
+                ),
+              ],
             ),
-          ],
+          ),
         );
       },
     );

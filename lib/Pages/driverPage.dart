@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:untitled/Pages/profilePage.dart';
 import 'LineMangerCall.dart';
 import 'loginPage.dart';
 import 'package:http/http.dart' as http;
@@ -92,7 +93,7 @@ class _DriverPageState extends State<DriverPage> {
             icon: const Icon(
               Icons.person,
               size: 30,
-              color: Colors.white,
+              color: Colors.black,
             ),
             onPressed: () {
               _showProfileOptions(context);
@@ -396,20 +397,27 @@ class _DriverPageState extends State<DriverPage> {
       builder: (BuildContext context) {
         return AlertDialog(
           title: const Text('Profile Options'),
-          content: const Text('View or Edit your profile here'),
-          actions: [
-            TextButton(
-              onPressed: () {
-                Navigator.of(context).pop();
-              },
-              child: const Text('Close'),
+          content: SingleChildScrollView(
+            child: ListBody(
+              children: <Widget>[
+                ListTile(
+                  leading: const Icon(Icons.visibility),
+                  title: const Text('View Profile'),
+                  onTap: () {
+                    Navigator.pop(context);
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(builder: (context) => const ProfilePage()),
+                    );
+                  },
+                ),
+              ],
             ),
-          ],
+          ),
         );
       },
     );
   }
-
   void _navigateToMyRoutes(BuildContext context) {
     ScaffoldMessenger.of(context).showSnackBar(
       const SnackBar(content: Text('Navigating to My Routes...')),
@@ -500,6 +508,27 @@ class _DriverPageState extends State<DriverPage> {
       });
     }
   }
+  void _createNotification(String message) async {
+    String? token = await storage.read(key: 'jwt_token');
+    if (token == null) return;
+
+    var notificationDetails = {'message': message};
+
+    final response = await http.post(
+      Uri.parse('http:$ip:3000/api/v1/notifications'),
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': 'Bearer $token',
+      },
+      body: jsonEncode(notificationDetails),
+    );
+
+    if (response.statusCode == 200) {
+      print('Notification created successfully');
+    } else {
+      print('Failed to create notification: ${response.body}');
+    }
+  }
   // Accept reservation
   Future<void> _acceptReservation(int reservationId) async {
     try {
@@ -512,6 +541,8 @@ class _DriverPageState extends State<DriverPage> {
       if (response.statusCode == 200) {
         _fetchReservations(); // Re-fetch reservations after acceptance
         _showSuccessDialog('Reservation accepted successfully');
+
+
       } else {
         _showErrorDialog('Error accepting reservation');
       }

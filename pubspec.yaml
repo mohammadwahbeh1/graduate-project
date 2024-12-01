@@ -51,9 +51,13 @@ dependencies:
   flutter_secure_storage: ^8.0.0
   flutter_rating_bar: ^4.0.0
   jwt_decoder: ^2.0.1
+
+  google_maps_flutter: ^2.2.2
+
   jwt_decode: ^0.3.0
 
   flutter_slidable: ^3.1.1
+
 
 
 
