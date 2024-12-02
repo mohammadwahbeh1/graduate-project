@@ -48,12 +48,6 @@ class _ProfilePageState extends State<ProfilePage> {
               'gender': data['gender'] ?? '',
               'address': data['address'] ?? '',
             };
-
-            // Add license number if role is driver
-            if (data['role'] == 'driver') {
-              userData['license_number'] = data['license_number'] ?? 'N/A';
-            }
-
             isLoading = false;
           });
         } else {
@@ -191,11 +185,6 @@ class _ProfilePageState extends State<ProfilePage> {
                   _buildInfoRow(Icons.accessibility, "Gender", userData['gender'] ?? ''),
                   const Divider(),
                   _buildInfoRow(Icons.location_on, "Address", userData['address'] ?? ''),
-                  // Show license number only if available
-                  if (userData.containsKey('license_number')) ...[
-                    const Divider(),
-                    _buildInfoRow(Icons.badge, "License Number", userData['license_number'] ?? ''),
-                  ],
                 ],
               ),
             ),

@@ -483,7 +483,7 @@ class _ReviewPageState extends State<ReviewPage> {
                   ),
                   TextButton(
                     onPressed: () {
-                      Navigator.pop(context); // إغلاق النافذة عند الضغط على إلغاء
+                      Navigator.pop(context);
                     },
                     child: const Text(
                       'Cancel',
