@@ -9,20 +9,27 @@ import 'Forgot_password.dart';
 import 'adminPage.dart';
 import 'driverPage.dart';
 import 'lineManagerPage.dart';
-
+import 'package:untitled/Pages/Location Service.dart';
 const String ip = "192.168.1.8";
 
 // Create a secure storage instance
 const storage = FlutterSecureStorage();
 
 class LoginPage extends StatefulWidget {
+
   const LoginPage({super.key});
+
 
   @override
   State<LoginPage> createState() => _LoginPageState();
 }
 
+
+
+
+
 class _LoginPageState extends State<LoginPage> {
+
   String email = "", password = "";
   var EmailController = TextEditingController();
   var PasswordController = TextEditingController();
@@ -63,6 +70,7 @@ class _LoginPageState extends State<LoginPage> {
 
 
         if (response.statusCode == 200) {
+
           // Successful login (200 status)
           var jsonResponse = jsonDecode(response.body);
           print('Login response: $jsonResponse');
@@ -125,6 +133,11 @@ class _LoginPageState extends State<LoginPage> {
       context,
       MaterialPageRoute(builder: (context) => targetPage),
     );
+  }
+  @override
+  void dispose() {
+
+    super.dispose();
   }
 
 

@@ -4,7 +4,7 @@ import 'dart:convert';
 import 'package:http/http.dart' as http;
 import 'dart:async';
 import 'Splash_screen.dart';
-const String ip ="192.168.1.18";
+const String ip ="192.168.1.8";
 
 
 class TerminalDetailsPage extends StatefulWidget {
@@ -27,7 +27,7 @@ class _TerminalDetailsPageState extends State<TerminalDetailsPage> {
   void initState() {
     super.initState();
     fetchLines();
-    timer = Timer.periodic(const Duration(hours: 5), (Timer t) {
+    timer = Timer.periodic(const Duration(minutes: 1), (Timer t) {
       fetchLines();
     });
   }
