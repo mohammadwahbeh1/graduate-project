@@ -28,8 +28,9 @@ environment:
 # the latest version available on pub.dev. To see which dependencies have newer
 # versions available, run `flutter pub outdated`.
 dependencies:
-
+  geolocator: ^8.2.0
   network_info_plus: ^2.1.0
+  provider: ^6.0.5
 
 
   flutter:
@@ -42,7 +43,7 @@ dependencies:
 
 
 
-
+  dropdown_search: ^5.0.2
   web_socket_channel: ^2.1.0
   sizer: ^2.0.15
   intl: ^0.17.0
@@ -50,15 +51,20 @@ dependencies:
   flutter_secure_storage: ^8.0.0
   flutter_rating_bar: ^4.0.0
   jwt_decoder: ^2.0.1
+  permission_handler: ^10.0.0
+
 
   syncfusion_flutter_charts: ^20.3.55  # or the latest version
 
   google_maps_flutter: ^2.2.2
 
+  geocoding: ^2.0.0
+
   jwt_decode: ^0.3.0
 
   flutter_slidable: ^3.1.1
   percent_indicator: ^4.0.0
+
 
 
 

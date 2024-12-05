@@ -29,7 +29,9 @@ class _homePageState extends State<homePage> {
   bool isLoading = true;
   final storage = FlutterSecureStorage();
   List<Map<String, dynamic>> notifications = [];
-  int notificationCount = 0; // Start notification count from 0
+  int notificationCount = 0;
+
+String username=""; // Start notification count from 0
 
   void addNotification(Map<String, dynamic> notification) {
     setState(() {
@@ -43,6 +45,7 @@ class _homePageState extends State<homePage> {
   void initState() {
     super.initState();
     fetchTerminals();
+    fetchUserProfile();
   }
 
   @override
@@ -63,7 +66,8 @@ class _homePageState extends State<homePage> {
             'Authorization': 'Bearer $token',
           },
         );
-
+        print("Token: $token");
+        print(response);
         if (response.statusCode == 200) {
           final List<dynamic> data = jsonDecode(response.body)['data'];
 
@@ -307,41 +311,84 @@ class _homePageState extends State<homePage> {
     );
   }
 
-  // Build drawer menu
+  Future<void> fetchUserProfile() async {
+    String? token = await storage.read(key: 'jwt_token');
+
+    if (token == null) {
+      setState(() {
+         username = "No Token Found";
+      });
+      return;
+    }
+
+    final url = Uri.parse("http://192.168.1.8:3000/api/v1/users/Profile");
+
+    try {
+      final response = await http.get(url, headers: {
+        'Authorization': 'Bearer $token',
+      });
+
+      if (response.statusCode == 200) {
+        final data = json.decode(response.body);
+        setState(() {
+          username = data['data']['username'];
+        });
+      } else {
+        setState(() {
+          username = "Failed to load";
+        });
+      }
+    } catch (e) {
+      setState(() {
+        username = "Error";
+      });
+      print("Error fetching user profile: $e");
+    }
+  }
+
+
+
+
   Widget buildDrawer(BuildContext context) {
     return Drawer(
+      backgroundColor: Colors.white,
       child: ListView(
         padding: EdgeInsets.zero,
         children: <Widget>[
+          // Header Section with Profile Info
           Container(
-            height: MediaQuery.of(context).size.height * 0.25,
+            height: MediaQuery.of(context).size.height * 0.30,
             decoration: const BoxDecoration(
               color: Colors.yellow,
             ),
-            child: const DrawerHeader(
-              margin: EdgeInsets.all(0),
-              padding: EdgeInsets.all(0),
-              child: Column(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  Icon(
-                    Icons.directions_car,
-                    size: 80,
-                    color: Colors.white,
+            child:  Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                // Profile Picture
+                CircleAvatar(
+                  radius: 50,
+                  backgroundImage: AssetImage('assets/profile.jpg'), // Replace with your image path
+                ),
+                SizedBox(height: 23),
+                // User Information
+                Text(
+                  username,
+                  style: TextStyle(
+                    color: Colors.black,
+                    fontSize: 20,
+                    fontWeight: FontWeight.bold,
+
                   ),
-                  SizedBox(height: 10),
-                  Text(
-                    'Taxi Service',
-                    style: TextStyle(
-                      color: Colors.white,
-                      fontSize: 24,
-                      fontWeight: FontWeight.bold,
-                    ),
-                  ),
-                ],
-              ),
+                ),
+
+
+                // Stats Row
+
+              ],
             ),
           ),
+          SizedBox(height: 20),
+          // Drawer List Items (your existing logic)
           ListTile(
             leading: const Icon(Icons.location_on),
             title: const Text('The Closest Point'),
@@ -353,6 +400,7 @@ class _homePageState extends State<homePage> {
               );
             },
           ),
+          SizedBox(height: 20),
           ListTile(
             leading: const Icon(Icons.contact_phone),
             title: const Text('Contact with Us'),
@@ -360,6 +408,7 @@ class _homePageState extends State<homePage> {
               Navigator.pop(context);
             },
           ),
+          SizedBox(height: 20),
           ListTile(
             leading: const Icon(Icons.book_online),
             title: const Text('Reservation'),
@@ -371,6 +420,7 @@ class _homePageState extends State<homePage> {
               );
             },
           ),
+          SizedBox(height: 20),
           ListTile(
             leading: const Icon(Icons.event_available),
             title: const Text('Book A Taxi'),
@@ -382,7 +432,7 @@ class _homePageState extends State<homePage> {
               );
             },
           ),
-          const Divider(),
+          SizedBox(height: 20),
           ListTile(
             leading: const Icon(Icons.logout),
             title: const Text('Log out'),
@@ -393,12 +443,12 @@ class _homePageState extends State<homePage> {
                 MaterialPageRoute(builder: (context) => LoginPage()),
               );
             },
-
           ),
         ],
       ),
     );
   }
+
 
   // Build terminal card UI
   Widget buildCard(BuildContext context, String terminalName, String imagePath, String terminalId) {

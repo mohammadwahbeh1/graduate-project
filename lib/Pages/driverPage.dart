@@ -1,9 +1,11 @@
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
 import 'package:untitled/Pages/profilePage.dart';
 import 'LineMangerCall.dart';
 import 'loginPage.dart';
 import 'package:http/http.dart' as http;
 import 'dart:convert';
+import 'package:untitled/Pages/Location Service.dart';
 
 const String ip = "192.168.1.8"; // Use your server IP address here
 
@@ -22,14 +24,26 @@ class _DriverPageState extends State<DriverPage> {
   bool isPending = true; // Flag to track which tab is selected
   bool isLoading = true; // Flag to show loading state
   String searchQuery = ''; // Store the search query
-
+  String username='';
+  final locationService = LocationService();
 
   @override
   void initState() {
     super.initState();
     _fetchReservations();
-  }
+    fetchUserProfile();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
 
+      locationService.startTracking(context);
+    });
+
+
+  }
+  @override
+  void dispose() {
+    locationService.stopTracking();
+    super.dispose();
+  }
 
   // Function to filter reservations based on search query
   void _filterReservations() {
@@ -77,9 +91,44 @@ class _DriverPageState extends State<DriverPage> {
       }
     });
   }
+  Future<void> fetchUserProfile() async {
+    String? token = await storage.read(key: 'jwt_token');
+
+    if (token == null) {
+      setState(() {
+        username = "No Token Found";
+      });
+      return;
+    }
+
+    final url = Uri.parse("http://192.168.1.8:3000/api/v1/users/Profile");
+
+    try {
+      final response = await http.get(url, headers: {
+        'Authorization': 'Bearer $token',
+      });
+
+      if (response.statusCode == 200) {
+        final data = json.decode(response.body);
+        setState(() {
+          username = data['data']['username'];
+        });
+      } else {
+        setState(() {
+          username = "Failed to load";
+        });
+      }
+    } catch (e) {
+      setState(() {
+        username = "Error";
+      });
+      print("Error fetching user profile: $e");
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
+
     return Scaffold(
       appBar: AppBar(
         title: const Text(
@@ -101,7 +150,7 @@ class _DriverPageState extends State<DriverPage> {
           ),
         ],
       ),
-      drawer: buildDrawer(context, 'Driver'),
+      drawer: buildDrawer(context),
       body: isLoading
           ? const Center(child: CircularProgressIndicator())
           : Column(
@@ -146,17 +195,19 @@ class _DriverPageState extends State<DriverPage> {
                         ),
                         title: Row(
                           children: [
-                            Text(
-                              "${reservation['User']['username']}",
-                              style: const TextStyle(
-                                  fontWeight: FontWeight.bold,
-                                  fontSize: 16),
+                            Expanded(
+                              child: Text(
+                                "${reservation['User']['username']}",
+                                style: const TextStyle(
+                                    fontWeight: FontWeight.bold,
+                                    fontSize: 16),
+                                overflow: TextOverflow.ellipsis, // Prevent overflow
+                              ),
                             ),
                             const SizedBox(width: 10),
                             Text(
                               "(${reservation['reservation_type']})",
-                              style:
-                              const TextStyle(color: Colors.grey),
+                              style: const TextStyle(color: Colors.grey),
                             ),
                           ],
                         ),
@@ -189,7 +240,11 @@ class _DriverPageState extends State<DriverPage> {
                           icon: const Icon(Icons.check_circle,
                               color: Colors.green, size: 35),
                           onPressed: () {
-                            _acceptReservation(reservation['reservation_id']);
+                            var userId = reservation['user_id'].toString();
+                            _acceptReservation(
+                              reservation['reservation_id'],
+                              userId,
+                            );
                           },
                         ),
                       ),
@@ -218,17 +273,19 @@ class _DriverPageState extends State<DriverPage> {
                         ),
                         title: Row(
                           children: [
-                            Text(
-                              "${reservation['User'] != null ? reservation['User']['username'] : 'Unknown User'}",
-                              style: const TextStyle(
-                                  fontWeight: FontWeight.bold,
-                                  fontSize: 16),
+                            Expanded(
+                              child: Text(
+                                "${reservation['User'] != null ? reservation['User']['username'] : 'Unknown User'}",
+                                style: const TextStyle(
+                                    fontWeight: FontWeight.bold,
+                                    fontSize: 16),
+                                overflow: TextOverflow.ellipsis, // Prevent overflow
+                              ),
                             ),
                             const SizedBox(width: 10),
                             Text(
                               "(${reservation['reservation_type']})",
-                              style:
-                              const TextStyle(color: Colors.grey),
+                              style: const TextStyle(color: Colors.grey),
                             ),
                           ],
                         ),
@@ -298,98 +355,103 @@ class _DriverPageState extends State<DriverPage> {
     );
   }
 
-
-
-  Widget buildDrawer(BuildContext context, String role) {
+  Widget buildDrawer(BuildContext context) {
     return Drawer(
+      backgroundColor: Colors.white,
       child: ListView(
         padding: EdgeInsets.zero,
         children: <Widget>[
-          // Drawer Header Section
+          // Header Section with Profile Info
           Container(
-            height: MediaQuery.of(context).size.height * 0.25,
+            height: MediaQuery.of(context).size.height * 0.30,
             decoration: const BoxDecoration(
               color: Colors.yellow,
             ),
-            child: const DrawerHeader(
-              child: Column(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  Icon(
-                    Icons.directions_car,
-                    size: 80,
-                    color: Colors.white,
-                  ),
-                  SizedBox(height: 10),
-                  Text(
-                    'Driver Dashboard',
-                    style: TextStyle(
-                      color: Colors.white,
-                      fontSize: 24,
-                      fontWeight: FontWeight.bold,
-                    ),
-                  ),
-                ],
-              ),
-            ),
-          ),
-
-          // Drawer Menu Items Section
-          Padding(
-            padding: const EdgeInsets.symmetric(vertical: 8.0),
-            child: Column(
+            child:  Column(
+              mainAxisAlignment: MainAxisAlignment.center,
               children: [
-                ListTile(
-                  leading: const Icon(Icons.map, size: 28),
-                  title: const Text('My Routes', style: TextStyle(fontSize: 16)),
-                  onTap: () {
-                    Navigator.pop(context);
-                    _navigateToMyRoutes(context);
-                  },
+                // Profile Picture
+                CircleAvatar(
+                  radius: 50,
+                  backgroundImage: AssetImage('assets/profile.jpg'), // Replace with your image path
                 ),
-                ListTile(
-                  leading: const Icon(Icons.notifications, size: 28),
-                  title: const Text('Notifications', style: TextStyle(fontSize: 16)),
-                  onTap: () {
-                    Navigator.pop(context);
-                    _navigateToNotifications(context);
-                  },
+                SizedBox(height: 23),
+                // User Information
+                Text(
+                  username,
+                  style: TextStyle(
+                    color: Colors.black,
+                    fontSize: 20,
+                    fontWeight: FontWeight.bold,
+
+                  ),
                 ),
-                const Divider(thickness: 1),
-                ListTile(
-                  leading: const Icon(Icons.supervisor_account, size: 28),
-                  title: const Text('Line Manager', style: TextStyle(fontSize: 16)),
-                  onTap: () {
-                    Navigator.pop(context);
-                    Navigator.push(
-                      context,
-                      MaterialPageRoute(builder: (context) => const LineManagerCall()),
-                    );
-                  },
-                ),
+
+
+                // Stats Row
+
               ],
             ),
           ),
-
-          // Logout Section
-          Padding(
-            padding: const EdgeInsets.only(bottom: 16.0),
-            child: ListTile(
-              leading: const Icon(Icons.logout, size: 28),
-              title: const Text('Log Out', style: TextStyle(fontSize: 16)),
-              onTap: () {
-                Navigator.pop(context);
-                Navigator.pushReplacement(
-                  context,
-                  MaterialPageRoute(builder: (context) => const LoginPage()),
-                );
-              },
-            ),
+          SizedBox(height: 20),
+          // Drawer List Items (your existing logic)
+          ListTile(
+            leading:  const Icon(Icons.map, size: 28),
+            title: const Text('My Routes', style: TextStyle(fontSize: 16)),
+            onTap: () {
+              Navigator.pop(context);
+              _navigateToMyRoutes(context);
+            },
+          ),
+          SizedBox(height: 20),
+          ListTile(
+            leading: const Icon(Icons.contact_phone),
+            title: const Text('Contact with Us'),
+            onTap: () {
+              Navigator.pop(context);
+            },
+          ),
+          SizedBox(height: 20),
+          ListTile(
+            leading: const Icon(Icons.notifications, size: 28),
+            title: const Text('Notifications', style: TextStyle(fontSize: 16)),
+            onTap: () {
+              Navigator.pop(context);
+              _navigateToNotifications(context);
+            },
+          ),
+          SizedBox(height: 20),
+          ListTile(
+            leading: const Icon(Icons.supervisor_account, size: 28),
+            title: const Text('Line Manager', style: TextStyle(fontSize: 16)),
+            onTap: () {
+              Navigator.pop(context);
+              Navigator.push(
+                context,
+                MaterialPageRoute(builder: (context) => const LineManagerCall()),
+              );
+            },
+          ),
+          SizedBox(height: 20),
+          ListTile(
+            leading: const Icon(Icons.logout),
+            title: const Text('Log out'),
+            onTap: () {
+              Navigator.pop(context);
+              Navigator.pushReplacement(
+                context,
+                MaterialPageRoute(builder: (context) => LoginPage()),
+              );
+            },
           ),
         ],
       ),
     );
   }
+
+
+
+
 
   void _showProfileOptions(BuildContext context) {
     showDialog(
@@ -508,14 +570,14 @@ class _DriverPageState extends State<DriverPage> {
       });
     }
   }
-  void _createNotification(String message) async {
+  void _createNotification(String userId, String message) async {
     String? token = await storage.read(key: 'jwt_token');
     if (token == null) return;
 
     var notificationDetails = {'message': message};
 
     final response = await http.post(
-      Uri.parse('http:$ip:3000/api/v1/notifications'),
+      Uri.parse('http://$ip:3000/api/v1/notifications/$userId/driver'),
       headers: {
         'Content-Type': 'application/json',
         'Authorization': 'Bearer $token',
@@ -530,7 +592,8 @@ class _DriverPageState extends State<DriverPage> {
     }
   }
   // Accept reservation
-  Future<void> _acceptReservation(int reservationId) async {
+  // Accept reservation and create notification
+  Future<void> _acceptReservation(int reservationId, String userId) async {
     try {
       String? token = await storage.read(key: 'jwt_token'); // Assuming storage is used for JWT token
       final response = await http.patch(
@@ -539,10 +602,11 @@ class _DriverPageState extends State<DriverPage> {
       );
 
       if (response.statusCode == 200) {
+        // After accepting the reservation, create a notification
+        _createNotification(userId, 'Taxi booked successfully at 12 AM');
+
         _fetchReservations(); // Re-fetch reservations after acceptance
         _showSuccessDialog('Reservation accepted successfully');
-
-
       } else {
         _showErrorDialog('Error accepting reservation');
       }
@@ -550,6 +614,7 @@ class _DriverPageState extends State<DriverPage> {
       _showErrorDialog('Error accepting reservation: $e');
     }
   }
+
 
   // Cancel reservation
   Future<void> _cancelReservation(int reservationId) async {
