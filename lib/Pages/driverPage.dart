@@ -6,8 +6,10 @@ import 'loginPage.dart';
 import 'package:http/http.dart' as http;
 import 'dart:convert';
 import 'package:untitled/Pages/Location Service.dart';
+import 'package:web_socket_channel/web_socket_channel.dart';
+import 'package:web_socket_channel/status.dart' as status;
 
-const String ip = "192.168.1.8"; // Use your server IP address here
+const String ip = "192.168.1.8";
 
 class DriverPage extends StatefulWidget {
   const DriverPage({super.key});
@@ -21,11 +23,12 @@ class _DriverPageState extends State<DriverPage> {
   List<dynamic> acceptedReservations = [];
   List<dynamic> filteredPendingReservations = [];
   List<dynamic> filteredAcceptedReservations = [];
-  bool isPending = true; // Flag to track which tab is selected
-  bool isLoading = true; // Flag to show loading state
-  String searchQuery = ''; // Store the search query
+  bool isPending = true;
+  bool isLoading = true;
+  String searchQuery = '';
   String username='';
   final locationService = LocationService();
+  WebSocketChannel? _channel;
 
   @override
   void initState() {
@@ -39,10 +42,12 @@ class _DriverPageState extends State<DriverPage> {
 
 
   }
+
   @override
   void dispose() {
     locationService.stopTracking();
     super.dispose();
+    _channel?.sink.close();
   }
 
   // Function to filter reservations based on search query
@@ -128,14 +133,15 @@ class _DriverPageState extends State<DriverPage> {
 
   @override
   Widget build(BuildContext context) {
-
     return Scaffold(
+
+
       appBar: AppBar(
         title: const Text(
           "Driver Dashboard",
           style: TextStyle(fontWeight: FontWeight.w500),
         ),
-        backgroundColor: Colors.yellow,
+        backgroundColor: Color(0xFFF5CF24),
         centerTitle: true,
         actions: [
           IconButton(
@@ -150,19 +156,27 @@ class _DriverPageState extends State<DriverPage> {
           ),
         ],
       ),
+
       drawer: buildDrawer(context),
-      body: isLoading
+      body:
+
+      isLoading
           ? const Center(child: CircularProgressIndicator())
           : Column(
         children: [
-          // Search bar for live search functionality
           Padding(
             padding: const EdgeInsets.all(16.0),
             child: TextField(
+
               decoration: const InputDecoration(
-                hintText: 'Search ',
-                border: OutlineInputBorder(),
+
+                hintText: 'Search',
+                border: OutlineInputBorder(
+                  borderRadius: BorderRadius.all(Radius.circular(12)),                 ),
                 prefixIcon: Icon(Icons.search),
+                fillColor: Colors.white,
+                filled: true,
+
               ),
               onChanged: (value) {
                 setState(() {
@@ -172,159 +186,268 @@ class _DriverPageState extends State<DriverPage> {
               },
             ),
           ),
-          // Show either Pending or Accepted reservations based on the selected tab
           Expanded(
             child: ListView(
               children: [
-                // Pending Reservations List
                 if (isPending && filteredPendingReservations.isNotEmpty) ...[
                   for (var reservation in filteredPendingReservations)
                     Card(
+                      color: Colors.white,
                       elevation: 8,
                       margin: const EdgeInsets.symmetric(
                           vertical: 8.0, horizontal: 16.0),
                       shape: RoundedRectangleBorder(
                         borderRadius: BorderRadius.circular(15),
                       ),
-                      color: Colors.blue.shade50,
-                      child: ListTile(
-                        leading: const CircleAvatar(
-                          radius: 30,
-                          backgroundImage:
-                          AssetImage('assets/commenter-1.jpg'),
-                        ),
-                        title: Row(
-                          children: [
-                            Expanded(
-                              child: Text(
-                                "${reservation['User']['username']}",
-                                style: const TextStyle(
-                                    fontWeight: FontWeight.bold,
-                                    fontSize: 16),
-                                overflow: TextOverflow.ellipsis, // Prevent overflow
-                              ),
-                            ),
-                            const SizedBox(width: 10),
-                            Text(
-                              "(${reservation['reservation_type']})",
-                              style: const TextStyle(color: Colors.grey),
-                            ),
-                          ],
-                        ),
-                        subtitle: Column(
+                      child: Padding(
+                        padding: const EdgeInsets.all(16.0),
+                        child: Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
                             Row(
+                              mainAxisAlignment:
+                              MainAxisAlignment.spaceBetween,
                               children: [
-                                const Icon(Icons.phone,
-                                    color: Colors.green, size: 18),
-                                const SizedBox(width: 5),
-                                Text("${reservation['phone_number']}"),
+                                Text(
+                                  "Ride #${reservation['reservation_id']}",
+                                  style: const TextStyle(
+                                    fontWeight: FontWeight.bold,
+                                    fontSize: 18,
+                                  ),
+                                ),
                               ],
                             ),
-                            const SizedBox(height: 5),
+                            const SizedBox(height: 8),
+                            Text(
+                              "${reservation['created_at']}",
+                              style: const TextStyle(color: Colors.grey),
+                            ),
+                            const Divider(height: 20, color: Colors.grey),
                             Row(
                               children: [
-                                const Icon(Icons.location_on,
-                                    color: Colors.blue, size: 18),
-                                const SizedBox(width: 5),
-                                Text(
-                                    "From: ${reservation['start_destination']} -> To: ${reservation['end_destination']}"),
+                                Container(
+                                  padding: EdgeInsets.all(8),
+                                  decoration: BoxDecoration(
+                                    color: Color(0xFFF5CF24),
+                                    shape: BoxShape.circle,
+                                    border: Border.all(
+                                      color: Color(0xFFFCF3C2),
+                                      width: 2,
+                                    ),
+                                  ),
+                                  child: Icon(
+                                    Icons.my_location_outlined,
+                                    color: Colors.black,
+                                    size: 30, // icon size
+                                  ),
+                                ),
+                                const SizedBox(width: 8),
+                                Expanded(
+                                  child: Text(
+                                    "Pick Up: ${reservation['start_destination']}",
+                                    style: const TextStyle(
+                                        fontSize: 14,
+                                        fontWeight: FontWeight.w500),
+                                  ),
+                                ),
                               ],
                             ),
-                            const SizedBox(height: 5),
-                            Text("Created: ${reservation['created_at']}"),
+                            const SizedBox(height: 8),
+                            Row(
+                              children: [
+                                Container(
+                                  padding: EdgeInsets.all(8),
+                                  decoration: BoxDecoration(
+                                    color: Color(0xFFF5CF24),
+                                    shape: BoxShape.circle,
+                                    border: Border.all(
+                                      color: Color(0xFFFCF3C2),
+                                      width: 2, // border width
+                                    ),
+                                  ),
+                                  child: Icon(
+                                    Icons.location_on_outlined,
+                                    color: Colors.black,
+                                    size: 30, // icon size
+                                  ),
+                                ),
+                                const SizedBox(width: 8),
+                                Expanded(
+                                  child: Text(
+                                    "Drop Off: ${reservation['end_destination']}",
+                                    style: const TextStyle(
+                                        fontSize: 14,
+                                        fontWeight: FontWeight.w500),
+                                  ),
+                                ),
+                              ],
+                            ),
+                            const SizedBox(height: 8),
+                            Text(
+                              "Description: ${reservation['description'] ?? 'No description provided.'}",
+                              style: const TextStyle(
+                                  fontSize: 14, color: Colors.black),
+                            ),
+                            const SizedBox(height: 16),
+                            ElevatedButton(
+                              onPressed: () {
+                                _showConfirmationDialog(
+                                  context: context,
+                                  title: 'Accept Reservation',
+                                  message: 'Are you sure you want to accept this reservation?',
+                                  onConfirm: () {
+                                    _acceptReservation(
+                                      reservation['reservation_id'],
+                                      reservation['user_id'].toString(),
+                                    );
+                                  },
+                                  confirmText: 'Accept',
+                                );
+                              },
+                              style: ElevatedButton.styleFrom(
+                                backgroundColor: Color(0xFFF5CF24),
+                                shape: RoundedRectangleBorder(
+                                  borderRadius: BorderRadius.circular(8.0),
+                                ),
+                                minimumSize: Size(double.infinity, 48),
+                              ),
+                              child: const Text(
+                                'Accept',
+                                style: TextStyle(
+                                    fontWeight: FontWeight.bold,
+                                    color: Colors.black),
+                              ),
+                            ),
                           ],
-                        ),
-                        trailing: IconButton(
-                          icon: const Icon(Icons.check_circle,
-                              color: Colors.green, size: 35),
-                          onPressed: () {
-                            var userId = reservation['user_id'].toString();
-                            _acceptReservation(
-                              reservation['reservation_id'],
-                              userId,
-                            );
-                          },
                         ),
                       ),
                     ),
                 ],
-                // Show a message if no pending reservations
                 if (isPending && filteredPendingReservations.isEmpty)
                   const Center(child: Text("No pending reservations.")),
 
-                // Accepted Reservations List
                 if (!isPending && filteredAcceptedReservations.isNotEmpty) ...[
                   for (var reservation in filteredAcceptedReservations)
                     Card(
+                      color: Colors.white,
                       elevation: 8,
-                      margin: const EdgeInsets.symmetric(
-                          vertical: 8.0, horizontal: 16.0),
+                      margin: const EdgeInsets.symmetric(vertical: 8.0, horizontal: 16.0),
                       shape: RoundedRectangleBorder(
                         borderRadius: BorderRadius.circular(15),
                       ),
-                      color: Colors.red.shade50,
-                      child: ListTile(
-                        leading: const CircleAvatar(
-                          radius: 30,
-                          backgroundImage:
-                          AssetImage('assets/commenter-1.jpg'),
-                        ),
-                        title: Row(
-                          children: [
-                            Expanded(
-                              child: Text(
-                                "${reservation['User'] != null ? reservation['User']['username'] : 'Unknown User'}",
-                                style: const TextStyle(
-                                    fontWeight: FontWeight.bold,
-                                    fontSize: 16),
-                                overflow: TextOverflow.ellipsis, // Prevent overflow
-                              ),
-                            ),
-                            const SizedBox(width: 10),
-                            Text(
-                              "(${reservation['reservation_type']})",
-                              style: const TextStyle(color: Colors.grey),
-                            ),
-                          ],
-                        ),
-                        subtitle: Column(
+                      child: Padding(
+                        padding: const EdgeInsets.all(16.0),
+                        child: Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
                             Row(
+                              mainAxisAlignment: MainAxisAlignment.spaceBetween,
                               children: [
-                                const Icon(Icons.phone,
-                                    color: Colors.green, size: 18),
-                                const SizedBox(width: 5),
-                                Text("${reservation['phone_number']}"),
+                                Text(
+                                  "Ride #${reservation['reservation_id']}",
+                                  style: const TextStyle(
+                                    fontWeight: FontWeight.bold,
+                                    fontSize: 18,
+                                  ),
+                                ),
                               ],
                             ),
-                            const SizedBox(height: 5),
+                            const SizedBox(height: 8),
+                            Text(
+                              "${reservation['created_at']}",
+                              style: const TextStyle(color: Colors.grey),
+                            ),
+                            const Divider(height: 20, color: Colors.grey),
                             Row(
                               children: [
-                                const Icon(Icons.location_on,
-                                    color: Colors.blue, size: 18),
-                                const SizedBox(width: 5),
-                                Text(
-                                    "From: ${reservation['start_destination']} -> To: ${reservation['end_destination']}"),
+                                Container(
+                                  padding: EdgeInsets.all(8),
+                                  decoration: BoxDecoration(
+                                    color: Color(0xFFF5CF24),
+                                    shape: BoxShape.circle,
+                                    border: Border.all(
+                                      color: Color(0xFFFCF3C2),
+                                      width: 2,
+                                    ),
+                                  ),
+                                  child: Icon(
+                                    Icons.my_location_outlined,
+                                    color: Colors.black,
+                                    size: 30, // icon size
+                                  ),
+                                ),
+                                const SizedBox(width: 8),
+                                Expanded(
+                                  child: Text(
+                                    "Pick Up: ${reservation['start_destination']}",
+                                    style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w500),
+                                  ),
+                                ),
                               ],
                             ),
-                            const SizedBox(height: 5),
-                            Text("Created: ${reservation['created_at']}"),
+                            const SizedBox(height: 8),
+                            Row(
+                              children: [
+                                Container(
+                                  padding: EdgeInsets.all(8),
+                                  decoration: BoxDecoration(
+                                    color: Color(0xFFF5CF24),
+                                    shape: BoxShape.circle,
+                                    border: Border.all(
+                                      color: Color(0xFFFCF3C2),
+                                      width: 2, // border width
+                                    ),
+                                  ),
+                                  child: Icon(
+                                    Icons.location_on_outlined,
+                                    color: Colors.black,
+                                    size: 30, // icon size
+                                  ),
+                                ),
+                                const SizedBox(width: 8),
+                                Expanded(
+                                  child: Text(
+                                    "Drop Off: ${reservation['end_destination']}",
+                                    style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w500),
+                                  ),
+                                ),
+                              ],
+                            ),
+                            const SizedBox(height: 8),
+                            Text(
+                              "Description: ${reservation['description'] ?? 'No description provided.'}",
+                              style: const TextStyle(fontSize: 14, color: Colors.black),
+                            ),
+                            const SizedBox(height: 16),
+                            ElevatedButton(
+                              onPressed: () {
+                                _showConfirmationDialog(
+                                  context: context,
+                                  title: 'Reject Reservation',
+                                  message: 'Are you sure you want to reject this reservation?',
+                                  onConfirm: () {
+                                    _cancelReservation(reservation['reservation_id']);
+                                  },
+                                  confirmText: 'Reject',
+                                );
+                              },
+                              style: ElevatedButton.styleFrom(
+                                backgroundColor: Color(0xFFF2643A),
+                                shape: RoundedRectangleBorder(
+                                  borderRadius: BorderRadius.circular(8.0),
+                                ),
+                                minimumSize: Size(double.infinity, 48),
+                              ),
+                              child: const Text(
+                                'Reject',
+                                style: TextStyle(fontWeight: FontWeight.bold, color: Colors.black,fontSize: 16),
+                              ),
+                            ),
                           ],
-                        ),
-                        trailing: IconButton(
-                          icon: const Icon(Icons.cancel,
-                              color: Colors.red, size: 35),
-                          onPressed: () {
-                            _cancelReservation(reservation['reservation_id']);
-                          },
                         ),
                       ),
                     ),
                 ],
-                // Show a message if no accepted reservations
                 if (!isPending && filteredAcceptedReservations.isEmpty)
                   const Center(child: Text("No accepted reservations.")),
               ],
@@ -338,7 +461,7 @@ class _DriverPageState extends State<DriverPage> {
           setState(() {
             isPending = index == 0;
             isLoading = true;
-            _fetchReservations(); // Fetch new data when tab is switched
+            _fetchReservations();
           });
         },
         items: const [
@@ -365,7 +488,7 @@ class _DriverPageState extends State<DriverPage> {
           Container(
             height: MediaQuery.of(context).size.height * 0.30,
             decoration: const BoxDecoration(
-              color: Colors.yellow,
+              color: Color(0xFFF5CF24),
             ),
             child:  Column(
               mainAxisAlignment: MainAxisAlignment.center,
@@ -373,7 +496,7 @@ class _DriverPageState extends State<DriverPage> {
                 // Profile Picture
                 CircleAvatar(
                   radius: 50,
-                  backgroundImage: AssetImage('assets/profile.jpg'), // Replace with your image path
+                  backgroundImage: AssetImage('assets/profile.jpg'),
                 ),
                 SizedBox(height: 23),
                 // User Information
@@ -449,6 +572,61 @@ class _DriverPageState extends State<DriverPage> {
     );
   }
 
+
+  void _showConfirmationDialog({
+    required BuildContext context,
+    required String title,
+    required String message,
+    required VoidCallback onConfirm,
+    required String confirmText,
+  }) {
+    showDialog(
+      context: context,
+      builder: (BuildContext context) {
+        return Dialog(
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(16.0),
+          ),
+          backgroundColor: Colors.white,
+          child: Padding(
+            padding: const EdgeInsets.all(20.0),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Text(
+                  title,
+                  style: const TextStyle(fontSize: 22, fontWeight: FontWeight.bold),
+                ),
+                const SizedBox(height: 10),
+                Text(
+                  message,
+                  style: const TextStyle(fontSize: 16),
+                  textAlign: TextAlign.center,
+                ),
+                const SizedBox(height: 20),
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceAround,
+                  children: [
+                    ElevatedButton(
+                      onPressed: () => Navigator.of(context).pop(),
+                      child: const Text('Cancel'),
+                    ),
+                    ElevatedButton(
+                      onPressed: () {
+                        Navigator.of(context).pop();
+                        onConfirm();
+                      },
+                      child: Text(confirmText),
+                    ),
+                  ],
+                ),
+              ],
+            ),
+          ),
+        );
+      },
+    );
+  }
 
 
 
@@ -535,7 +713,7 @@ class _DriverPageState extends State<DriverPage> {
   // Fetch reservations from the API
   Future<void> _fetchReservations() async {
     try {
-      String? token = await storage.read(key: 'jwt_token'); // Assuming storage is used for JWT token
+      String? token = await storage.read(key: 'jwt_token');
 
       if (token != null) {
         final pendingResponse = await http.get(
@@ -545,8 +723,8 @@ class _DriverPageState extends State<DriverPage> {
 
         if (pendingResponse.statusCode == 200) {
           setState(() {
-            pendingReservations = json.decode(pendingResponse.body)['data']; // Adjusted for proper data extraction
-            filteredPendingReservations = List.from(pendingReservations); // Set initial filtered data
+            pendingReservations = json.decode(pendingResponse.body)['data'];
+            filteredPendingReservations = List.from(pendingReservations);
           });
         }
 
@@ -557,24 +735,28 @@ class _DriverPageState extends State<DriverPage> {
 
         if (acceptedResponse.statusCode == 200) {
           setState(() {
-            acceptedReservations = json.decode(acceptedResponse.body)['data']; // Adjusted for proper data extraction
-            filteredAcceptedReservations = List.from(acceptedReservations); // Set initial filtered data
+            acceptedReservations = json.decode(acceptedResponse.body)['data'];
+            filteredAcceptedReservations = List.from(acceptedReservations);
             isLoading = false;
           });
         }
       }
     } catch (error) {
-      // Handle error properly
+
       setState(() {
         isLoading = false;
       });
     }
   }
   void _createNotification(String userId, String message) async {
+    // Instead of sending via WebSocket, send to backend server
     String? token = await storage.read(key: 'jwt_token');
     if (token == null) return;
 
-    var notificationDetails = {'message': message};
+    var notificationDetails = {
+      'userId': userId, // ID of the user receiving the notification
+      'message': message, // The notification message
+    };
 
     final response = await http.post(
       Uri.parse('http://$ip:3000/api/v1/notifications/$userId/driver'),
@@ -591,22 +773,36 @@ class _DriverPageState extends State<DriverPage> {
       print('Failed to create notification: ${response.body}');
     }
   }
-  // Accept reservation
-  // Accept reservation and create notification
+
+
+
   Future<void> _acceptReservation(int reservationId, String userId) async {
     try {
-      String? token = await storage.read(key: 'jwt_token'); // Assuming storage is used for JWT token
+      String? token = await storage.read(key: 'jwt_token');
       final response = await http.patch(
         Uri.parse('http://$ip:3000/api/v1/reservation/accept/$reservationId'),
         headers: {'Authorization': 'Bearer $token'},
       );
+      print("the response is :  $response");
 
       if (response.statusCode == 200) {
-        // After accepting the reservation, create a notification
-        _createNotification(userId, 'Taxi booked successfully at 12 AM');
+        final responseData = jsonDecode(response.body);
+        final driverInfo = responseData['data']['driver'];
+        String driverName = driverInfo['username'];
+        String driverPhone = driverInfo['phone_number'];
 
-        _fetchReservations(); // Re-fetch reservations after acceptance
+        _createNotification(
+          userId,
+          'Your taxi has been booked successfully by $driverName. Contact: $driverPhone.',
+        );
+
+        _fetchReservations();
         _showSuccessDialog('Reservation accepted successfully');
+        setState(() {
+          filteredPendingReservations.removeWhere(
+                (reservation) => reservation['reservation_id'] == reservationId,
+          );
+        });
       } else {
         _showErrorDialog('Error accepting reservation');
       }
@@ -619,14 +815,14 @@ class _DriverPageState extends State<DriverPage> {
   // Cancel reservation
   Future<void> _cancelReservation(int reservationId) async {
     try {
-      String? token = await storage.read(key: 'jwt_token'); // Assuming storage is used for JWT token
+      String? token = await storage.read(key: 'jwt_token');
       final response = await http.patch(
         Uri.parse('http://$ip:3000/api/v1/reservation/cancel/$reservationId'),
         headers: {'Authorization': 'Bearer $token'},
       );
 
       if (response.statusCode == 200) {
-        _fetchReservations(); // Re-fetch reservations after cancellation
+        _fetchReservations();
         _showSuccessDialog('Reservation cancelled successfully');
       } else {
         _showErrorDialog('Error canceling reservation');

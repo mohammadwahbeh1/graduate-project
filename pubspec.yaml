@@ -41,8 +41,7 @@ dependencies:
 
 
 
-
-
+  swipe_to: ^1.0.6
   dropdown_search: ^5.0.2
   web_socket_channel: ^2.1.0
   sizer: ^2.0.15

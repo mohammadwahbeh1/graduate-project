@@ -22,6 +22,8 @@ class _BookTaxiPageState extends State<BookTaxiPage> {
   String? _startDestination;
   String? _endDestination;
   String _selectedType = 'Single';
+  final TextEditingController _descriptionController = TextEditingController();
+
   final List<String> _allLocations = [
     'راس العين',
     'شركة الكهرباء',
@@ -220,6 +222,26 @@ class _BookTaxiPageState extends State<BookTaxiPage> {
               ),
               const SizedBox(height: 30),
               _buildPhoneNumberRow(),
+              const SizedBox(height: 20),
+              // Description field added here
+              TextFormField(
+                controller: _descriptionController,
+                maxLines: 4,
+                decoration: InputDecoration(
+                  labelText: 'Add Description (Optional)',
+                  labelStyle: const TextStyle(color: Colors.black),
+
+                  border: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(8),
+                  ),
+                  alignLabelWithHint: true,
+                  focusedBorder: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(8),
+                    borderSide: BorderSide(color: Colors.black, width: 2), // Focused border color
+                  ),
+                ),
+
+              ),
               const SizedBox(height: 35),
               Center(
                 child: ElevatedButton(
@@ -252,6 +274,7 @@ class _BookTaxiPageState extends State<BookTaxiPage> {
       ),
     );
   }
+
 
   Widget _buildDropdownPlaceholder(String text) {
     return Container(
@@ -637,6 +660,7 @@ class _BookTaxiPageState extends State<BookTaxiPage> {
     setState(() {
       _startDestination = null;
       _endDestination = null;
+      _descriptionController.clear();
     });
 
     _phoneNumberController.clear();
@@ -689,12 +713,13 @@ class _BookTaxiPageState extends State<BookTaxiPage> {
     //String endDestination = _endDestinationController.text;
     String phoneNumber = _phoneNumberController.text;
     String timeStamp = DateFormat.jm().format(DateTime.now());
-
+    String? description = _descriptionController.text.trim();
     var bookingDetails = {
       'start_destination': _startDestination,
       'end_destination': _endDestination,
       'reservation_type': _selectedType,
       'phone_number': '+970$phoneNumber',
+      'description': description.isNotEmpty ? description : null,
     };
 
     String? token = await storage.read(key: 'jwt_token');

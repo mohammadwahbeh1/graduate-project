@@ -11,6 +11,8 @@ import 'package:untitled/Pages/reservationPage.dart';
 import 'bookingTaxi.dart';
 import 'closestPointPage.dart';
 import 'profilePage.dart';
+import 'package:web_socket_channel/web_socket_channel.dart';
+import 'package:web_socket_channel/status.dart' as status;
 
 const String ip ="192.168.1.8";
 
@@ -30,8 +32,15 @@ class _homePageState extends State<homePage> {
   final storage = FlutterSecureStorage();
   List<Map<String, dynamic>> notifications = [];
   int notificationCount = 0;
-
-String username=""; // Start notification count from 0
+  WebSocketChannel? _channel;
+  int _currentIndex = 0;
+String username="";
+  final List<Widget> _pages = [
+    Container(),  // Replace with your Home Page class
+    ClosestPointPage(), // Replace with your Closest Point Page class
+    BookTaxiPage(), // Replace with your Book Taxi Page class
+    ReservationsPage(), // Replace with your Reservations Page class
+  ];
 
   void addNotification(Map<String, dynamic> notification) {
     setState(() {
@@ -46,6 +55,7 @@ String username=""; // Start notification count from 0
     super.initState();
     fetchTerminals();
     fetchUserProfile();
+    _initializeWebSocket();
   }
 
   @override
@@ -184,6 +194,7 @@ String username=""; // Start notification count from 0
     });
   }
 
+
   void _showNotifications(BuildContext context) {
     showDialog(
       context: context,
@@ -310,6 +321,52 @@ String username=""; // Start notification count from 0
       },
     );
   }
+  void _initializeWebSocket() async {
+    String? token = await storage.read(key: 'jwt_token'); // Retrieve JWT token
+    String? userId = await storage.read(key: 'user_id');
+
+    if (token != null) {
+      _channel = WebSocketChannel.connect(
+        Uri.parse('ws://$ip:3000/ws/notifications?token=$token&userId=$userId'), // Add your WebSocket server URL
+      );
+
+
+      _channel!.stream.listen(
+            (message) {
+          final notification = jsonDecode(message);
+          print('Received notification: $notification');
+          setState(() {
+            notifications.add({
+              'id': notification['id'],
+              'message': notification['message'],
+              'isRead': false,
+              'createdAt': notification['created_at'],
+            });
+            notificationCount++;
+          });
+        },
+        onError: (error) {
+          print("WebSocket error: $error");
+          _reconnectWebSocket(); // Reconnect if there is an error
+        },
+        onDone: () {
+          print("WebSocket connection closed.");
+          _reconnectWebSocket(); // Reconnect when connection is closed
+        },
+      );
+    }
+  }
+  void _reconnectWebSocket() {
+    Future.delayed(Duration(seconds: 5), () {
+      print("Reconnecting WebSocket...");
+      _initializeWebSocket();
+    });
+  }
+  @override
+  void dispose() {
+    _channel?.sink.close();  // Gracefully close the WebSocket connection
+    super.dispose();
+  }
 
   Future<void> fetchUserProfile() async {
     String? token = await storage.read(key: 'jwt_token');
@@ -348,7 +405,6 @@ String username=""; // Start notification count from 0
 
 
 
-
   Widget buildDrawer(BuildContext context) {
     return Drawer(
       backgroundColor: Colors.white,
@@ -359,7 +415,7 @@ String username=""; // Start notification count from 0
           Container(
             height: MediaQuery.of(context).size.height * 0.30,
             decoration: const BoxDecoration(
-              color: Colors.yellow,
+              color: Color(0xFFF6D533),
             ),
             child:  Column(
               mainAxisAlignment: MainAxisAlignment.center,
@@ -557,12 +613,16 @@ String username=""; // Start notification count from 0
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(
-        title: const Text(
-          "Terminals",
+      appBar: PreferredSize(preferredSize: Size.fromHeight(50.0),
+
+
+
+        child:AppBar(
+        title:  Text(
+            _getAppBarTitle(),
           style: TextStyle(fontWeight: FontWeight.w500),
         ),
-        backgroundColor: Colors.yellow,
+        backgroundColor: Color(0xFFF6D533),
         centerTitle: true,
         actions: [
           Stack(
@@ -614,21 +674,102 @@ String username=""; // Start notification count from 0
           ),
         ],
       ),
-      drawer: buildDrawer(context),
-      body: isLoading
-          ? const Center(
-        child: CircularProgressIndicator(),
-      )
-          : ListView.builder(
-        itemCount: terminals.length,
-        itemBuilder: (context, index) {
-          return buildCard(
-            context,
-            terminals[index]['terminal_name']!,
-            'assets/terminal.jpg',
-            terminals[index]['terminal_id']!,
-          );
+      ),
+      drawer: buildDrawer(context), // Keep the drawer as is
+      body:_currentIndex == 0
+          ? _buildHomeContent()
+          : _pages[_currentIndex],
+      bottomNavigationBar: _buildCustomBottomNavigationBar(), // Add the custom BottomNavigationBar
+    );
+  }
+  Widget _buildHomeContent() {
+    return isLoading
+        ? const Center(
+      child: CircularProgressIndicator(),
+    )
+        : ListView.builder(
+      itemCount: terminals.length,
+      itemBuilder: (context, index) {
+        return buildCard(
+          context,
+          terminals[index]['terminal_name']!,
+          'assets/terminal.jpg',
+          terminals[index]['terminal_id']!,
+        );
+      },
+    );
+  }
+  Widget _buildCustomBottomNavigationBar() {
+    return Container(
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: const BorderRadius.only(
+          topLeft: Radius.circular(30),
+          topRight: Radius.circular(30),
+        ),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(0.1),
+            spreadRadius: 2,
+            blurRadius: 10,
+          ),
+        ],
+      ),
+      child: BottomNavigationBar(
+        type: BottomNavigationBarType.fixed,
+        currentIndex: _currentIndex,
+        onTap: (index) {
+          setState(() {
+            _currentIndex = index;
+          });
         },
+        backgroundColor: Colors.transparent,
+        elevation: 0,
+        selectedItemColor: Colors.black,
+        unselectedItemColor: Colors.grey,
+        showSelectedLabels: true,
+        showUnselectedLabels: true,
+        items: [
+          _buildNavItem(Icons.home, 'Home', 0),
+          _buildNavItem(Icons.location_on, 'Closest Point', 1),
+          _buildNavItem(Icons.event_available, 'Book Taxi', 2),
+          _buildNavItem(Icons.book_online, 'Reservations', 3),
+        ],
       ),
     );
-  } }
+  }
+  BottomNavigationBarItem _buildNavItem(IconData icon, String label, int index) {
+    return BottomNavigationBarItem(
+      icon: Stack(
+        alignment: Alignment.center,
+        children: [
+          if (_currentIndex == index)
+            Container(
+              height: 45,
+              width: 45,
+              decoration: BoxDecoration(
+                color: const Color(0xFFF6D533), // Yellow highlight color
+                shape: BoxShape.circle,
+              ),
+            ),
+          Icon(icon, size: 28),
+        ],
+      ),
+      label: label,
+    );
+  }
+  String _getAppBarTitle() {
+    switch (_currentIndex) {
+      case 0:
+        return "Terminals"; // Title for Home tab
+      case 1:
+        return "Closest Point"; // Title for Closest Point tab
+      case 2:
+        return "Book Taxi"; // Title for Book Taxi tab
+      case 3:
+        return "Reservations"; // Title for Reservations tab
+      default:
+        return "Terminals"; // Default title
+    }
+  }
+}

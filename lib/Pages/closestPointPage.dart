@@ -185,10 +185,7 @@ class _ClosestPointPageState extends State<ClosestPointPage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(
-        title: const Text('Route Planner'),
-        backgroundColor: Colors.yellow,
-      ),
+
       body: Column(
         children: [
           Padding(

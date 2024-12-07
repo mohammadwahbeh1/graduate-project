@@ -89,14 +89,7 @@ class _ReservationsPageState extends State<ReservationsPage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(
-        backgroundColor: Colors.yellow,
-        title: const Text(
-          'Your Reservations',
-          style: TextStyle(color: Colors.black, fontWeight: FontWeight.bold),
-        ),
-        iconTheme: const IconThemeData(color: Colors.black),
-      ),
+
       body: _isLoading
           ? Center(child: CircularProgressIndicator())
           : _reservations.isEmpty
