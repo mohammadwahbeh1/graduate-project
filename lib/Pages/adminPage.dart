@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 
 import 'DriversAndLinesPage.dart';
-import 'LinesAndManagersPage.dart';
+import 'Reports.dart';
 import 'TerminalsPage.dart';
 import 'UsersManagementPage.dart';
 import 'VehiclePage.dart';
@@ -90,7 +90,11 @@ class ManagerPage extends StatelessWidget {
             leading: const Icon(Icons.analytics),
             title: const Text('View Reports'),
             onTap: () {
-              Navigator.pop(context);
+              Navigator.push(
+                context,
+                MaterialPageRoute(
+                    builder: (context) =>  StatisticsPage()),
+              );
             },
           ),
           ListTile(
@@ -127,17 +131,6 @@ class ManagerPage extends StatelessWidget {
             },
           ),
 
-          ListTile(
-            leading: const Icon(Icons.manage_accounts),
-            title: const Text('View Lines and Managers'),
-            onTap: () {
-              Navigator.push(
-                context,
-                MaterialPageRoute(
-                    builder: (context) => const LinesAndManagersPage()),
-              );
-            },
-          ),
           const Divider(),
           ListTile(
             leading: const Icon(Icons.logout),

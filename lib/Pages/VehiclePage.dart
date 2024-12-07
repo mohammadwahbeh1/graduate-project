@@ -347,8 +347,8 @@ class _VehiclePageState extends State<VehiclePage> {
                 border: OutlineInputBorder(
                   borderRadius: BorderRadius.circular(12),
                 ),
-                prefixIcon: Icon(Icons.search),
-                contentPadding: EdgeInsets.symmetric(
+                prefixIcon: const Icon(Icons.search),
+                contentPadding: const EdgeInsets.symmetric(
                     vertical: 16, horizontal: 12),
               ),
             ),
@@ -375,7 +375,7 @@ class _VehiclePageState extends State<VehiclePage> {
                     child: Row(
                       children: [
                         // Vehicle Image or Icon (for illustration)
-                        Icon(
+                        const Icon(
                           Icons.car_repair,
                           size: 50,
                           color: Colors.teal,

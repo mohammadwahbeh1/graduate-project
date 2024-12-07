@@ -25,6 +25,9 @@ class _LinePageState extends State<LinePage> {
   late String selectedManagerId;
   String? selectedLineId;
 
+  String searchQuery = "";
+  List<dynamic> filteredLines = [];
+
   @override
   void initState() {
     super.initState();
@@ -35,7 +38,21 @@ class _LinePageState extends State<LinePage> {
     fetchLineManagers();
   }
 
-  @override
+
+  void updateSearchResults(String query) {
+    setState(() {
+      searchQuery = query.toLowerCase();
+      filteredLines = lines.where((line) {
+        final lineName = line['line_name'].toString().toLowerCase();
+        final manager = lineManagers.firstWhere(
+              (manager) => manager['user_id'].toString() == line['line_manager_id'].toString(),
+          orElse: () => {'username': 'Unknown Manager'},
+        )['username'].toString().toLowerCase();
+
+        return lineName.contains(searchQuery) || manager.contains(searchQuery);
+      }).toList();
+    });
+  }  @override
   void dispose() {
     lineNameController.dispose();
     latitudeController.dispose();
@@ -65,6 +82,7 @@ class _LinePageState extends State<LinePage> {
       final data = jsonDecode(response.body);
       setState(() {
         lines = data['data'];
+        filteredLines = List.from(lines);
         isLoading = false;
       });
     } else {
@@ -74,7 +92,6 @@ class _LinePageState extends State<LinePage> {
       });
     }
   }
-
   Future<void> fetchLineManagers() async {
     String? token = await storage.read(key: 'jwt_token');
     if (token == null || token.isEmpty) {
@@ -109,12 +126,23 @@ class _LinePageState extends State<LinePage> {
       return;
     }
 
-    final url = lineId == null
-        ? '$baseUrl/create'
-        : '$baseUrl/update/$lineId';
 
-    final response = await http.post(
-      Uri.parse(url),
+    final response = lineId == null
+        ? await http.post(
+      Uri.parse('$baseUrl/create'),
+      headers: {
+        'Authorization': 'Bearer $token',
+        'Content-Type': 'application/json',
+      },
+      body: jsonEncode({
+        'line_manager_id': selectedManagerId,
+        'line_name': lineNameController.text,
+        'lat': latitudeController.text,
+        'long': longitudeController.text,
+      }),
+    )
+        : await http.put(
+      Uri.parse('$baseUrl/update/$lineId'),
       headers: {
         'Authorization': 'Bearer $token',
         'Content-Type': 'application/json',
@@ -126,6 +154,8 @@ class _LinePageState extends State<LinePage> {
         'long': longitudeController.text,
       }),
     );
+
+
 
     if (response.statusCode == 200 || response.statusCode == 201) {
       _showSuccessDialog(lineId == null
@@ -150,7 +180,16 @@ class _LinePageState extends State<LinePage> {
           ),
           ElevatedButton(
             onPressed: () => Navigator.pop(context, true),
-            child: const Text('Delete', style: TextStyle(color: Colors.white)),
+            style: ElevatedButton.styleFrom(
+              backgroundColor: Colors.red, // إضافة لون الخلفية الأحمر
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(8),
+              ),
+            ),
+            child: const Text(
+              'Delete',
+              style: TextStyle(color: Colors.white), // تأكيد أن النص أبيض
+            ),
           ),
         ],
       ),
@@ -334,42 +373,103 @@ class _LinePageState extends State<LinePage> {
       appBar: AppBar(
         backgroundColor: Colors.deepPurple,
         title: const Text('Line Management'),
+        bottom: PreferredSize(
+          preferredSize: const Size.fromHeight(60),
+          child: Padding(
+            padding: const EdgeInsets.all(10.0),
+            child: TextField(
+              onChanged: updateSearchResults, // استدعاء التصفية عند تغيير النص
+              decoration: InputDecoration(
+                hintText: 'Search by Line Name or Manager',
+                filled: true,
+                fillColor: Colors.white,
+                prefixIcon: const Icon(Icons.search, color: Colors.deepPurple),
+                border: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(12),
+                  borderSide: BorderSide.none,
+                ),
+              ),
+            ),
+          ),
+        ),
       ),
       body: isLoading
           ? const Center(child: CircularProgressIndicator())
+          : filteredLines.isEmpty
+          ? const Center(child: Text('No results found'))
           : ListView.builder(
-        itemCount: lines.length,
+        itemCount: filteredLines.length,
         itemBuilder: (context, index) {
-          final line = lines[index];
-          return Card(
-            margin: const EdgeInsets.symmetric(horizontal: 10, vertical: 10),
-            elevation: 10,
-            shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(15),
-            ),
-            shadowColor: Colors.deepPurpleAccent,
-            child: ListTile(
-              contentPadding: const EdgeInsets.symmetric(horizontal: 20, vertical: 15),
-              title: Text(
-                line['line_name'],
-                style: TextStyle(fontWeight: FontWeight.bold, fontSize: 18, color: Colors.deepPurple),
+          final line = filteredLines[index];
+          final manager = lineManagers.firstWhere(
+                (manager) =>
+            manager['user_id'].toString() == line['line_manager_id'].toString(),
+            orElse: () => {'username': 'Unknown Manager'},
+          );
+          return GestureDetector(
+            onTap: () => print("Card tapped"), // يمكن إضافة وظيفة تفاعلية عند الضغط على الكارد
+            child: Card(
+              margin: const EdgeInsets.symmetric(horizontal: 15, vertical: 10),
+              elevation: 20,
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(30),
               ),
-              subtitle: Text(
-                'Manager: ${line['line_manager_id']}',
-                style: TextStyle(color: Colors.deepPurpleAccent),
-              ),
-              trailing: Row(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  IconButton(
-                    icon: const Icon(Icons.edit, color: Colors.blue),
-                    onPressed: () => _openFormDialog(isEdit: true, lineId: line['line_id'].toString()),
+              shadowColor: Colors.deepPurple.withOpacity(0.7),
+              child: ClipRRect(
+                borderRadius: BorderRadius.circular(30),
+                child: Container(
+                  decoration: BoxDecoration(
+                    gradient: LinearGradient(
+                      colors: [
+                        Colors.deepPurple.shade500,
+                        Colors.deepPurple.shade800,
+                        Colors.purple.shade900,
+                      ],
+                      begin: Alignment.topLeft,
+                      end: Alignment.bottomRight,
+                      stops: [0.2, 0.5, 0.8],
+                    ),
+                    boxShadow: [
+                      BoxShadow(
+                        color: Colors.black.withOpacity(0.4),
+                        blurRadius: 15,
+                        offset: Offset(5, 10),
+                      ),
+                    ],
                   ),
-                  IconButton(
-                    icon: const Icon(Icons.delete, color: Colors.red),
-                    onPressed: () => deleteLine(line['line_id'].toString()),
+                  child: ListTile(
+                    contentPadding: const EdgeInsets.symmetric(horizontal: 25, vertical: 20),
+                    title: Text(
+                      line['line_name'],
+                      style: const TextStyle(
+                        fontWeight: FontWeight.bold,
+                        fontSize: 20,
+                        color: Colors.white,
+                        letterSpacing: 1.2,
+                      ),
+                    ),
+                    subtitle: Text(
+                      'Manager: ${manager['username']}',
+                      style: const TextStyle(
+                        color: Colors.white60,
+                        fontSize: 16,
+                      ),
+                    ),
+                    trailing: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        IconButton(
+                          icon: const Icon(Icons.edit, color: Colors.white),
+                          onPressed: () => _openFormDialog(isEdit: true, lineId: line['line_id'].toString()),
+                        ),
+                        IconButton(
+                          icon: const Icon(Icons.delete, color: Colors.white),
+                          onPressed: () => deleteLine(line['line_id'].toString()),
+                        ),
+                      ],
+                    ),
                   ),
-                ],
+                ),
               ),
             ),
           );
@@ -378,9 +478,9 @@ class _LinePageState extends State<LinePage> {
       floatingActionButton: FloatingActionButton(
         backgroundColor: Colors.deepPurple,
         onPressed: () => _openFormDialog(isEdit: false),
-        child: const Icon(Icons.add ,  color: Colors.white,
-        ),
+        child: const Icon(Icons.add, color: Colors.white),
       ),
     );
   }
 }
+
