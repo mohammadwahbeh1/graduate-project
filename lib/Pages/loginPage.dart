@@ -10,7 +10,9 @@ import 'adminPage.dart';
 import 'driverPage.dart';
 import 'lineManagerPage.dart';
 import 'package:untitled/Pages/Location Service.dart';
+import 'package:flutter/foundation.dart';
 const String ip = "192.168.1.8";
+
 
 // Create a secure storage instance
 const storage = FlutterSecureStorage();
@@ -30,7 +32,8 @@ class LoginPage extends StatefulWidget {
 
 class _LoginPageState extends State<LoginPage> {
 
-  String email = "", password = "";
+  String email = "",
+      password = "";
   var EmailController = TextEditingController();
   var PasswordController = TextEditingController();
   final _formkey = GlobalKey<FormState>();
@@ -50,7 +53,8 @@ class _LoginPageState extends State<LoginPage> {
       });
 
       // Backend URL for login
-      var url = Uri.parse('http://$ip:3000/api/v1/login'); // Replace with your actual API URL
+      var url = Uri.parse(
+          'http://$ip:3000/api/v1/login'); // Replace with your actual API URL
 
       // Prepare the body of the POST request
       var body = json.encode({
@@ -70,7 +74,6 @@ class _LoginPageState extends State<LoginPage> {
 
 
         if (response.statusCode == 200) {
-
           // Successful login (200 status)
           var jsonResponse = jsonDecode(response.body);
           print('Login response: $jsonResponse');
@@ -80,7 +83,8 @@ class _LoginPageState extends State<LoginPage> {
           DateTime expirationTime = DateTime.now().add(Duration(minutes: 2));
           await storage.write(key: 'jwt_token', value: token);
           await storage.write(key: 'user_id', value: userId.toString());
-          await storage.write(key: 'token_expiration', value: expirationTime.toIso8601String());
+          await storage.write(
+              key: 'token_expiration', value: expirationTime.toIso8601String());
 
           // Decode the token to get the role
           Map<String, dynamic> decodedToken = Jwt.parseJwt(token);
@@ -134,9 +138,9 @@ class _LoginPageState extends State<LoginPage> {
       MaterialPageRoute(builder: (context) => targetPage),
     );
   }
+
   @override
   void dispose() {
-
     super.dispose();
   }
 
@@ -146,29 +150,44 @@ class _LoginPageState extends State<LoginPage> {
     return await storage.read(key: 'jwt_token');
   }
 
+
   @override
   Widget build(BuildContext context) {
+    final isWeb = kIsWeb; // تحديد إذا كان التطبيق يعمل كويب
+
     return Scaffold(
       backgroundColor: Colors.white,
-      body:  (isLoading)? Center(child: CircularProgressIndicator()):
-      Container(
-        child: SingleChildScrollView(
-          child: Column(
-            children: [
-
-              const SizedBox(height: 30),
-              Container(
-                width: MediaQuery.of(context).size.width,
-                child: Image.asset('assets/logo.jpg'),
-              ),
-              const SizedBox(height: 30),
-              Padding(
-                padding: const EdgeInsets.only(left: 20.0, right: 20),
-                child: Form(
+      body: (isLoading)
+          ? Center(child: CircularProgressIndicator())
+          : Center( // يجعل التصميم في وسط الشاشة
+        child: Container(
+          width: isWeb ? 500 : MediaQuery
+              .of(context)
+              .size
+              .width, // تقليل العرض للويب
+          padding: EdgeInsets.symmetric(
+            horizontal: isWeb ? 30.0 : 20.0, // ضبط المسافات بناءً على الجهاز
+          ),
+          child: SingleChildScrollView(
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              // وضع العناصر في الوسط
+              children: [
+                const SizedBox(height: 30),
+                // الشعار
+                Container(
+                  width: isWeb ? 200 : MediaQuery
+                      .of(context)
+                      .size
+                      .width * 0.7, // تقليل حجم الشعار للويب
+                  child: Image.asset('assets/logo.jpg'),
+                ),
+                const SizedBox(height: 30),
+                Form(
                   key: _formkey,
                   child: Column(
                     children: [
-                      // Email input field
+                      // حقل البريد الإلكتروني
                       Container(
                         padding: const EdgeInsets.symmetric(
                             vertical: 2.0, horizontal: 30.0),
@@ -196,9 +215,8 @@ class _LoginPageState extends State<LoginPage> {
                           },
                         ),
                       ),
-                      const SizedBox(height: 40.0),
-
-                      // Password input field
+                      const SizedBox(height: 20.0),
+                      // حقل كلمة المرور
                       Container(
                         padding: const EdgeInsets.symmetric(
                             vertical: 2.0, horizontal: 30.0),
@@ -227,15 +245,14 @@ class _LoginPageState extends State<LoginPage> {
                           },
                         ),
                       ),
-                      const SizedBox(height: 30),
-
-                      // Sign In button
+                      const SizedBox(height: 20),
+                      // زر تسجيل الدخول
                       GestureDetector(
                         onTap: userLogin,
                         child: Container(
-                          width: MediaQuery.of(context).size.width,
+                          width: double.infinity,
                           padding: const EdgeInsets.symmetric(
-                              vertical: 11.0, horizontal: 25.0),
+                              vertical: 12.0),
                           decoration: BoxDecoration(
                             color: const Color(0xFFFFD700),
                             borderRadius: BorderRadius.circular(30),
@@ -245,16 +262,15 @@ class _LoginPageState extends State<LoginPage> {
                               "Sign In",
                               style: TextStyle(
                                 color: Colors.white,
-                                fontSize: 19.0,
-                                fontWeight: FontWeight.w400,
+                                fontSize: 18.0,
+                                fontWeight: FontWeight.w600,
                               ),
                             ),
                           ),
                         ),
                       ),
                       const SizedBox(height: 20.0),
-
-                      // Forgot Password link
+                      // رابط "نسيت كلمة المرور"
                       GestureDetector(
                         onTap: () {
                           Navigator.push(
@@ -267,20 +283,19 @@ class _LoginPageState extends State<LoginPage> {
                           "Forgot Password?",
                           style: TextStyle(
                               color: Color(0xFF8c8e98),
-                              fontSize: 18.0,
+                              fontSize: 16.0,
                               fontWeight: FontWeight.w500),
                         ),
                       ),
-                      const SizedBox(height: 40.0),
-
-                      // Sign Up link
+                      const SizedBox(height: 30.0),
+                      // رابط التسجيل
                       Row(
                         mainAxisAlignment: MainAxisAlignment.center,
                         children: [
                           const Text(
                             "Don't have an account?",
                             style: TextStyle(
-                                fontSize: 18.0, color: Colors.black),
+                                fontSize: 16.0, color: Colors.black),
                           ),
                           const SizedBox(width: 5.0),
                           GestureDetector(
@@ -295,17 +310,17 @@ class _LoginPageState extends State<LoginPage> {
                               "Create",
                               style: TextStyle(
                                   color: Color(0xFFFFD700),
-                                  fontSize: 20.0,
-                                  fontWeight: FontWeight.w500),
+                                  fontSize: 18.0,
+                                  fontWeight: FontWeight.w600),
                             ),
-                          )
+                          ),
                         ],
-                      )
+                      ),
                     ],
                   ),
                 ),
-              )
-            ],
+              ],
+            ),
           ),
         ),
       ),

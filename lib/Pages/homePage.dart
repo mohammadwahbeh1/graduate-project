@@ -405,46 +405,116 @@ String username="";
 
 
 
+  @override
+  Widget build(BuildContext context) {
+    bool isWeb = MediaQuery.of(context).size.width >= 600; // تحديد ما إذا كان العرض على الويب
+
+    return Scaffold(
+      appBar: PreferredSize(
+        preferredSize: Size.fromHeight(isWeb ? 60.0 : 50.0), // تغيير حجم الـ AppBar للويب فقط
+        child: AppBar(
+          title: Text(
+            _getAppBarTitle(),
+            style: TextStyle(
+              fontWeight: FontWeight.w500,
+              fontSize: isWeb ? 24 : 20, // حجم الخط أكبر للويب
+            ),
+          ),
+          backgroundColor: Color(0xFFF6D533),
+          centerTitle: true,
+          actions: [
+            Stack(
+              children: [
+                IconButton(
+                  icon: Image.asset(
+                    'assets/notification.png',
+                    width: 30,
+                    height: 30,
+                  ),
+                  onPressed: () {
+                    _showNotifications(context);
+                  },
+                ),
+                Positioned(
+                  right: 8,
+                  top: 8,
+                  child: Container(
+                    padding: const EdgeInsets.all(2),
+                    decoration: BoxDecoration(
+                      color: Colors.red,
+                      borderRadius: BorderRadius.circular(10),
+                    ),
+                    constraints: const BoxConstraints(
+                      minWidth: 16,
+                      minHeight: 16,
+                    ),
+                    child: Text(
+                      '$notificationCount',
+                      style: const TextStyle(
+                        color: Colors.white,
+                        fontSize: 12,
+                      ),
+                      textAlign: TextAlign.center,
+                    ),
+                  ),
+                ),
+              ],
+            ),
+            IconButton(
+              icon: const Icon(
+                Icons.person,
+                size: 30,
+                color: Colors.black,
+              ),
+              onPressed: () {
+                _showProfileOptions(context); // Show profile options
+              },
+            ),
+          ],
+        ),
+      ),
+      drawer: isWeb ? buildDrawer(context) : buildDrawer(context), // لا تغيير إذا كان العرض موبايل
+      body: _currentIndex == 0
+          ? _buildHomeContent()
+          : _pages[_currentIndex],
+      bottomNavigationBar: isWeb ? _buildCustomBottomNavigationBar() : _buildCustomBottomNavigationBar(), // تغيير تصميم الشريط السفلي للويب فقط
+    );
+  }
+// تحسين buildDrawer لتناسب الويب
   Widget buildDrawer(BuildContext context) {
+    bool isWeb = MediaQuery.of(context).size.width >= 600; // تحديد ما إذا كان العرض على الويب
+
     return Drawer(
+      width: isWeb ? 300 : double.infinity, // عرض أكبر للويب
       backgroundColor: Colors.white,
       child: ListView(
         padding: EdgeInsets.zero,
         children: <Widget>[
-          // Header Section with Profile Info
           Container(
-            height: MediaQuery.of(context).size.height * 0.30,
+            height: isWeb ? MediaQuery.of(context).size.height * 0.25 : MediaQuery.of(context).size.height * 0.30,
             decoration: const BoxDecoration(
               color: Color(0xFFF6D533),
             ),
-            child:  Column(
+            child: Column(
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
-                // Profile Picture
                 CircleAvatar(
-                  radius: 50,
-                  backgroundImage: AssetImage('assets/profile.jpg'), // Replace with your image path
+                  radius: isWeb ? 60 : 50, // حجم الصورة أكبر للويب
+                  backgroundImage: AssetImage('assets/profile.jpg'),
                 ),
-                SizedBox(height: 23),
-                // User Information
+                SizedBox(height: isWeb ? 10 : 23), // تقليل المسافة للويب
                 Text(
                   username,
                   style: TextStyle(
                     color: Colors.black,
-                    fontSize: 20,
+                    fontSize: isWeb ? 24 : 20, // حجم الخط أكبر للويب
                     fontWeight: FontWeight.bold,
-
                   ),
                 ),
-
-
-                // Stats Row
-
               ],
             ),
           ),
           SizedBox(height: 20),
-          // Drawer List Items (your existing logic)
           ListTile(
             leading: const Icon(Icons.location_on),
             title: const Text('The Closest Point'),
@@ -505,9 +575,9 @@ String username="";
     );
   }
 
-
-  // Build terminal card UI
   Widget buildCard(BuildContext context, String terminalName, String imagePath, String terminalId) {
+    bool isWeb = MediaQuery.of(context).size.width >= 600; // تحديد إذا ما كان التطبيق يعمل على الويب
+
     return GestureDetector(
       onTap: () {
         Navigator.push(
@@ -518,24 +588,24 @@ String username="";
         );
       },
       child: Padding(
-        padding: const EdgeInsets.only(top: 20, right: 5, left: 5),
+        padding: const EdgeInsets.symmetric(vertical: 10, horizontal: 5),
         child: Card(
-          margin: const EdgeInsets.symmetric(horizontal: 20),
+          margin: EdgeInsets.symmetric(horizontal: isWeb ? 20 : 15), // زيادة الهوامش للويب
           shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(15.0),
-            side: const BorderSide(
+            borderRadius: BorderRadius.circular(12.0),
+            side: BorderSide(
               color: Colors.grey,
-              width: 1,
+              width: 0.5,
             ),
           ),
           clipBehavior: Clip.antiAlias,
-          elevation: 5,
+          elevation: isWeb ? 5 : 3, // رفع الإضاءة على الويب لزيادة الوضوح
           child: Stack(
             alignment: Alignment.center,
             children: [
               Image.asset(
                 imagePath,
-                height: 200,
+                height: isWeb ? 300 : 180, // حجم الصورة أكبر للويب
                 width: double.infinity,
                 fit: BoxFit.cover,
               ),
@@ -544,32 +614,29 @@ String username="";
                 left: 0,
                 right: 0,
                 child: ClipRRect(
-                  borderRadius: const BorderRadius.vertical(bottom: Radius.circular(15)),
+                  borderRadius: BorderRadius.vertical(bottom: Radius.circular(12)),
                   child: BackdropFilter(
-                    filter: ImageFilter.blur(sigmaX: 5.0, sigmaY: 5.0),  // Slightly reduced blur intensity
+                    filter: ImageFilter.blur(sigmaX: 4.0, sigmaY: 4.0),
                     child: Container(
-                      height: 70,  // Adjusted height for better balance
-                      alignment: Alignment.center,
-                      color: Colors.black.withOpacity(0.4),  // Slightly lighter opacity
+                      height: isWeb ? 100 : 60, // ارتفاع الحاوية متوازن
+                      color: Colors.black.withOpacity(0.5),
                       child: Row(
-                        mainAxisAlignment: MainAxisAlignment.spaceBetween,  // Spread the items across the row
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
                         children: [
-                          // Terminal name on the left
                           Padding(
-                            padding: const EdgeInsets.only(left: 15),  // Added padding to the left for better spacing
+                            padding: const EdgeInsets.only(left: 15),
                             child: Text(
                               terminalName,
-                              style: const TextStyle(
-                                fontSize: 20,  // Slightly smaller and thinner font size
-                                fontWeight: FontWeight.w300,  // Lighter font weight for a refined look
+                              style: TextStyle(
+                                fontSize: isWeb ? 22 : 16, // حجم الخط أكبر للويب
+                                fontWeight: FontWeight.w500,
                                 color: Colors.white,
-                                fontFamily: 'Roboto',  // Font set to 'Roboto', but can be replaced with any lightweight font
+                                fontFamily: 'Roboto',
                               ),
                             ),
                           ),
-                          // Review button on the right with slight offset
                           Padding(
-                            padding: const EdgeInsets.only(right: 20),  // Added some space from the right edge
+                            padding: const EdgeInsets.only(right: 15),
                             child: ElevatedButton(
                               onPressed: () {
                                 Navigator.push(
@@ -580,19 +647,19 @@ String username="";
                                 );
                               },
                               style: ElevatedButton.styleFrom(
-                                backgroundColor: Colors.transparent,  // Transparent background
-                                side: BorderSide(color: Colors.white, width: 2),  // White border
+                                backgroundColor: Colors.transparent,
+                                side: BorderSide(color: Colors.white, width: 1.5),
                                 shape: RoundedRectangleBorder(
-                                  borderRadius: BorderRadius.circular(20),  // Rounded corners for the button
+                                  borderRadius: BorderRadius.circular(18),
                                 ),
-                                padding: EdgeInsets.symmetric(horizontal: 25, vertical: 10),  // Button padding
+                                padding: EdgeInsets.symmetric(horizontal: 15, vertical: 8),
                               ),
                               child: const Text(
                                 "View Reviews",
                                 style: TextStyle(
-                                  fontSize: 16,
-                                  color: Colors.white,  // White text color
-                                  fontFamily: 'Roboto',  // Consistent font
+                                  fontSize: 14,
+                                  color: Colors.white,
+                                  fontFamily: 'Roboto',
                                 ),
                               ),
                             ),
@@ -610,82 +677,32 @@ String username="";
     );
   }
 
-  @override
-  Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: PreferredSize(preferredSize: Size.fromHeight(50.0),
+  // Build terminal card UI
 
 
-
-        child:AppBar(
-        title:  Text(
-            _getAppBarTitle(),
-          style: TextStyle(fontWeight: FontWeight.w500),
-        ),
-        backgroundColor: Color(0xFFF6D533),
-        centerTitle: true,
-        actions: [
-          Stack(
-            children: [
-              IconButton(
-                icon: Image.asset(
-                  'assets/notification.png',
-                  width: 30,
-                  height: 30,
-                ),
-                onPressed: () {
-                  _showNotifications(context);
-                },
-              ),
-              Positioned(
-                right: 8,
-                top: 8,
-                child: Container(
-                  padding: const EdgeInsets.all(2),
-                  decoration: BoxDecoration(
-                    color: Colors.red,
-                    borderRadius: BorderRadius.circular(10),
-                  ),
-                  constraints: const BoxConstraints(
-                    minWidth: 16,
-                    minHeight: 16,
-                  ),
-                  child: Text(
-                    '$notificationCount',
-                    style: const TextStyle(
-                      color: Colors.white,
-                      fontSize: 12,
-                    ),
-                    textAlign: TextAlign.center,
-                  ),
-                ),
-              ),
-            ],
-          ),
-          IconButton(
-            icon: const Icon(
-              Icons.person,
-              size: 30,
-              color: Colors.black,
-            ),
-            onPressed: () {
-              _showProfileOptions(context); // Show profile options
-            },
-          ),
-        ],
-      ),
-      ),
-      drawer: buildDrawer(context), // Keep the drawer as is
-      body:_currentIndex == 0
-          ? _buildHomeContent()
-          : _pages[_currentIndex],
-      bottomNavigationBar: _buildCustomBottomNavigationBar(), // Add the custom BottomNavigationBar
-    );
-  }
   Widget _buildHomeContent() {
-    return isLoading
-        ? const Center(
-      child: CircularProgressIndicator(),
+    bool isWeb = MediaQuery.of(context).size.width >= 600;
+
+    return isWeb
+        ? Padding(
+      padding: const EdgeInsets.all(10),
+      child: GridView.builder(
+        gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+          crossAxisCount: 3,
+          crossAxisSpacing: 15, // المسافة بين الأعمدة
+          mainAxisSpacing: 15, // المسافة بين الصفوف
+          childAspectRatio: 1.5, // نسبة العرض إلى الارتفاع لكل كارد
+        ),
+        itemCount: terminals.length,
+        itemBuilder: (context, index) {
+          return buildCard(
+            context,
+            terminals[index]['terminal_name']!,
+            'assets/terminal.jpg',
+            terminals[index]['terminal_id']!,
+          );
+        },
+      ),
     )
         : ListView.builder(
       itemCount: terminals.length,
@@ -715,7 +732,7 @@ String username="";
           ),
         ],
       ),
-      child: BottomNavigationBar(
+      child:BottomNavigationBar(
         type: BottomNavigationBarType.fixed,
         currentIndex: _currentIndex,
         onTap: (index) {
@@ -736,6 +753,7 @@ String username="";
           _buildNavItem(Icons.book_online, 'Reservations', 3),
         ],
       ),
+
     );
   }
   BottomNavigationBarItem _buildNavItem(IconData icon, String label, int index) {

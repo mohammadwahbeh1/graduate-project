@@ -73,28 +73,72 @@ class _StatisticsPageState extends State<StatisticsPage> {
         title: Text('Statistics', style: TextStyle(fontWeight: FontWeight.bold)),
         backgroundColor: Colors.blueAccent,
       ),
-      body: _isLoading
-          ? Center(child: CircularProgressIndicator())
-          : Padding(
-        padding: const EdgeInsets.all(16.0),
-        child: ListView(
-          children: [
-            _buildSectionTitle('User Statistics'),
-            _buildUserStats(),
-            Divider(thickness: 2),
-            _buildSectionTitle('Vehicle Statistics'),
-            _buildVehicleStats(),
-            Divider(thickness: 2),
-            _buildSectionTitle('Reservation Statistics'),
-            _buildReservationStats(),
-            Divider(thickness: 2),
-            _buildSectionTitle('Review Statistics'),
-            _buildReviewStats(),
-          ],
-        ),
+      body: LayoutBuilder(
+        builder: (context, constraints) {
+          bool isWeb = constraints.maxWidth > 800; // Detects if on a larger screen
+          return _isLoading
+              ? Center(child: CircularProgressIndicator())
+              : Padding(
+            padding: isWeb
+                ? const EdgeInsets.symmetric(horizontal: 32.0, vertical: 16.0)
+                : const EdgeInsets.all(16.0),
+            child: isWeb
+                ? Row(
+              children: [
+                Expanded(
+                  child: Column(
+                    children: [
+                      Expanded(
+                        child: SingleChildScrollView(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              _buildSectionTitle('User Statistics'),
+                              _buildUserStats(),
+                              Divider(thickness: 2),
+                              _buildSectionTitle('Vehicle Statistics'),
+                              _buildVehicleStats(),
+                              Divider(thickness: 2),
+                              _buildSectionTitle('Reservation Statistics'),
+                              _buildReservationStats(),
+                              Divider(thickness: 2),
+                              _buildSectionTitle('Review Statistics'),
+                              _buildReviewStats(),
+                            ],
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+                SizedBox(width: 20),
+                // Additional widgets can be added here for web-only features
+              ],
+            )
+                : SingleChildScrollView(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  _buildSectionTitle('User Statistics'),
+                  _buildUserStats(),
+                  Divider(thickness: 2),
+                  _buildSectionTitle('Vehicle Statistics'),
+                  _buildVehicleStats(),
+                  Divider(thickness: 2),
+                  _buildSectionTitle('Reservation Statistics'),
+                  _buildReservationStats(),
+                  Divider(thickness: 2),
+                  _buildSectionTitle('Review Statistics'),
+                  _buildReviewStats(),
+                ],
+              ),
+            ),
+          );
+        },
       ),
     );
   }
+
 
   Widget _buildSectionTitle(String title) {
     return Padding(
