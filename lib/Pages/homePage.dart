@@ -61,7 +61,7 @@ String username="";
   @override
   void didChangeDependencies() {
     super.didChangeDependencies();
-    fetchNotifications(); // Fetch notifications whenever the widget is reloaded
+    fetchNotifications();
   }
 
   // Fetch terminals
@@ -247,10 +247,10 @@ String username="";
                                       int notificationId = notification['id']; // Get notification ID
 
                                       try {
-                                        // Call _handleMarkAsRead and update the state
+                                        
                                         await _handleMarkAsRead(notificationId);
 
-                                        // Update state inside the dialog to reflect changes immediately
+
                                         setDialogState(() {
                                           notifications.removeWhere((notif) => notif['id'] == notificationId);
                                         });
@@ -613,13 +613,11 @@ String username="";
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: PreferredSize(preferredSize: Size.fromHeight(50.0),
-
-
-
-        child:AppBar(
-        title:  Text(
-            _getAppBarTitle(),
+    appBar: _currentIndex != 2 ? PreferredSize(
+      preferredSize: Size.fromHeight(50.0),
+      child: AppBar(
+        title: Text(
+          _getAppBarTitle(),
           style: TextStyle(fontWeight: FontWeight.w500),
         ),
         backgroundColor: Color(0xFFF6D533),
@@ -669,18 +667,19 @@ String username="";
               color: Colors.black,
             ),
             onPressed: () {
-              _showProfileOptions(context); // Show profile options
+              _showProfileOptions(context);
             },
           ),
         ],
       ),
-      ),
-      drawer: buildDrawer(context), // Keep the drawer as is
-      body:_currentIndex == 0
-          ? _buildHomeContent()
-          : _pages[_currentIndex],
-      bottomNavigationBar: _buildCustomBottomNavigationBar(), // Add the custom BottomNavigationBar
+    ) : null, // Return null when Book Taxi tab is selected
+    drawer: buildDrawer(context),
+    body: _currentIndex == 0
+        ? _buildHomeContent()
+        : _pages[_currentIndex],
+    bottomNavigationBar: _buildCustomBottomNavigationBar(),
     );
+
   }
   Widget _buildHomeContent() {
     return isLoading

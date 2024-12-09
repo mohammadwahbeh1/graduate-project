@@ -6,6 +6,7 @@ import 'package:provider/provider.dart';
 import 'package:geolocator/geolocator.dart';
 
 import 'Pages/Location Service.dart';
+import 'Pages/location_provider.dart';
 
 
 void main() {
