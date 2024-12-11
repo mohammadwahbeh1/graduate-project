@@ -55,7 +55,7 @@ class _ViewDriversPageState extends State<ViewDriversOnMapPage> {
       if (token == null) throw Exception('Token not found');
 
       final response = await http.get(
-        Uri.parse('http://192.168.1.8:3000/api/v1/line/drivers/locations'),
+        Uri.parse('http://192.168.1.12:3000/api/v1/line/drivers/locations'),
         headers: {'Authorization': 'Bearer $token'},
       );
 

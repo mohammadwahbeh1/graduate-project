@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 
-// تأكد من استيراد الصفحات الأخرى بشكل صحيح
 import 'DriversAndLinesPage.dart';
 import 'Reports.dart';
 import 'TerminalsPage.dart';
@@ -15,7 +14,6 @@ class ManagerPage extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      // استخدام AppBar بتصميم متناسق مع لوحة الألوان الزرقاء
       appBar: AppBar(
         title: const Text(
           "Manager Dashboard",

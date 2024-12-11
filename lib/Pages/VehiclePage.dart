@@ -2,6 +2,7 @@ import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:http/http.dart' as http;
+import 'package:google_maps_flutter/google_maps_flutter.dart';
 
 class VehiclePage extends StatefulWidget {
   const VehiclePage({Key? key}) : super(key: key);
@@ -11,7 +12,7 @@ class VehiclePage extends StatefulWidget {
 }
 
 class _VehiclePageState extends State<VehiclePage> {
-  final storage = FlutterSecureStorage();
+  final storage = const FlutterSecureStorage();
   List<dynamic> vehicles = [];
   List<dynamic> filteredVehicles = [];
   List<dynamic> drivers = [];
@@ -20,15 +21,13 @@ class _VehiclePageState extends State<VehiclePage> {
   String? selectedDriver;
   String? selectedLine;
   String? selectedStatus;
-  String latitude = '';
-  String longitude = '';
-  TextEditingController latitudeController = TextEditingController();
-  TextEditingController longitudeController = TextEditingController();
-  TextEditingController searchController = TextEditingController();
+  double? latitude;
+  double? longitude;
+  final TextEditingController searchController = TextEditingController();
 
   // Primary and Secondary Colors for consistency
-  final Color primaryColor = Color(0xFF00B4DB);
-  final Color secondaryColor = Color(0xFF0083B0);
+  static const Color primaryColor = Color(0xFF00B4DB);
+  static const Color secondaryColor = Color(0xFF0083B0);
 
   @override
   void initState() {
@@ -41,8 +40,6 @@ class _VehiclePageState extends State<VehiclePage> {
 
   @override
   void dispose() {
-    latitudeController.dispose();
-    longitudeController.dispose();
     searchController.dispose();
     super.dispose();
   }
@@ -60,7 +57,7 @@ class _VehiclePageState extends State<VehiclePage> {
       }
 
       final response = await http.get(
-        Uri.parse('http://192.168.1.8:3000/api/v1/vehicle/'),
+        Uri.parse('http://192.168.1.12:3000/api/v1/vehicle/'),
         headers: {
           'Authorization': 'Bearer $token',
           'Accept': 'application/json',
@@ -95,7 +92,7 @@ class _VehiclePageState extends State<VehiclePage> {
       }
 
       final response = await http.get(
-        Uri.parse('http://192.168.1.8:3000/api/v1/admin/drivers'),
+        Uri.parse('http://192.168.1.12:3000/api/v1/admin/drivers'),
         headers: {
           'Authorization': 'Bearer $token',
           'Accept': 'application/json',
@@ -125,7 +122,7 @@ class _VehiclePageState extends State<VehiclePage> {
       }
 
       final response = await http.get(
-        Uri.parse('http://192.168.1.8:3000/api/v1/line/term/line'),
+        Uri.parse('http://192.168.1.12:3000/api/v1/line/term/line'),
         headers: {
           'Authorization': 'Bearer $token',
           'Accept': 'application/json',
@@ -145,25 +142,14 @@ class _VehiclePageState extends State<VehiclePage> {
     }
   }
 
-  // Filter Vehicles based on search input
-  void _filterVehicles() {
-    String query = searchController.text.toLowerCase();
-    setState(() {
-      filteredVehicles = vehicles.where((vehicle) {
-        return vehicle['vehicle_id'].toString().toLowerCase().contains(query) ||
-            vehicle['driver']['username'].toLowerCase().contains(query) ||
-            vehicle['line']['line_name'].toLowerCase().contains(query) ||
-            (vehicle['current_status'] != null &&
-                vehicle['current_status'].toLowerCase().contains(query));
-      }).toList();
-    });
-  }
-
   // Show Error Snackbar
   void _showErrorSnackbar(String message) {
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
-        content: Text(message),
+        content: Text(message,
+            style: const TextStyle(
+              color: Colors.white,
+            )),
         backgroundColor: Colors.redAccent,
       ),
     );
@@ -173,10 +159,39 @@ class _VehiclePageState extends State<VehiclePage> {
   void _showSuccessSnackbar(String message) {
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
-        content: Text(message),
+        content: Text(message,
+            style: const TextStyle(
+              color: Colors.white,
+            )),
         backgroundColor: Colors.green,
       ),
     );
+  }
+
+  // Filter Vehicles based on search input
+  void _filterVehicles() {
+    String query = searchController.text.toLowerCase();
+    setState(() {
+      filteredVehicles = vehicles.where((vehicle) {
+        return vehicle['vehicle_id']
+            .toString()
+            .toLowerCase()
+            .contains(query) ||
+            vehicle['driver']['username']
+                .toString()
+                .toLowerCase()
+                .contains(query) ||
+            vehicle['line']['line_name']
+                .toString()
+                .toLowerCase()
+                .contains(query) ||
+            (vehicle['current_status'] != null &&
+                vehicle['current_status']
+                    .toString()
+                    .toLowerCase()
+                    .contains(query));
+      }).toList();
+    });
   }
 
   // Create Vehicle
@@ -184,9 +199,9 @@ class _VehiclePageState extends State<VehiclePage> {
     if (selectedDriver == null ||
         selectedLine == null ||
         selectedStatus == null ||
-        latitude.isEmpty ||
-        longitude.isEmpty) {
-      _showErrorSnackbar('Please fill in all fields');
+        latitude == null ||
+        longitude == null) {
+      _showErrorSnackbar('Please fill in all fields and select a location');
       return;
     }
 
@@ -202,7 +217,7 @@ class _VehiclePageState extends State<VehiclePage> {
       }
 
       final response = await http.post(
-        Uri.parse('http://192.168.1.8:3000/api/v1/vehicle/'),
+        Uri.parse('http://192.168.1.12:3000/api/v1/vehicle/'),
         headers: {
           'Authorization': 'Bearer $token',
           'Content-Type': 'application/json',
@@ -238,9 +253,9 @@ class _VehiclePageState extends State<VehiclePage> {
     if (selectedDriver == null ||
         selectedLine == null ||
         selectedStatus == null ||
-        latitude.isEmpty ||
-        longitude.isEmpty) {
-      _showErrorSnackbar('Please fill in all fields');
+        latitude == null ||
+        longitude == null) {
+      _showErrorSnackbar('Please fill in all fields and select a location');
       return;
     }
 
@@ -256,7 +271,7 @@ class _VehiclePageState extends State<VehiclePage> {
       }
 
       final response = await http.put(
-        Uri.parse('http://192.168.1.8:3000/api/v1/vehicle/$vehicleId'),
+        Uri.parse('http://192.168.1.12:3000/api/v1/vehicle/$vehicleId'),
         headers: {
           'Authorization': 'Bearer $token',
           'Content-Type': 'application/json',
@@ -301,7 +316,7 @@ class _VehiclePageState extends State<VehiclePage> {
       }
 
       final response = await http.delete(
-        Uri.parse('http://192.168.1.8:3000/api/v1/vehicle/$vehicleId'),
+        Uri.parse('http://192.168.1.12:3000/api/v1/vehicle/$vehicleId'),
         headers: {
           'Authorization': 'Bearer $token',
           'Accept': 'application/json',
@@ -332,147 +347,175 @@ class _VehiclePageState extends State<VehiclePage> {
       selectedDriver = vehicle['driver']['user_id'].toString();
       selectedLine = vehicle['line']['line_id'].toString();
       selectedStatus = vehicle['current_status'];
-      latitude = vehicle['latitude'].toString();
-      longitude = vehicle['longitude'].toString();
-
-      latitudeController.text = latitude;
-      longitudeController.text = longitude;
+      latitude = double.tryParse(vehicle['latitude'].toString());
+      longitude = double.tryParse(vehicle['longitude'].toString());
     } else {
       selectedDriver = null;
       selectedLine = null;
       selectedStatus = null;
-      latitudeController.clear();
-      longitudeController.clear();
+      latitude = null;
+      longitude = null;
     }
 
     showDialog(
       context: context,
       builder: (context) {
-        return AlertDialog(
-          title: Text(isEdit ? 'Edit Vehicle' : 'Create Vehicle'),
-          content: SingleChildScrollView(
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                // Select Driver
-                DropdownButtonFormField<String>(
-                  value: selectedDriver,
-                  decoration: InputDecoration(
-                    labelText: 'Select Driver',
-                    border: OutlineInputBorder(),
-                  ),
-                  items: drivers.map((driver) {
-                    return DropdownMenuItem<String>(
-                      value: driver['user_id'].toString(),
-                      child: Text(driver['username']),
-                    );
-                  }).toList(),
-                  onChanged: (value) {
-                    setState(() {
-                      selectedDriver = value;
-                    });
-                  },
-                  validator: (value) =>
-                  value == null ? 'Please select a driver' : null,
-                ),
-                SizedBox(height: 15),
-                // Select Line
-                DropdownButtonFormField<String>(
-                  value: selectedLine,
-                  decoration: InputDecoration(
-                    labelText: 'Select Line',
-                    border: OutlineInputBorder(),
-                  ),
-                  items: lines.map((line) {
-                    return DropdownMenuItem<String>(
-                      value: line['line_id'].toString(),
-                      child: Text(line['line_name']),
-                    );
-                  }).toList(),
-                  onChanged: (value) {
-                    setState(() {
-                      selectedLine = value;
-                    });
-                  },
-                  validator: (value) =>
-                  value == null ? 'Please select a line' : null,
-                ),
-                SizedBox(height: 15),
-                // Current Status (Dropdown)
-                DropdownButtonFormField<String>(
-                  value: selectedStatus,
-                  decoration: InputDecoration(
-                    labelText: 'Current Status',
-                    border: OutlineInputBorder(),
-                  ),
-                  items: [
-                    DropdownMenuItem(
-                      value: 'on_the_way',
-                      child: Text('On The Way'),
+        return StatefulBuilder(
+          builder: (context, setStateDialog) {
+            return AlertDialog(
+              title: Text(isEdit ? 'Edit Vehicle' : 'Create Vehicle',
+                  style: const TextStyle(fontWeight: FontWeight.bold)),
+              content: SingleChildScrollView(
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    // Select Driver
+                    DropdownButtonFormField<String>(
+                      value: selectedDriver,
+                      decoration: const InputDecoration(
+                        labelText: 'Select Driver',
+                        border: OutlineInputBorder(),
+                      ),
+                      items: drivers.map((driver) {
+                        return DropdownMenuItem<String>(
+                          value: driver['user_id'].toString(),
+                          child: Text(driver['username']),
+                        );
+                      }).toList(),
+                      onChanged: (value) {
+                        setStateDialog(() {
+                          selectedDriver = value;
+                        });
+                      },
+                      validator: (value) =>
+                      value == null ? 'Please select a driver' : null,
                     ),
-                    DropdownMenuItem(
-                      value: 'in_terminal',
-                      child: Text('In Terminal'),
+                    const SizedBox(height: 15),
+                    // Select Line
+                    DropdownButtonFormField<String>(
+                      value: selectedLine,
+                      decoration: const InputDecoration(
+                        labelText: 'Select Line',
+                        border: OutlineInputBorder(),
+                      ),
+                      items: lines.map((line) {
+                        return DropdownMenuItem<String>(
+                          value: line['line_id'].toString(),
+                          child: Text(line['line_name']),
+                        );
+                      }).toList(),
+                      onChanged: (value) {
+                        setStateDialog(() {
+                          selectedLine = value;
+                        });
+                      },
+                      validator: (value) =>
+                      value == null ? 'Please select a line' : null,
+                    ),
+                    const SizedBox(height: 15),
+                    // Current Status (Dropdown)
+                    DropdownButtonFormField<String>(
+                      value: selectedStatus,
+                      decoration: const InputDecoration(
+                        labelText: 'Current Status',
+                        border: OutlineInputBorder(),
+                      ),
+                      items: const [
+                        DropdownMenuItem(
+                          value: 'on_the_way',
+                          child: Text('On The Way'),
+                        ),
+                        DropdownMenuItem(
+                          value: 'in_terminal',
+                          child: Text('In Terminal'),
+                        ),
+                      ],
+                      onChanged: (value) {
+                        setStateDialog(() {
+                          selectedStatus = value;
+                        });
+                      },
+                      validator: (value) =>
+                      value == null ? 'Please select a status' : null,
+                    ),
+                    const SizedBox(height: 15),
+                    // Latitude and Longitude Display (Read-Only)
+                    Align(
+                      alignment: Alignment.centerLeft,
+                      child: Text(
+                        (latitude == null || longitude == null)
+                            ? 'Location: Not Selected'
+                            : 'Location: $latitude, $longitude',
+                        style:
+                        TextStyle(color: Colors.grey[700], fontSize: 16),
+                      ),
+                    ),
+                    const SizedBox(height: 15),
+                    // Button to Select Location from Map
+                    ElevatedButton.icon(
+                      onPressed: () async {
+                        // Open Map Selection Dialog
+                        LatLng? selectedLatLng = await showDialog<LatLng>(
+                          context: context,
+                          builder: (context) => _MapSelectionDialog(
+                            initialLocation: (latitude != null &&
+                                longitude != null)
+                                ? LatLng(latitude!, longitude!)
+                                : null,
+                          ),
+                        );
+
+                        if (selectedLatLng != null) {
+                          setStateDialog(() {
+                            latitude = selectedLatLng.latitude;
+                            longitude = selectedLatLng.longitude;
+                          });
+                        }
+                      },
+                      icon: const Icon(Icons.location_on, color: Colors.white),
+                      label: const Text('Select Location from Map',
+                          style: TextStyle(color: Colors.white)),
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: secondaryColor,
+                        padding: const EdgeInsets.symmetric(
+                            horizontal: 20, vertical: 12),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(30),
+                        ),
+                      ),
                     ),
                   ],
-                  onChanged: (value) {
-                    setState(() {
-                      selectedStatus = value;
-                    });
-                  },
-                  validator: (value) =>
-                  value == null ? 'Please select a status' : null,
                 ),
-                SizedBox(height: 15),
-                // Latitude
-                TextField(
-                  controller: latitudeController,
-                  decoration: InputDecoration(
-                    labelText: 'Latitude',
-                    border: OutlineInputBorder(),
-                  ),
-                  keyboardType: TextInputType.number,
-                  onChanged: (value) {
-                    latitude = value;
-                  },
+              ),
+              actions: [
+                TextButton(
+                  onPressed: () => Navigator.of(context).pop(),
+                  child:
+                  const Text('Cancel', style: TextStyle(color: Colors.grey)),
                 ),
-                SizedBox(height: 15),
-                // Longitude
-                TextField(
-                  controller: longitudeController,
-                  decoration: InputDecoration(
-                    labelText: 'Longitude',
-                    border: OutlineInputBorder(),
-                  ),
-                  keyboardType: TextInputType.number,
-                  onChanged: (value) {
-                    longitude = value;
+                ElevatedButton(
+                  onPressed: () {
+                    if (isEdit) {
+                      _updateVehicle(vehicle!['vehicle_id'].toString());
+                    } else {
+                      _createVehicle();
+                    }
+                    Navigator.of(context).pop();
                   },
+                  child: Text(isEdit ? 'Update' : 'Create',
+                      style: const TextStyle(color: Colors.white)),
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: secondaryColor,
+                    padding: const EdgeInsets.symmetric(
+                        horizontal: 20, vertical: 12),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(30),
+                    ),
+                  ),
                 ),
               ],
-            ),
-          ),
-          actions: [
-            TextButton(
-              onPressed: () => Navigator.of(context).pop(),
-              child: Text('Cancel',
-                  style: TextStyle(color: Colors.grey[700])),
-            ),
-            ElevatedButton(
-              onPressed: () {
-                if (isEdit) {
-                  _updateVehicle(vehicle!['vehicle_id'].toString());
-                } else {
-                  _createVehicle();
-                }
-                Navigator.of(context).pop();
-              },
-              child: Text(isEdit ? 'Update' : 'Create'),
-              style: ElevatedButton.styleFrom(
-                backgroundColor: secondaryColor,
-              ),
-            ),
-          ],
+            );
+          },
         );
       },
     );
@@ -483,21 +526,22 @@ class _VehiclePageState extends State<VehiclePage> {
     showDialog(
       context: context,
       builder: (context) => AlertDialog(
-        title: Text('Confirm Deletion',
+        title: const Text('Confirm Deletion',
             style: TextStyle(fontWeight: FontWeight.bold)),
-        content: Text('Are you sure you want to delete this vehicle?'),
+        content: const Text('Are you sure you want to delete this vehicle?'),
         actions: [
           TextButton(
             onPressed: () => Navigator.of(context).pop(),
             child:
-            Text('Cancel', style: TextStyle(color: Colors.grey[700])),
+            const Text('Cancel', style: TextStyle(color: Colors.grey)),
           ),
           ElevatedButton(
             onPressed: () {
               _deleteVehicle(vehicleId);
               Navigator.of(context).pop();
             },
-            child: Text('Delete'),
+            child: const Text('Delete',
+                style: TextStyle(color: Colors.white)),
             style: ElevatedButton.styleFrom(
               backgroundColor: Colors.redAccent,
             ),
@@ -527,20 +571,20 @@ class _VehiclePageState extends State<VehiclePage> {
           ),
           borderRadius: BorderRadius.circular(20),
         ),
-        padding: EdgeInsets.all(20),
+        padding: const EdgeInsets.all(20),
         child: Row(
           children: [
             // Vehicle Icon
             CircleAvatar(
               radius: 30,
               backgroundColor: primaryColor,
-              child: Icon(
-                Icons.directions_car,
+              child: const Icon(
+                Icons.location_on,
                 size: 30,
                 color: Colors.white,
               ),
             ),
-            SizedBox(width: 20),
+            const SizedBox(width: 20),
             // Vehicle Information
             Expanded(
               child: Column(
@@ -554,7 +598,7 @@ class _VehiclePageState extends State<VehiclePage> {
                       color: secondaryColor,
                     ),
                   ),
-                  SizedBox(height: 5),
+                  const SizedBox(height: 5),
                   Text(
                     'Driver: ${vehicle['driver']['username']}',
                     style: TextStyle(
@@ -562,7 +606,7 @@ class _VehiclePageState extends State<VehiclePage> {
                       color: Colors.grey[700],
                     ),
                   ),
-                  SizedBox(height: 5),
+                  const SizedBox(height: 5),
                   Text(
                     'Line: ${vehicle['line']['line_name']}',
                     style: TextStyle(
@@ -570,7 +614,7 @@ class _VehiclePageState extends State<VehiclePage> {
                       color: Colors.grey[700],
                     ),
                   ),
-                  SizedBox(height: 5),
+                  const SizedBox(height: 5),
                   Text(
                     'Status: ${vehicle['current_status'] != null ? _formatStatus(vehicle['current_status']) : 'N/A'}',
                     style: TextStyle(
@@ -585,13 +629,29 @@ class _VehiclePageState extends State<VehiclePage> {
             Row(
               mainAxisSize: MainAxisSize.min,
               children: [
+                // Button to View Location
                 IconButton(
-                  icon: Icon(Icons.edit, color: Colors.orangeAccent),
+                  icon: const Icon(Icons.location_on, color: Colors.blueAccent),
+                  onPressed: () {
+                    // Show Vehicle Location on Map within a dialog
+                    showDialog(
+                      context: context,
+                      builder: (context) => _VehicleLocationDialog(
+                        vehicleId: vehicle['vehicle_id'].toString(),
+                        latitude: double.parse(vehicle['latitude'].toString()),
+                        longitude: double.parse(vehicle['longitude'].toString()),
+                      ),
+                    );
+                  },
+                  tooltip: 'View Location',
+                ),
+                IconButton(
+                  icon: const Icon(Icons.edit, color: Colors.orangeAccent),
                   onPressed: () => _showVehicleDialog(vehicle: vehicle),
                   tooltip: 'Edit',
                 ),
                 IconButton(
-                  icon: Icon(Icons.delete, color: Colors.redAccent),
+                  icon: const Icon(Icons.delete, color: Colors.redAccent),
                   onPressed: () =>
                       _confirmDeleteVehicle(vehicle['vehicle_id'].toString()),
                   tooltip: 'Delete',
@@ -619,11 +679,11 @@ class _VehiclePageState extends State<VehiclePage> {
   // Build Vehicle List with responsive layout
   Widget _buildVehicleList(bool isWeb) {
     if (filteredVehicles.isEmpty) {
-      return Center(
+      return const Center(
         child: Text(
           'No vehicles available.',
           style: TextStyle(
-            color: Colors.grey[600],
+            color: Colors.grey,
             fontSize: 16,
           ),
         ),
@@ -632,7 +692,7 @@ class _VehiclePageState extends State<VehiclePage> {
 
     if (isWeb) {
       return GridView.builder(
-        gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+        gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
           crossAxisCount: 3, // Adjust as needed
           crossAxisSpacing: 20,
           mainAxisSpacing: 20,
@@ -658,9 +718,9 @@ class _VehiclePageState extends State<VehiclePage> {
     return Scaffold(
       // AppBar with Gradient
       appBar: AppBar(
-        title: Text('Vehicle Management'),
+        title: const Text('Vehicle Management'),
         flexibleSpace: Container(
-          decoration: BoxDecoration(
+          decoration: const BoxDecoration(
             gradient: LinearGradient(
               colors: [primaryColor, secondaryColor],
               begin: Alignment.topLeft,
@@ -668,7 +728,7 @@ class _VehiclePageState extends State<VehiclePage> {
             ),
           ),
         ),
-        iconTheme: IconThemeData(color: Colors.white),
+        iconTheme: const IconThemeData(color: Colors.white),
         elevation: 0,
         centerTitle: true,
       ),
@@ -680,7 +740,7 @@ class _VehiclePageState extends State<VehiclePage> {
               ? Center(
             child: CircularProgressIndicator(
               valueColor:
-              AlwaysStoppedAnimation<Color>(secondaryColor),
+              const AlwaysStoppedAnimation<Color>(secondaryColor),
             ),
           )
               : Padding(
@@ -698,11 +758,11 @@ class _VehiclePageState extends State<VehiclePage> {
                     decoration: InputDecoration(
                       hintText:
                       'Search by ID, Driver, Line, or Status',
-                      prefixIcon: Icon(Icons.search,
-                          color: secondaryColor),
+                      prefixIcon:
+                      Icon(Icons.search, color: secondaryColor),
                       filled: true,
                       fillColor: Colors.white,
-                      contentPadding: EdgeInsets.symmetric(
+                      contentPadding: const EdgeInsets.symmetric(
                           vertical: 0, horizontal: 20),
                       border: OutlineInputBorder(
                         borderRadius: BorderRadius.circular(30),
@@ -716,7 +776,7 @@ class _VehiclePageState extends State<VehiclePage> {
                     ),
                   ),
                 ),
-                SizedBox(height: 16),
+                const SizedBox(height: 16),
                 // Vehicle List
                 Expanded(child: _buildVehicleList(isWeb)),
               ],
@@ -729,8 +789,145 @@ class _VehiclePageState extends State<VehiclePage> {
         onPressed: () => _showVehicleDialog(),
         backgroundColor: secondaryColor,
         tooltip: 'Add Vehicle',
-        child: Icon(Icons.add, color: Colors.white),
+        child: const Icon(Icons.add, color: Colors.white),
       ),
+    );
+  }
+}
+
+// Dialog for Selecting Location on Map
+class _MapSelectionDialog extends StatefulWidget {
+  final LatLng? initialLocation;
+
+  const _MapSelectionDialog({Key? key, this.initialLocation}) : super(key: key);
+
+  @override
+  __MapSelectionDialogState createState() => __MapSelectionDialogState();
+}
+
+class __MapSelectionDialogState extends State<_MapSelectionDialog> {
+  LatLng? _selectedLocation;
+  late GoogleMapController _mapController;
+
+  @override
+  void initState() {
+    super.initState();
+    _selectedLocation = widget.initialLocation ??
+        const LatLng(37.7749, -122.4194); // Default to San Francisco
+  }
+
+  void _onMapTapped(LatLng position) {
+    setState(() {
+      _selectedLocation = position;
+    });
+  }
+
+  void _onConfirm() {
+    if (_selectedLocation != null) {
+      Navigator.of(context).pop(_selectedLocation);
+    } else {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text(
+            'Please select a location on the map',
+            style: TextStyle(color: Colors.white),
+          ),
+          backgroundColor: Colors.redAccent,
+        ),
+      );
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return AlertDialog(
+      title: const Text('Select Vehicle Location',
+          style: TextStyle(fontWeight: FontWeight.bold)),
+      content: SizedBox(
+        width: double.maxFinite,
+        height: 400,
+        child: GoogleMap(
+          initialCameraPosition: CameraPosition(
+            target: _selectedLocation!,
+            zoom: 14,
+          ),
+          onMapCreated: (controller) {
+            _mapController = controller;
+          },
+          onTap: _onMapTapped,
+          markers: _selectedLocation != null
+              ? {
+            Marker(
+              markerId: const MarkerId('selected-location'),
+              position: _selectedLocation!,
+            ),
+          }
+              : {},
+        ),
+      ),
+      actions: [
+        TextButton(
+          onPressed: () => Navigator.of(context).pop(),
+          child:
+          const Text('Cancel', style: TextStyle(color: Colors.grey)),
+        ),
+        ElevatedButton(
+          onPressed: _onConfirm,
+          child: const Text('Confirm',
+              style: TextStyle(color: Colors.white)),
+          style: ElevatedButton.styleFrom(
+            backgroundColor: Colors.green,
+          ),
+        ),
+      ],
+    );
+  }
+}
+
+// Dialog for Viewing Vehicle Location on Map
+class _VehicleLocationDialog extends StatelessWidget {
+  final String vehicleId;
+  final double latitude;
+  final double longitude;
+
+  const _VehicleLocationDialog({
+    Key? key,
+    required this.vehicleId,
+    required this.latitude,
+    required this.longitude,
+  }) : super(key: key);
+
+  @override
+  Widget build(BuildContext context) {
+    LatLng vehicleLocation = LatLng(latitude, longitude);
+
+    return AlertDialog(
+      title: Text('Vehicle Location: $vehicleId',
+          style: const TextStyle(fontWeight: FontWeight.bold)),
+      content: SizedBox(
+        width: double.maxFinite,
+        height: 400,
+        child: GoogleMap(
+          initialCameraPosition: CameraPosition(
+            target: vehicleLocation,
+            zoom: 14,
+          ),
+          markers: {
+            Marker(
+              markerId: MarkerId(vehicleId),
+              position: vehicleLocation,
+              infoWindow: InfoWindow(title: 'Vehicle ID: $vehicleId'),
+            ),
+          },
+        ),
+      ),
+      actions: [
+        TextButton(
+          onPressed: () => Navigator.of(context).pop(),
+          child:
+          const Text('Close', style: TextStyle(color: Colors.grey)),
+        ),
+      ],
     );
   }
 }

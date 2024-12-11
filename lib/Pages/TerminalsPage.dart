@@ -2,6 +2,8 @@ import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
+import 'package:google_maps_flutter/google_maps_flutter.dart';
+import 'package:network_info_plus/network_info_plus.dart';
 
 class TerminalPage extends StatefulWidget {
   @override
@@ -9,13 +11,25 @@ class TerminalPage extends StatefulWidget {
 }
 
 class _TerminalPageState extends State<TerminalPage> {
-  final storage = FlutterSecureStorage();
+  final storage = const FlutterSecureStorage();
   List<dynamic> terminals = [];
   List<dynamic> filteredTerminals = [];
   List<dynamic> admins = [];
-  String ip = '192.168.1.8';
+  String ip = "192.168.1.12";
   bool isLoading = false;
-  TextEditingController searchController = TextEditingController();
+  final TextEditingController searchController = TextEditingController();
+
+  Future<void> _fetchIpAddress() async {
+    final info = NetworkInfo();
+    String? wifiIP = await info.getWifiIP(); // الحصول على عنوان الـ IP الخاص بالواي فاي
+    setState(() {
+      ip = wifiIP ?? 'غير متصل بالشبكة';
+    });
+  }
+
+  // Primary and Secondary Colors for consistency
+  final Color primaryColor = const Color(0xFF00B4DB);
+  final Color secondaryColor = const Color(0xFF0083B0);
 
   @override
   void initState() {
@@ -23,6 +37,13 @@ class _TerminalPageState extends State<TerminalPage> {
     fetchTerminals();
     fetchAdmins();
     searchController.addListener(_filterTerminals);
+    _fetchIpAddress(); // استدعاء الدالة للحصول على الـ IP عند بدء الصفحة
+  }
+
+  @override
+  void dispose() {
+    searchController.dispose();
+    super.dispose();
   }
 
   // Fetch Terminals
@@ -38,7 +59,7 @@ class _TerminalPageState extends State<TerminalPage> {
       }
 
       final response = await http.get(
-        Uri.parse('http://$ip:3000/api/v1/terminals'),
+        Uri.parse('http://localhost:3000/api/v1/admin/terminals'), // Updated endpoint
         headers: {
           'Authorization': 'Bearer $token',
           'Accept': 'application/json',
@@ -97,7 +118,7 @@ class _TerminalPageState extends State<TerminalPage> {
   void _showErrorSnackbar(String message) {
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
-        content: Text(message),
+        content: Text(message, style: const TextStyle(color: Colors.white)),
         backgroundColor: Colors.redAccent,
       ),
     );
@@ -107,7 +128,7 @@ class _TerminalPageState extends State<TerminalPage> {
   void _showSuccessSnackbar(String message) {
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
-        content: Text(message),
+        content: Text(message, style: const TextStyle(color: Colors.white)),
         backgroundColor: Colors.green,
       ),
     );
@@ -118,15 +139,29 @@ class _TerminalPageState extends State<TerminalPage> {
     String query = searchController.text.toLowerCase();
     setState(() {
       filteredTerminals = terminals.where((terminal) {
-        bool matchesQuery = terminal['terminal_name'].toLowerCase().contains(query);
-        return matchesQuery;
+        bool matchesName =
+        terminal['terminal_name'].toString().toLowerCase().contains(query);
+
+        // Fetch admin name for filtering
+        String adminName = 'N/A';
+        try {
+          var admin = admins.firstWhere(
+                  (admin) => admin['user_id'].toString() == terminal['user_id'].toString(),
+              orElse: () => {'username': 'N/A'});
+          adminName = admin['username'].toString().toLowerCase();
+        } catch (_) {
+          adminName = 'N/A';
+        }
+
+        bool matchesAdmin = adminName.contains(query);
+        return matchesName || matchesAdmin;
       }).toList();
     });
   }
 
-  // Create new terminal
-  Future<void> createTerminal(String terminalName, String locationCenter,
-      String totalVehicles, String userId) async {
+  // Create new terminal (send latitude and longitude separately)
+  Future<void> createTerminal(
+      String terminalName, double? latitude, double? longitude, String totalVehicles, String userId) async {
     setState(() {
       isLoading = true;
     });
@@ -137,6 +172,14 @@ class _TerminalPageState extends State<TerminalPage> {
         return;
       }
 
+      final requestBody = {
+        'terminal_name': terminalName,
+        'total_vehicles': totalVehicles,
+        'user_id': userId,
+        'latitude': latitude,
+        'longitude': longitude,
+      };
+
       final response = await http.post(
         Uri.parse('http://$ip:3000/api/v1/terminals'),
         headers: {
@@ -144,12 +187,7 @@ class _TerminalPageState extends State<TerminalPage> {
           'Accept': 'application/json',
           'Content-Type': 'application/json',
         },
-        body: json.encode({
-          'terminal_name': terminalName,
-          'location_center': locationCenter,
-          'total_vehicles': totalVehicles,
-          'user_id': userId,
-        }),
+        body: json.encode(requestBody),
       );
 
       if (response.statusCode == 201 || response.statusCode == 200) {
@@ -169,101 +207,52 @@ class _TerminalPageState extends State<TerminalPage> {
     }
   }
 
-  // Show Add Terminal Dialog
-  void _showAddTerminalDialog() {
-    final terminalNameController = TextEditingController();
-    final locationCenterController = TextEditingController();
-    final totalVehiclesController = TextEditingController();
-    String? selectedAdminId;
+  // Update Terminal (send latitude and longitude separately)
+  Future<void> updateTerminal(String id, String terminalName, double? latitude,
+      double? longitude, String totalVehicles, String userId) async {
+    setState(() {
+      isLoading = true;
+    });
+    try {
+      String? token = await storage.read(key: 'jwt_token');
+      if (token == null || token.isEmpty) {
+        _showErrorSnackbar('Authentication token is missing or invalid.');
+        return;
+      }
 
-    showDialog(
-      context: context,
-      builder: (context) => AlertDialog(
-        title: const Text('Add Terminal',
-            style: TextStyle(fontWeight: FontWeight.bold)),
-        content: SingleChildScrollView(
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              // Terminal Name
-              TextField(
-                controller: terminalNameController,
-                decoration: const InputDecoration(
-                  labelText: 'Terminal Name',
-                  border: OutlineInputBorder(),
-                ),
-              ),
-              const SizedBox(height: 15),
-              // Location Center
-              TextField(
-                controller: locationCenterController,
-                decoration: const InputDecoration(
-                  labelText: 'Location Center',
-                  border: OutlineInputBorder(),
-                ),
-              ),
-              const SizedBox(height: 15),
-              // Total Vehicles
-              TextField(
-                controller: totalVehiclesController,
-                keyboardType: TextInputType.number,
-                decoration: const InputDecoration(
-                  labelText: 'Total Vehicles',
-                  border: OutlineInputBorder(),
-                ),
-              ),
-              const SizedBox(height: 15),
-              // Select Admin
-              DropdownButtonFormField<String>(
-                value: selectedAdminId,
-                items: admins.map((admin) {
-                  return DropdownMenuItem(
-                    value: admin['user_id'].toString(),
-                    child: Text(admin['username']),
-                  );
-                }).toList(),
-                onChanged: (value) {
-                  selectedAdminId = value;
-                },
-                decoration:
-                const InputDecoration(labelText: 'Select Admin'),
-                validator: (value) =>
-                value == null ? 'Please select an admin' : null,
-              ),
-            ],
-          ),
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.of(context).pop(),
-            child:
-            const Text('Cancel', style: TextStyle(color: Colors.grey)),
-          ),
-          ElevatedButton(
-            onPressed: () {
-              if (terminalNameController.text.isNotEmpty &&
-                  locationCenterController.text.isNotEmpty &&
-                  totalVehiclesController.text.isNotEmpty &&
-                  selectedAdminId != null) {
-                createTerminal(
-                  terminalNameController.text,
-                  locationCenterController.text,
-                  totalVehiclesController.text,
-                  selectedAdminId!,
-                );
-                Navigator.of(context).pop();
-              } else {
-                _showErrorSnackbar('Please fill in all fields.');
-              }
-            },
-            child: const Text('Add'),
-            style: ElevatedButton.styleFrom(
-              backgroundColor: const Color(0xFFFFFFFF),
-            ),
-          ),
-        ],
-      ),
-    );
+      final requestBody = {
+        'terminal_name': terminalName,
+        'total_vehicles': totalVehicles,
+        'user_id': userId,
+        'latitude': latitude,
+        'longitude': longitude,
+      };
+
+      final response = await http.put(
+        Uri.parse('http://$ip:3000/api/v1/terminals/$id'),
+        headers: {
+          'Authorization': 'Bearer $token',
+          'Accept': 'application/json',
+          'Content-Type': 'application/json',
+        },
+        body: json.encode(requestBody),
+      );
+
+      if (response.statusCode == 200) {
+        _showSuccessSnackbar('Terminal updated successfully.');
+        fetchTerminals(); // Reload terminals after updating
+      } else {
+        final errorMessage =
+            json.decode(response.body)['message'] ?? 'An unknown error occurred.';
+        _showErrorSnackbar('Failed to update terminal: $errorMessage');
+      }
+    } catch (e) {
+      _showErrorSnackbar('An error occurred: $e');
+    } finally {
+      setState(() {
+        isLoading = false;
+      });
+    }
   }
 
   // Delete Terminal
@@ -303,19 +292,18 @@ class _TerminalPageState extends State<TerminalPage> {
     }
   }
 
+  // Confirm Delete Terminal
   void _confirmDeleteTerminal(String id) {
     showDialog(
       context: context,
       builder: (context) => AlertDialog(
         title: const Text('Confirm Deletion',
             style: TextStyle(fontWeight: FontWeight.bold)),
-        content:
-        const Text('Are you sure you want to delete this terminal?'),
+        content: const Text('Are you sure you want to delete this terminal?'),
         actions: [
           TextButton(
             onPressed: () => Navigator.of(context).pop(),
-            child:
-            const Text('Cancel', style: TextStyle(color: Colors.grey)),
+            child: const Text('Cancel', style: TextStyle(color: Colors.grey)),
           ),
           ElevatedButton(
             onPressed: () {
@@ -325,6 +313,7 @@ class _TerminalPageState extends State<TerminalPage> {
             child: const Text('Delete'),
             style: ElevatedButton.styleFrom(
               backgroundColor: Colors.red,
+              foregroundColor: Colors.white, // Ensure text is white
             ),
           ),
         ],
@@ -332,145 +321,134 @@ class _TerminalPageState extends State<TerminalPage> {
     );
   }
 
-  // Update Terminal
-  Future<void> updateTerminal(String id, String terminalName,
-      String locationCenter, String totalVehicles, String userId) async {
-    setState(() {
-      isLoading = true;
-    });
-    try {
-      String? token = await storage.read(key: 'jwt_token');
-      if (token == null || token.isEmpty) {
-        _showErrorSnackbar('Authentication token is missing or invalid.');
-        return;
-      }
-
-      final response = await http.put(
-        Uri.parse('http://$ip:3000/api/v1/terminals/$id'),
-        headers: {
-          'Authorization': 'Bearer $token',
-          'Accept': 'application/json',
-          'Content-Type': 'application/json',
-        },
-        body: json.encode({
-          'terminal_name': terminalName,
-          'location_center': locationCenter,
-          'total_vehicles': totalVehicles,
-          'user_id': userId,
-        }),
-      );
-
-      if (response.statusCode == 200) {
-        _showSuccessSnackbar('Terminal updated successfully.');
-        fetchTerminals(); // Reload terminals after updating
-      } else {
-        final errorMessage =
-            json.decode(response.body)['message'] ?? 'An unknown error occurred.';
-        _showErrorSnackbar('Failed to update terminal: $errorMessage');
-      }
-    } catch (e) {
-      _showErrorSnackbar('An error occurred: $e');
-    } finally {
-      setState(() {
-        isLoading = false;
-      });
-    }
-  }
-
-  // Show Edit Terminal Dialog
-  void _showEditTerminalDialog(dynamic terminal) {
-    final terminalNameController =
-    TextEditingController(text: terminal['terminal_name']);
-    final locationCenterController =
-    TextEditingController(text: terminal['location_center'] ?? '');
-    final totalVehiclesController =
-    TextEditingController(text: terminal['total_vehicles'].toString());
-    String? selectedAdminId = terminal['user_id']?.toString();
+  // Show Add Terminal Dialog
+  void _showAddTerminalDialog() {
+    final terminalNameController = TextEditingController();
+    final totalVehiclesController = TextEditingController();
+    String? selectedAdminId;
+    double? selectedLatitude;
+    double? selectedLongitude;
 
     showDialog(
       context: context,
       builder: (context) => AlertDialog(
-        title: const Text('Edit Terminal',
-            style: TextStyle(fontWeight: FontWeight.bold)),
+        title: const Text('Add Terminal', style: TextStyle(fontWeight: FontWeight.bold)),
         content: SingleChildScrollView(
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              // Terminal Name
-              TextField(
-                controller: terminalNameController,
-                decoration: const InputDecoration(
-                  labelText: 'Terminal Name',
-                  border: OutlineInputBorder(),
-                ),
-              ),
-              const SizedBox(height: 15),
-              // Location Center
-              TextField(
-                controller: locationCenterController,
-                decoration: const InputDecoration(
-                  labelText: 'Location Center',
-                  border: OutlineInputBorder(),
-                ),
-              ),
-              const SizedBox(height: 15),
-              // Total Vehicles
-              TextField(
-                controller: totalVehiclesController,
-                keyboardType: TextInputType.number,
-                decoration: const InputDecoration(
-                  labelText: 'Total Vehicles',
-                  border: OutlineInputBorder(),
-                ),
-              ),
-              const SizedBox(height: 15),
-              // Select Admin
-              DropdownButtonFormField<String>(
-                value: selectedAdminId,
-                items: admins.map((admin) {
-                  return DropdownMenuItem(
-                    value: admin['user_id'].toString(),
-                    child: Text(admin['username']),
-                  );
-                }).toList(),
-                onChanged: (value) {
-                  selectedAdminId = value;
-                },
-                decoration:
-                const InputDecoration(labelText: 'Select Admin'),
-                validator: (value) =>
-                value == null ? 'Please select an admin' : null,
-              ),
-            ],
+          child: StatefulBuilder(
+            builder: (context, setStateDialog) {
+              return Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  // Terminal Name
+                  TextField(
+                    controller: terminalNameController,
+                    decoration: const InputDecoration(
+                      labelText: 'Terminal Name',
+                      border: OutlineInputBorder(),
+                    ),
+                  ),
+                  const SizedBox(height: 15),
+                  // Total Vehicles
+                  TextField(
+                    controller: totalVehiclesController,
+                    keyboardType: TextInputType.number,
+                    decoration: const InputDecoration(
+                      labelText: 'Total Vehicles',
+                      border: OutlineInputBorder(),
+                    ),
+                  ),
+                  const SizedBox(height: 15),
+                  // Select Admin
+                  DropdownButtonFormField<String>(
+                    value: selectedAdminId,
+                    items: admins.map((admin) {
+                      return DropdownMenuItem<String>(
+                        value: admin['user_id'].toString(),
+                        child: Text(admin['username']),
+                      );
+                    }).toList(),
+                    onChanged: (value) {
+                      setStateDialog(() {
+                        selectedAdminId = value;
+                      });
+                    },
+                    decoration: const InputDecoration(labelText: 'Select Admin'),
+                    validator: (value) => value == null ? 'Please select an admin' : null,
+                  ),
+                  const SizedBox(height: 15),
+                  // Show chosen coordinates or not
+                  Text(
+                    (selectedLatitude == null || selectedLongitude == null)
+                        ? 'Location: Not Selected'
+                        : 'Location: $selectedLatitude, $selectedLongitude',
+                    style: TextStyle(color: Colors.grey[700]),
+                  ),
+                  const SizedBox(height: 15),
+                  // Button to Select Location from Map
+                  ElevatedButton.icon(
+                    onPressed: () async {
+                      // Open Map Selection Dialog
+                      LatLng? selectedLatLng = await showDialog<LatLng>(
+                        context: context,
+                        builder: (context) => _MapSelectionDialog(
+                          initialLocation: selectedLatitude != null && selectedLongitude != null
+                              ? LatLng(selectedLatitude!, selectedLongitude!)
+                              : null,
+                        ),
+                      );
+
+                      if (selectedLatLng != null) {
+                        setStateDialog(() {
+                          selectedLatitude = selectedLatLng.latitude;
+                          selectedLongitude = selectedLatLng.longitude;
+                        });
+                      }
+                    },
+                    icon: const Icon(Icons.location_on, color: Colors.white),
+                    label: const Text('Select Location from Map',
+                        style: TextStyle(color: Colors.white)),
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: secondaryColor,
+                      padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(30),
+                      ),
+                    ),
+                  ),
+                ],
+              );
+            },
           ),
         ),
         actions: [
           TextButton(
             onPressed: () => Navigator.of(context).pop(),
-            child:
-            const Text('Cancel', style: TextStyle(color: Colors.grey)),
+            child: const Text('Cancel', style: TextStyle(color: Colors.grey)),
           ),
           ElevatedButton(
             onPressed: () {
               if (terminalNameController.text.isNotEmpty &&
-                  locationCenterController.text.isNotEmpty &&
                   totalVehiclesController.text.isNotEmpty &&
                   selectedAdminId != null) {
-                updateTerminal(
-                  terminal['terminal_id'].toString(),
+                createTerminal(
                   terminalNameController.text,
-                  locationCenterController.text,
+                  selectedLatitude,
+                  selectedLongitude,
                   totalVehiclesController.text,
                   selectedAdminId!,
                 );
                 Navigator.of(context).pop();
               } else {
-                _showErrorSnackbar('Please fill in all fields.');
+                _showErrorSnackbar('Please fill in all required fields.');
               }
             },
-            child: const Text('Update'),
+            child: const Text('Add', style: TextStyle(color: Colors.white)),
             style: ElevatedButton.styleFrom(
-              backgroundColor: const Color(0xFFFFFFFF),
+              backgroundColor: secondaryColor,
+              padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(30),
+              ),
             ),
           ),
         ],
@@ -478,7 +456,145 @@ class _TerminalPageState extends State<TerminalPage> {
     );
   }
 
-  // Build Terminal List Item with improved styling
+  // Show Edit Terminal Dialog
+  void _showEditTerminalDialog(dynamic terminal) {
+    final terminalNameController = TextEditingController(text: terminal['terminal_name'].toString());
+    final totalVehiclesController = TextEditingController(text: terminal['total_vehicles'].toString());
+    String? selectedAdminId = terminal['user_id']?.toString();
+
+    double? selectedLatitude = terminal['latitude'] == null ? null : (terminal['latitude'] as num?)?.toDouble();
+    double? selectedLongitude = terminal['longitude'] == null ? null : (terminal['longitude'] as num?)?.toDouble();
+
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('Edit Terminal', style: TextStyle(fontWeight: FontWeight.bold)),
+        content: SingleChildScrollView(
+          child: StatefulBuilder(
+            builder: (context, setStateDialog) {
+              return Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  // Terminal Name
+                  TextField(
+                    controller: terminalNameController,
+                    decoration: const InputDecoration(
+                      labelText: 'Terminal Name',
+                      border: OutlineInputBorder(),
+                    ),
+                  ),
+                  const SizedBox(height: 15),
+                  // Total Vehicles
+                  TextField(
+                    controller: totalVehiclesController,
+                    keyboardType: TextInputType.number,
+                    decoration: const InputDecoration(
+                      labelText: 'Total Vehicles',
+                      border: OutlineInputBorder(),
+                    ),
+                  ),
+                  const SizedBox(height: 15),
+                  // Select Admin
+                  DropdownButtonFormField<String>(
+                    value: selectedAdminId,
+                    items: admins.map((admin) {
+                      return DropdownMenuItem<String>(
+                        value: admin['user_id'].toString(),
+                        child: Text(admin['username']),
+                      );
+                    }).toList(),
+                    onChanged: (value) {
+                      setStateDialog(() {
+                        selectedAdminId = value;
+                      });
+                    },
+                    decoration: const InputDecoration(labelText: 'Select Admin'),
+                    validator: (value) => value == null ? 'Please select an admin' : null,
+                  ),
+                  const SizedBox(height: 15),
+                  Text(
+                    (selectedLatitude == null || selectedLongitude == null)
+                        ? 'Location: Not Available'
+                        : (selectedLatitude == 0 && selectedLongitude == 0)
+                        ? 'Location: Not Available'
+                        : 'Location: $selectedLatitude, $selectedLongitude',
+                    style: TextStyle(color: Colors.grey[700]),
+                  ),
+                  const SizedBox(height: 15),
+                  // Button to Select Location from Map
+                  ElevatedButton.icon(
+                    onPressed: () async {
+                      // Open Map Selection Dialog
+                      LatLng? selectedLatLng = await showDialog<LatLng>(
+                        context: context,
+                        builder: (context) => _MapSelectionDialog(
+                          initialLocation: (selectedLatitude != null && selectedLongitude != null)
+                              ? LatLng(selectedLatitude!.toDouble(), selectedLongitude!.toDouble())
+                              : null,
+                        ),
+                      );
+
+                      if (selectedLatLng != null) {
+                        setStateDialog(() {
+                          selectedLatitude = selectedLatLng.latitude;
+                          selectedLongitude = selectedLatLng.longitude;
+                        });
+                      }
+                    },
+                    icon: const Icon(Icons.location_on, color: Colors.white),
+                    label: const Text('Select Location from Map',
+                        style: TextStyle(color: Colors.white)),
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: secondaryColor,
+                      padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(30),
+                      ),
+                    ),
+                  ),
+                ],
+              );
+            },
+          ),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(context).pop(),
+            child: const Text('Cancel', style: TextStyle(color: Colors.grey)),
+          ),
+          ElevatedButton(
+            onPressed: () {
+              if (terminalNameController.text.isNotEmpty &&
+                  totalVehiclesController.text.isNotEmpty &&
+                  selectedAdminId != null) {
+                updateTerminal(
+                  terminal['terminal_id'].toString(),
+                  terminalNameController.text,
+                  selectedLatitude,
+                  selectedLongitude,
+                  totalVehiclesController.text,
+                  selectedAdminId!,
+                );
+                Navigator.of(context).pop();
+              } else {
+                _showErrorSnackbar('Please fill in all required fields.');
+              }
+            },
+            child: const Text('Update', style: TextStyle(color: Colors.white)),
+            style: ElevatedButton.styleFrom(
+              backgroundColor: secondaryColor,
+              padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(30),
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  // Build Terminal Card with enhanced design
   Widget _buildTerminalCard(dynamic terminal) {
     String adminName = 'Not Available';
     try {
@@ -488,6 +604,17 @@ class _TerminalPageState extends State<TerminalPage> {
       adminName = admin['username'];
     } catch (e) {
       adminName = 'N/A';
+    }
+
+    double? latitude = terminal['latitude'] == null ? null : (terminal['latitude'] as num?)?.toDouble();
+    double? longitude = terminal['longitude'] == null ? null : (terminal['longitude'] as num?)?.toDouble();
+
+    // Determine location display
+    String locationDisplay;
+    if (latitude == null || longitude == null || (latitude == 0 && longitude == 0)) {
+      locationDisplay = 'Not Available';
+    } else {
+      locationDisplay = '$latitude, $longitude';
     }
 
     return Card(
@@ -514,7 +641,7 @@ class _TerminalPageState extends State<TerminalPage> {
             // Terminal Icon
             CircleAvatar(
               radius: 30,
-              backgroundColor: const Color(0xFF00B4DB),
+              backgroundColor: primaryColor,
               child: const Icon(
                 Icons.location_on,
                 size: 30,
@@ -528,24 +655,17 @@ class _TerminalPageState extends State<TerminalPage> {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text(
-                    terminal['terminal_name'],
+                    terminal['terminal_name'].toString(),
                     style: const TextStyle(
                       fontWeight: FontWeight.bold,
                       fontSize: 18,
                       color: Color(0xFF0083B0),
                     ),
                   ),
+
                   const SizedBox(height: 5),
                   Text(
-                    'Location: ${terminal['location_center'] ?? 'Not Available'}',
-                    style: TextStyle(
-                      color: Colors.grey[700],
-                      fontSize: 14,
-                    ),
-                  ),
-                  const SizedBox(height: 5),
-                  Text(
-                    'Total Vehicles: ${terminal['total_vehicles']}',
+                    'Total Vehicles: ${terminal['vehicleCount']}', // Updated field
                     style: TextStyle(
                       color: Colors.grey[700],
                       fontSize: 14,
@@ -566,15 +686,32 @@ class _TerminalPageState extends State<TerminalPage> {
             Row(
               mainAxisSize: MainAxisSize.min,
               children: [
+                // Button to View Location
                 IconButton(
-                  icon: const Icon(Icons.edit, color: Colors.orange),
+                  icon: const Icon(Icons.location_on, color: Colors.blueAccent),
+                  onPressed: (latitude == null || longitude == null || (latitude == 0 && longitude == 0))
+                      ? null // Disable if no location
+                      : () {
+                    // Show Terminal Location on Map within a dialog
+                    showDialog(
+                      context: context,
+                      builder: (context) => _TerminalLocationDialog(
+                        terminalId: terminal['terminal_id'].toString(),
+                        latitude: latitude,
+                        longitude: longitude,
+                      ),
+                    );
+                  },
+                  tooltip: 'View Location',
+                ),
+                IconButton(
+                  icon: const Icon(Icons.edit, color: Colors.orangeAccent),
                   onPressed: () => _showEditTerminalDialog(terminal),
                   tooltip: 'Edit',
                 ),
                 IconButton(
-                  icon: const Icon(Icons.delete, color: Colors.red),
-                  onPressed: () => _confirmDeleteTerminal(
-                      terminal['terminal_id'].toString()),
+                  icon: const Icon(Icons.delete, color: Colors.redAccent),
+                  onPressed: () => _confirmDeleteTerminal(terminal['terminal_id'].toString()),
                   tooltip: 'Delete',
                 ),
               ],
@@ -643,7 +780,7 @@ class _TerminalPageState extends State<TerminalPage> {
       ),
       body: LayoutBuilder(
         builder: (context, constraints) {
-          bool isWeb = constraints.maxWidth > 800; // Determines if the screen size is for web
+          bool isWeb = constraints.maxWidth > 800; // Determines if screen size is for web
 
           return isLoading
               ? Center(
@@ -653,38 +790,30 @@ class _TerminalPageState extends State<TerminalPage> {
           )
               : Padding(
             padding: isWeb
-                ? const EdgeInsets.symmetric(horizontal: 32.0, vertical: 24.0) // Larger padding for web
-                : const EdgeInsets.all(16.0), // Smaller padding for mobile
+                ? const EdgeInsets.symmetric(horizontal: 32.0, vertical: 24.0)
+                : const EdgeInsets.all(16.0),
             child: Column(
               children: [
                 // Search Section
                 Padding(
                   padding: const EdgeInsets.symmetric(vertical: 8.0),
-                  child: Row(
-                    children: [
-                      Expanded(
-                        child: TextField(
-                          controller: searchController,
-                          decoration: InputDecoration(
-                            hintText: 'Search by terminal name or admin',
-                            prefixIcon: const Icon(Icons.search, color: Color(0xFF0083B0)),
-                            filled: true,
-                            fillColor: Colors.white,
-                            contentPadding:
-                            const EdgeInsets.symmetric(vertical: 0, horizontal: 20),
-                            border: OutlineInputBorder(
-                              borderRadius: BorderRadius.circular(30),
-                              borderSide: BorderSide.none,
-                            ),
-                            focusedBorder: OutlineInputBorder(
-                              borderRadius: BorderRadius.circular(30),
-                              borderSide: const BorderSide(color: Color(0xFF0083B0)),
-                            ),
-                          ),
-                        ),
+                  child: TextField(
+                    controller: searchController,
+                    decoration: InputDecoration(
+                      hintText: 'Search by terminal name or admin',
+                      prefixIcon: const Icon(Icons.search, color: Color(0xFF0083B0)),
+                      filled: true,
+                      fillColor: Colors.white,
+                      contentPadding: const EdgeInsets.symmetric(vertical: 0, horizontal: 20),
+                      border: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(30),
+                        borderSide: BorderSide.none,
                       ),
-                      // Removed the admin filter dropdown as per request
-                    ],
+                      focusedBorder: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(30),
+                        borderSide: const BorderSide(color: Color(0xFF0083B0)),
+                      ),
+                    ),
                   ),
                 ),
                 const SizedBox(height: 16),
@@ -697,10 +826,142 @@ class _TerminalPageState extends State<TerminalPage> {
       ),
       floatingActionButton: FloatingActionButton(
         onPressed: _showAddTerminalDialog,
-        backgroundColor: const Color(0xFF0083B0),
+        backgroundColor: secondaryColor,
         tooltip: 'Add Terminal',
-        child: const Icon(Icons.add , color: Color(0xFFFFFFFF),),
+        child: const Icon(Icons.add, color: Colors.white),
       ),
+    );
+  }
+}
+
+// Dialog for Selecting Location on Map
+class _MapSelectionDialog extends StatefulWidget {
+  final LatLng? initialLocation;
+
+  const _MapSelectionDialog({Key? key, this.initialLocation}) : super(key: key);
+
+  @override
+  __MapSelectionDialogState createState() => __MapSelectionDialogState();
+}
+
+class __MapSelectionDialogState extends State<_MapSelectionDialog> {
+  LatLng? _selectedLocation;
+  late GoogleMapController _mapController;
+
+  @override
+  void initState() {
+    super.initState();
+    _selectedLocation = widget.initialLocation ?? const LatLng(32.2077, 35.2813); // Default to specified location
+  }
+
+  void _onMapTapped(LatLng position) {
+    setState(() {
+      _selectedLocation = position;
+    });
+  }
+
+  void _onConfirm() {
+    if (_selectedLocation != null) {
+      Navigator.of(context).pop(_selectedLocation);
+    } else {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text(
+            'Please select a location on the map',
+            style: TextStyle(color: Colors.white),
+          ),
+          backgroundColor: Colors.redAccent,
+        ),
+      );
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return AlertDialog(
+      title: const Text('Select Terminal Location'),
+      content: SizedBox(
+        width: double.maxFinite,
+        height: 400,
+        child: GoogleMap(
+          initialCameraPosition: CameraPosition(
+            target: _selectedLocation!,
+            zoom: 14,
+          ),
+          onMapCreated: (controller) {
+            _mapController = controller;
+          },
+          onTap: _onMapTapped,
+          markers: _selectedLocation != null
+              ? {
+            Marker(
+              markerId: const MarkerId('selected-location'),
+              position: _selectedLocation!,
+            ),
+          }
+              : {},
+        ),
+      ),
+      actions: [
+        TextButton(
+          onPressed: () => Navigator.of(context).pop(),
+          child: const Text('Cancel', style: TextStyle(color: Colors.grey)),
+        ),
+        ElevatedButton(
+          onPressed: _onConfirm,
+          child: const Text('Confirm', style: TextStyle(color: Colors.white)),
+          style: ElevatedButton.styleFrom(
+            backgroundColor: Colors.green,
+          ),
+        ),
+      ],
+    );
+  }
+}
+
+// Dialog for Viewing Terminal Location on Map
+class _TerminalLocationDialog extends StatelessWidget {
+  final String terminalId;
+  final double? latitude;
+  final double? longitude;
+
+  const _TerminalLocationDialog({
+    Key? key,
+    required this.terminalId,
+    required this.latitude,
+    required this.longitude,
+  }) : super(key: key);
+
+  @override
+  Widget build(BuildContext context) {
+    // Since this dialog is only opened if we have valid coordinates, no need to check null here
+    LatLng terminalLocation = LatLng(latitude!, longitude!);
+
+    return AlertDialog(
+      title: Text('Terminal Location: $terminalId'),
+      content: SizedBox(
+        width: double.maxFinite,
+        height: 400,
+        child: GoogleMap(
+          initialCameraPosition: CameraPosition(
+            target: terminalLocation,
+            zoom: 14,
+          ),
+          markers: {
+            Marker(
+              markerId: MarkerId(terminalId),
+              position: terminalLocation,
+              infoWindow: InfoWindow(title: 'Terminal ID: $terminalId'),
+            ),
+          },
+        ),
+      ),
+      actions: [
+        TextButton(
+          onPressed: () => Navigator.of(context).pop(),
+          child: const Text('Close', style: TextStyle(color: Colors.grey)),
+        ),
+      ],
     );
   }
 }
