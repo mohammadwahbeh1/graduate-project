@@ -9,7 +9,7 @@ import 'package:untitled/Pages/Location Service.dart';
 import 'package:web_socket_channel/web_socket_channel.dart';
 import 'package:web_socket_channel/status.dart' as status;
 
-const String ip = "192.168.1.8";
+const String ip = "192.168.1.12";
 
 class DriverPage extends StatefulWidget {
   const DriverPage({super.key});
