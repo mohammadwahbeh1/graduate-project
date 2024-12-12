@@ -620,7 +620,7 @@ String username="";
           _getAppBarTitle(),
           style: TextStyle(fontWeight: FontWeight.w500),
         ),
-        backgroundColor: Color(0xFFF6D533),
+        backgroundColor: Color(0xFFFED300),
         centerTitle: true,
         actions: [
           Stack(

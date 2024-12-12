@@ -428,7 +428,7 @@ class _DriverPageState extends State<DriverPage> {
                                   onConfirm: () {
                                     _cancelReservation(reservation['reservation_id']);
                                   },
-                                  confirmText: 'Reject',
+                                  confirmText: 'Cancel',
                                 );
                               },
                               style: ElevatedButton.styleFrom(

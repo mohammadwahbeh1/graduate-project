@@ -63,6 +63,7 @@ class _ViewDriversPageState extends State<ViewDriversOnMapPage> {
         final data = jsonDecode(response.body)['data'];
         for (var vehicle in data) {
           final driver = vehicle['driver'];
+          print(driver);
           final customIcon = await _loadCustomIcon();
           _markers.add(
             Marker(

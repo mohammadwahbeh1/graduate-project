@@ -3,6 +3,8 @@ import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 import 'package:intl/intl.dart';
 import 'dart:convert';
+import 'package:intl/intl.dart';
+import 'dart:convert';
 
 import 'Splash_screen.dart';
 const String ip ="192.168.1.8";
@@ -23,6 +25,19 @@ class _BookTaxiPageState extends State<BookTaxiPage> {
   String? _endDestination;
   String _selectedType = 'Single';
   final TextEditingController _descriptionController = TextEditingController();
+  DateTime? _selectedDate;
+  TimeOfDay? _selectedTime;
+  bool _isRecurring = false;
+  List<bool> _selectedDays = List.generate(7, (index) => false);
+  final List<String> _weekDays = [
+    'Mon',
+    'Tue',
+    'Wed',
+    'Thu',
+    'Fri',
+    'Sat',
+    'Sun'
+  ];
 
   final List<String> _allLocations = [
     'راس العين',
@@ -142,7 +157,6 @@ class _BookTaxiPageState extends State<BookTaxiPage> {
     'مستشفى رفيديا'
   ];
 
-  @override
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: Colors.white,
@@ -174,12 +188,14 @@ class _BookTaxiPageState extends State<BookTaxiPage> {
                 ),
               ),
               const SizedBox(height: 30),
+              // Location Selection Row
               Row(
                 children: [
                   Expanded(
                     child: GestureDetector(
                       onTap: () {
-                        _showLocationSelector(context, _allLocations, (selectedLocation) {
+                        _showLocationSelector(
+                            context, _allLocations, (selectedLocation) {
                           setState(() {
                             _startDestination = selectedLocation;
                           });
@@ -194,7 +210,8 @@ class _BookTaxiPageState extends State<BookTaxiPage> {
                   Expanded(
                     child: GestureDetector(
                       onTap: () {
-                        _showLocationSelector(context, _allLocations, (selectedLocation) {
+                        _showLocationSelector(
+                            context, _allLocations, (selectedLocation) {
                           setState(() {
                             _endDestination = selectedLocation;
                           });
@@ -208,39 +225,152 @@ class _BookTaxiPageState extends State<BookTaxiPage> {
                 ],
               ),
               const SizedBox(height: 20),
+              // Single/Family Selection
               Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
                   Expanded(
-                    child: _buildSelectionButton('Single', _selectedType == 'Single'),
+                    child: _buildSelectionButton(
+                        'Single', _selectedType == 'Single'),
                   ),
                   const SizedBox(width: 10),
                   Expanded(
-                    child: _buildSelectionButton('Family', _selectedType == 'Family'),
+                    child: _buildSelectionButton(
+                        'Family', _selectedType == 'Family'),
                   ),
                 ],
               ),
-              const SizedBox(height: 30),
+              const SizedBox(height: 20),
+              // Date and Time Selection
+              Row(
+                children: [
+                  Expanded(
+                    child: GestureDetector(
+                      onTap: () => _selectDate(context),
+                      child: Container(
+                        padding: EdgeInsets.symmetric(
+                            vertical: 15, horizontal: 10),
+                        decoration: BoxDecoration(
+                          border: Border.all(color: Colors.black),
+                          borderRadius: BorderRadius.circular(10),
+                          color: Colors.white,
+                        ),
+                        child: Row(
+                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                          children: [
+                            Text(
+                              _selectedDate == null
+                                  ? 'Select Date'
+                                  : DateFormat('MMM dd, yyyy').format(
+                                  _selectedDate!),
+                              style: TextStyle(
+                                color: Colors.black,
+                                fontWeight: FontWeight.bold,
+                              ),
+                            ),
+                            Icon(Icons.calendar_today, color: Colors.black),
+                          ],
+                        ),
+                      ),
+                    ),
+                  ),
+                  SizedBox(width: 15),
+                  Expanded(
+                    child: GestureDetector(
+                      onTap: () => _selectTime(context),
+                      child: Container(
+                        padding: EdgeInsets.symmetric(
+                            vertical: 15, horizontal: 10),
+                        decoration: BoxDecoration(
+                          border: Border.all(color: Colors.black),
+                          borderRadius: BorderRadius.circular(10),
+                          color: Colors.white,
+                        ),
+                        child: Row(
+                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                          children: [
+                            Text(
+                              _selectedTime == null
+                                  ? 'Select Time'
+                                  : _selectedTime!.format(context),
+                              style: TextStyle(
+                                color: Colors.black,
+                                fontWeight: FontWeight.bold,
+                              ),
+                            ),
+                            Icon(Icons.access_time, color: Colors.black),
+                          ],
+                        ),
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 20),
+              // Recurring Booking Option
+              Row(
+                children: [
+                  Checkbox(
+                    value: _isRecurring,
+                    onChanged: (value) {
+                      setState(() {
+                        _isRecurring = value ?? false;
+                      });
+                    },
+                  ),
+                  Text('Recurring Booking'),
+                ],
+              ),
+              if (_isRecurring) ...[
+                const SizedBox(height: 15),
+                Container(
+                  height: 50,
+                  child: ListView.builder(
+                    scrollDirection: Axis.horizontal,
+                    itemCount: 7,
+                    itemBuilder: (context, index) {
+                      return Padding(
+                        padding: EdgeInsets.only(right: 8),
+                        child: FilterChip(
+                          label: Text(_weekDays[index]),
+                          selected: _selectedDays[index],
+                          onSelected: (bool selected) {
+                            setState(() {
+                              _selectedDays[index] = selected;
+                            });
+                          },
+                          backgroundColor: Colors.white,
+                          selectedColor: Colors.yellow,
+                          checkmarkColor: Colors.black,
+                          labelStyle: TextStyle(
+                            color: _selectedDays[index] ? Colors.black : Colors
+                                .grey,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                      );
+                    },
+                  ),
+                ),
+              ],
+              const SizedBox(height: 20),
               _buildPhoneNumberRow(),
               const SizedBox(height: 20),
-              // Description field added here
               TextFormField(
                 controller: _descriptionController,
                 maxLines: 4,
                 decoration: InputDecoration(
                   labelText: 'Add Description (Optional)',
                   labelStyle: const TextStyle(color: Colors.black),
-
                   border: OutlineInputBorder(
                     borderRadius: BorderRadius.circular(8),
                   ),
                   alignLabelWithHint: true,
                   focusedBorder: OutlineInputBorder(
                     borderRadius: BorderRadius.circular(8),
-                    borderSide: BorderSide(color: Colors.black, width: 2), // Focused border color
+                    borderSide: BorderSide(color: Colors.black, width: 2),
                   ),
                 ),
-
               ),
               const SizedBox(height: 35),
               Center(
@@ -252,7 +382,8 @@ class _BookTaxiPageState extends State<BookTaxiPage> {
                   },
                   style: ElevatedButton.styleFrom(
                     backgroundColor: Colors.yellow,
-                    padding: const EdgeInsets.symmetric(vertical: 15, horizontal: 50),
+                    padding: const EdgeInsets.symmetric(
+                        vertical: 15, horizontal: 50),
                     shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(8),
                     ),
@@ -273,6 +404,54 @@ class _BookTaxiPageState extends State<BookTaxiPage> {
         ),
       ),
     );
+  }
+
+  Future<void> _selectDate(BuildContext context) async {
+    final DateTime? picked = await showDatePicker(
+      context: context,
+      initialDate: _selectedDate ?? DateTime.now(),
+      firstDate: DateTime.now(),
+      lastDate: DateTime.now().add(Duration(days: 365)),
+      builder: (context, child) {
+        return Theme(
+          data: Theme.of(context).copyWith(
+            colorScheme: ColorScheme.light(
+              primary: Colors.yellow,
+              onPrimary: Colors.black,
+            ),
+          ),
+          child: child!,
+        );
+      },
+    );
+    if (picked != null && picked != _selectedDate) {
+      setState(() {
+        _selectedDate = picked;
+      });
+    }
+  }
+
+  Future<void> _selectTime(BuildContext context) async {
+    final TimeOfDay? picked = await showTimePicker(
+      context: context,
+      initialTime: _selectedTime ?? TimeOfDay.now(),
+      builder: (context, child) {
+        return Theme(
+          data: Theme.of(context).copyWith(
+            colorScheme: ColorScheme.light(
+              primary: Colors.yellow,
+              onPrimary: Colors.black,
+            ),
+          ),
+          child: child!,
+        );
+      },
+    );
+    if (picked != null && picked != _selectedTime) {
+      setState(() {
+        _selectedTime = picked;
+      });
+    }
   }
 
 
@@ -300,16 +479,19 @@ class _BookTaxiPageState extends State<BookTaxiPage> {
     );
   }
 
-  void _showLocationSelector(BuildContext context, List<String> locations, Function(String) onSelect) {
+  void _showLocationSelector(BuildContext context, List<String> locations,
+      Function(String) onSelect) {
     showModalBottomSheet(
       backgroundColor: Colors.grey[50],
       context: context,
       shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
       ),
-      isScrollControlled: true, // Ensures the modal expands properly
+      isScrollControlled: true,
+      // Ensures the modal expands properly
       builder: (context) {
-        List<String> filteredLocations = List.from(locations); // Copy initial list
+        List<String> filteredLocations = List.from(
+            locations); // Copy initial list
 
         return StatefulBuilder(
           builder: (context, setState) {
@@ -330,30 +512,31 @@ class _BookTaxiPageState extends State<BookTaxiPage> {
                   const SizedBox(height: 30),
 
 
-                     Row(
-                      children: [
-                        // Back arrow button aligned to the left
-                        IconButton(
-                          icon: Icon(Icons.arrow_back, color: Colors.black),
-                          onPressed: () {
-                            Navigator.pop(context); // Close the modal when pressed
-                          },
+                  Row(
+                    children: [
+                      // Back arrow button aligned to the left
+                      IconButton(
+                        icon: Icon(Icons.arrow_back, color: Colors.black),
+                        onPressed: () {
+                          Navigator.pop(
+                              context); // Close the modal when pressed
+                        },
+                      ),
+                      // Center the Text in the middle of the Row
+
+
+                      Text(
+                        "Find a place",
+                        style: TextStyle(
+                          fontWeight: FontWeight.bold,
+                          fontSize: 18,
+                          color: Colors.black,
                         ),
-                        // Center the Text in the middle of the Row
+                      ),
 
 
-                            Text(
-                              "Find a place",
-                              style: TextStyle(
-                                fontWeight: FontWeight.bold,
-                                fontSize: 18,
-                                color: Colors.black,
-                              ),
-                            ),
-
-
-                      ],
-                    ),
+                    ],
+                  ),
 
                   const SizedBox(height: 15),
                   // Search TextField for filtering locations
@@ -375,7 +558,8 @@ class _BookTaxiPageState extends State<BookTaxiPage> {
                         // Filter the list in real-time as the user types
                         filteredLocations = locations
                             .where((location) =>
-                            location.toLowerCase().contains(query.toLowerCase()))
+                            location.toLowerCase().contains(
+                                query.toLowerCase()))
                             .toList();
                       });
                     },
@@ -384,7 +568,8 @@ class _BookTaxiPageState extends State<BookTaxiPage> {
                         // Ensure the filtered list is kept even when the keyboard is dismissed
                         filteredLocations = locations
                             .where((location) =>
-                            location.toLowerCase().contains(query.toLowerCase()))
+                            location.toLowerCase().contains(
+                                query.toLowerCase()))
                             .toList();
                       });
                     },
@@ -408,7 +593,8 @@ class _BookTaxiPageState extends State<BookTaxiPage> {
                             ),
                             onPressed: () {
                               onSelect(filteredLocations[index]);
-                              Navigator.pop(context); // Close the modal after selection
+                              Navigator.pop(
+                                  context); // Close the modal after selection
                             },
                             child: Text(
                               filteredLocations[index],
@@ -430,9 +616,6 @@ class _BookTaxiPageState extends State<BookTaxiPage> {
       },
     );
   }
-
-
-
 
 
   Widget _buildPhoneNumberRow() {
@@ -556,7 +739,6 @@ class _BookTaxiPageState extends State<BookTaxiPage> {
                       onPressed: () {
                         Navigator.of(context).pop();
                         _bookTaxi();
-
                       },
                       child: const Text('Yes'),
                     ),
@@ -569,6 +751,7 @@ class _BookTaxiPageState extends State<BookTaxiPage> {
       },
     );
   }
+
   void _showSuccessDialog() {
     showDialog(
       context: context,
@@ -612,6 +795,7 @@ class _BookTaxiPageState extends State<BookTaxiPage> {
       },
     );
   }
+
   void _showErrorDialog(String errorMessage) {
     showDialog(
       context: context,
@@ -664,7 +848,6 @@ class _BookTaxiPageState extends State<BookTaxiPage> {
     });
 
     _phoneNumberController.clear();
-
   }
 
   void _createNotification(String message) async {
@@ -676,7 +859,6 @@ class _BookTaxiPageState extends State<BookTaxiPage> {
     }
 
     var notificationDetails = {'message': message};
-
 
 
     final response = await http.post(
@@ -698,53 +880,88 @@ class _BookTaxiPageState extends State<BookTaxiPage> {
 
 
   void _bookTaxi() async {
-
+    // Validation checks
     if (_startDestination == _endDestination) {
-      // Show an error message to the user
-      _showErrorDialog('Start and end destinations cannot be the same or empty.');
+      _showErrorDialog(
+          'Start and end destinations cannot be the same or empty.');
       return;
     }
+
     if (_phoneNumberController.text.isEmpty) {
       _showErrorDialog('Please enter a valid phone number.');
       return;
     }
 
-   // String startDestination = _startDestinationController.text;
-    //String endDestination = _endDestinationController.text;
+    // Add new validation for scheduled booking
+    if (_selectedDate != null && _selectedTime == null) {
+      _showErrorDialog(
+          'Please select both date and time for scheduled booking.');
+      return;
+    }
+
+    if (_isRecurring && !_selectedDays.contains(true)) {
+      _showErrorDialog('Please select at least one day for recurring booking.');
+      return;
+    }
+
+    // Prepare booking details
     String phoneNumber = _phoneNumberController.text;
     String timeStamp = DateFormat.jm().format(DateTime.now());
     String? description = _descriptionController.text.trim();
+
+    // Create booking details map with new fields
     var bookingDetails = {
       'start_destination': _startDestination,
       'end_destination': _endDestination,
       'reservation_type': _selectedType,
       'phone_number': '+970$phoneNumber',
       'description': description.isNotEmpty ? description : null,
+
+      'scheduled_date': _selectedDate?.toIso8601String(),
+      'scheduled_time': _selectedTime != null
+          ? '${_selectedTime!.hour.toString().padLeft(2, '0')}:${_selectedTime!
+          .minute.toString().padLeft(2, '0')}:00'
+          : null,
+      'is_recurring': _isRecurring,
+      'recurring_days': _isRecurring
+          ? _weekDays
+          .asMap()
+          .entries
+          .where((entry) => _selectedDays[entry.key])
+          .map((entry) => entry.value)
+          .toList()
+
+          : null,
     };
 
+    // Send request
     String? token = await storage.read(key: 'jwt_token');
     if (token == null) return;
 
-    final response = await http.post(
-      Uri.parse('http://$ip:3000/api/v1/reservation'),
-      headers: {
-        'Content-Type': 'application/json',
-        'Authorization': 'Bearer $token',
-      },
-      body: jsonEncode(bookingDetails),
-    );
+    try {
+      final response = await http.post(
+        Uri.parse('http://$ip:3000/api/v1/reservation'),
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': 'Bearer $token',
+        },
+        body: jsonEncode(bookingDetails),
+      );
 
-    if (response.statusCode == 201) {
-      _showSuccessDialog();
-
-      _createNotification(
-          "Taxi booked from $_startDestination  to $_endDestination  at $timeStamp.");
-      _clearFields();
-
-    } else {
-      print('Failed to book taxi: ${response.body}');
+      if (response.statusCode == 201) {
+        _showSuccessDialog();
+        _createNotification(
+            "Taxi booked from $_startDestination to $_endDestination at $timeStamp."
+        );
+        _clearFields();
+      } else {
+        print('Failed to book taxi: ${response.body}');
+        _showErrorDialog('Failed to book taxi. Please try again.');
+      }
+    } catch (e) {
+      print('Error booking taxi: $e');
+      _showErrorDialog('Network error. Please check your connection.');
     }
   }
 }
-
 
