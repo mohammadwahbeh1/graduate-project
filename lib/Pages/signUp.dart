@@ -3,6 +3,8 @@ import 'package:http/http.dart' as http; // For making HTTP requests
 import 'dart:convert'; // For encoding/decoding JSON
 import 'package:flutter_secure_storage/flutter_secure_storage.dart'; // For secure storage
 import 'loginPage.dart'; // Navigate to login page after successful sign-up
+import 'package:flutter/foundation.dart';
+
 
 const String ip ="192.168.1.8";
 
@@ -95,223 +97,190 @@ class _SignUpState extends State<SignUp> {
     }
   }
 
+
   @override
   Widget build(BuildContext context) {
+    final isWeb = kIsWeb;
+    final screenWidth = MediaQuery.of(context).size.width;
+    final containerWidth = isWeb ? (screenWidth > 600 ? 500 : screenWidth * 0.9) : screenWidth;
+
     return Scaffold(
       backgroundColor: Colors.white,
-      body: SingleChildScrollView(
-        child: Column(
-          children: [
-            const SizedBox(height: 70.0),
-            Padding(
-              padding: const EdgeInsets.only(left: 20.0, right: 20.0),
-              child: Form(
-                key: _formkey,
-                child: Column(
-                  children: [
-                    // Name input field
-                    Container(
-                      padding: const EdgeInsets.symmetric(
-                          vertical: 2.0, horizontal: 30.0),
-                      decoration: BoxDecoration(
-                          color: const Color(0xFFedf0f8),
-                          borderRadius: BorderRadius.circular(30)),
-                      child: TextFormField(
-                        validator: (value) {
-                          if (value == null || value.isEmpty) {
-                            return 'Please Enter Name';
-                          }
-                          return null;
-                        },
-                        controller: namecontroller,
-                        decoration: const InputDecoration(
-                            border: InputBorder.none,
-                            hintText: "Name",
-                            hintStyle: TextStyle(
-                                color: Color(0xFFb2b7bf), fontSize: 18.0)),
-                      ),
-                    ),
-                    const SizedBox(height: 30.0),
+      body: Center(
+        child: SingleChildScrollView(
+          child: Column(
+            children: [
+              const SizedBox(height: 70.0),
+              Padding(
+                padding: EdgeInsets.symmetric(horizontal: isWeb ? 0 : 20.0),
+                child: Form(
+                  key: _formkey,
+                  child: Container(
+                    width: containerWidth.toDouble(),
+                    child: Column(
+                      children: [
+                        // Name input field
+                        _buildInputField(
+                          controller: namecontroller,
+                          hint: "Name",
+                          validator: (value) {
+                            if (value == null || value.isEmpty) {
+                              return 'Please Enter Name';
+                            }
+                            return null;
+                          },
+                        ),
+                        const SizedBox(height: 30.0),
 
-                    // Email input field with validation
-                    Container(
-                      padding: const EdgeInsets.symmetric(
-                          vertical: 2.0, horizontal: 30.0),
-                      decoration: BoxDecoration(
-                          color: const Color(0xFFedf0f8),
-                          borderRadius: BorderRadius.circular(30)),
-                      child: TextFormField(
-                        validator: (value) {
-                          if (value == null || value.isEmpty) {
-                            return 'Please Enter Email';
-                          } else if (!emailRegExp.hasMatch(value)) {
-                            return 'Please Enter a Valid Email';
-                          }
-                          return null;
-                        },
-                        controller: mailcontroller,
-                        decoration: const InputDecoration(
-                            border: InputBorder.none,
-                            hintText: "Email",
-                            hintStyle: TextStyle(
-                                color: Color(0xFFb2b7bf), fontSize: 18.0)),
-                      ),
-                    ),
-                    const SizedBox(height: 30.0),
+                        // Email input field with validation
+                        _buildInputField(
+                          controller: mailcontroller,
+                          hint: "Email",
+                          validator: (value) {
+                            if (value == null || value.isEmpty) {
+                              return 'Please Enter Email';
+                            } else if (!emailRegExp.hasMatch(value)) {
+                              return 'Please Enter a Valid Email';
+                            }
+                            return null;
+                          },
+                        ),
+                        const SizedBox(height: 30.0),
 
-                    // Password input field with validation
-                    Container(
-                      padding: const EdgeInsets.symmetric(
-                          vertical: 2.0, horizontal: 30.0),
-                      decoration: BoxDecoration(
-                          color: const Color(0xFFedf0f8),
-                          borderRadius: BorderRadius.circular(30)),
-                      child: TextFormField(
-                        validator: (value) {
-                          if (value == null || value.isEmpty) {
-                            return 'Please Enter Password';
-                          } else if (value.length < 6) {
-                            return 'Password must be at least 6 characters long';
-                          }
-                          return null;
-                        },
-                        controller: passwordcontroller,
-                        decoration: const InputDecoration(
-                            border: InputBorder.none,
-                            hintText: "Password",
-                            hintStyle: TextStyle(
-                                color: Color(0xFFb2b7bf), fontSize: 18.0)),
-                        obscureText: true,
-                      ),
-                    ),
-                    const SizedBox(height: 30.0),
+                        // Password input field with validation
+                        _buildInputField(
+                          controller: passwordcontroller,
+                          hint: "Password",
+                          isPassword: true,
+                          validator: (value) {
+                            if (value == null || value.isEmpty) {
+                              return 'Please Enter Password';
+                            } else if (value.length < 6) {
+                              return 'Password must be at least 6 characters long';
+                            }
+                            return null;
+                          },
+                        ),
+                        const SizedBox(height: 30.0),
 
-                    // Confirm Password input field with validation
-                    Container(
-                      padding: const EdgeInsets.symmetric(
-                          vertical: 2.0, horizontal: 30.0),
-                      decoration: BoxDecoration(
-                          color: const Color(0xFFedf0f8),
-                          borderRadius: BorderRadius.circular(30)),
-                      child: TextFormField(
-                        validator: (value) {
-                          if (value == null || value.isEmpty) {
-                            return 'Please Confirm Password';
-                          } else if (value != passwordcontroller.text) {
-                            return 'Passwords do not match';
-                          }
-                          return null;
-                        },
-                        controller: confirmPasswordController,
-                        decoration: const InputDecoration(
-                            border: InputBorder.none,
-                            hintText: "Confirm Password",
-                            hintStyle: TextStyle(
-                                color: Color(0xFFb2b7bf), fontSize: 18.0)),
-                        obscureText: true,
-                      ),
-                    ),
-                    const SizedBox(height: 30.0),
+                        // Confirm Password input field with validation
+                        _buildInputField(
+                          controller: confirmPasswordController,
+                          hint: "Confirm Password",
+                          isPassword: true,
+                          validator: (value) {
+                            if (value == null || value.isEmpty) {
+                              return 'Please Confirm Password';
+                            } else if (value != passwordcontroller.text) {
+                              return 'Passwords do not match';
+                            }
+                            return null;
+                          },
+                        ),
+                        const SizedBox(height: 30.0),
 
-                    // Address input field with validation
-                    Container(
-                      padding: const EdgeInsets.symmetric(
-                          vertical: 2.0, horizontal: 30.0),
-                      decoration: BoxDecoration(
-                          color: const Color(0xFFedf0f8),
-                          borderRadius: BorderRadius.circular(30)),
-                      child: TextFormField(
-                        validator: (value) {
-                          if (value == null || value.isEmpty) {
-                            return 'Please Enter Address';
-                          }
-                          return null;
-                        },
-                        controller: addressController,
-                        decoration: const InputDecoration(
-                            border: InputBorder.none,
-                            hintText: "Address",
-                            hintStyle: TextStyle(
-                                color: Color(0xFFb2b7bf), fontSize: 18.0)),
-                      ),
-                    ),
-                    const SizedBox(height: 30.0),
+                        // Address input field with validation
+                        _buildInputField(
+                          controller: addressController,
+                          hint: "Address",
+                          validator: (value) {
+                            if (value == null || value.isEmpty) {
+                              return 'Please Enter Address';
+                            }
+                            return null;
+                          },
+                        ),
+                        const SizedBox(height: 30.0),
 
-                    // Gender input field with validation
-                    Container(
-                      padding: const EdgeInsets.symmetric(
-                          vertical: 2.0, horizontal: 30.0),
-                      decoration: BoxDecoration(
-                          color: const Color(0xFFedf0f8),
-                          borderRadius: BorderRadius.circular(30)),
-                      child: TextFormField(
-                        validator: (value) {
-                          if (value == null || value.isEmpty) {
-                            return 'Please Enter Gender';
-                          }
-                          return null;
-                        },
-                        controller: genderController,
-                        decoration: const InputDecoration(
-                            border: InputBorder.none,
-                            hintText: "Gender",
-                            hintStyle: TextStyle(
-                                color: Color(0xFFb2b7bf), fontSize: 18.0)),
-                      ),
-                    ),
-                    const SizedBox(height: 30.0),
+                        // Gender input field with validation
+                        _buildInputField(
+                          controller: genderController,
+                          hint: "Gender",
+                          validator: (value) {
+                            if (value == null || value.isEmpty) {
+                              return 'Please Enter Gender';
+                            }
+                            return null;
+                          },
+                        ),
+                        const SizedBox(height: 30.0),
 
-                    // Date of Birth input field with validation
-                    Container(
-                      padding: const EdgeInsets.symmetric(
-                          vertical: 2.0, horizontal: 30.0),
-                      decoration: BoxDecoration(
-                          color: const Color(0xFFedf0f8),
-                          borderRadius: BorderRadius.circular(30)),
-                      child: TextFormField(
-                        validator: (value) {
-                          if (value == null || value.isEmpty) {
-                            return 'Please Enter Date of Birth';
-                          }
-                          return null;
-                        },
-                        controller: dateOfBirthController,
-                        decoration: const InputDecoration(
-                            border: InputBorder.none,
-                            hintText: "Date of Birth (YYYY-MM-DD)",
-                            hintStyle: TextStyle(
-                                color: Color(0xFFb2b7bf), fontSize: 18.0)),
-                      ),
-                    ),
-                    const SizedBox(height: 30.0),
+                        // Date of Birth input field with validation
+                        _buildInputField(
+                          controller: dateOfBirthController,
+                          hint: "Date of Birth (YYYY-MM-DD)",
+                          validator: (value) {
+                            if (value == null || value.isEmpty) {
+                              return 'Please Enter Date of Birth';
+                            }
+                            return null;
+                          },
+                        ),
+                        const SizedBox(height: 30.0),
 
-                    // Sign Up button
-                    GestureDetector(
-                      onTap: registration,
-                      child: Container(
-                          width: MediaQuery.of(context).size.width,
-                          padding: const EdgeInsets.symmetric(
-                              vertical: 13.0, horizontal: 30.0),
-                          decoration: BoxDecoration(
+                        // Sign Up button
+                        GestureDetector(
+                          onTap: registration,
+                          child: Container(
+                            width: containerWidth.toDouble(),
+                            padding: const EdgeInsets.symmetric(
+                                vertical: 13.0, horizontal: 30.0),
+                            decoration: BoxDecoration(
                               color: const Color(0xFFFFD700),
-                              borderRadius: BorderRadius.circular(30)),
-                          child: const Center(
+                              borderRadius: BorderRadius.circular(30),
+                            ),
+                            child: const Center(
                               child: Text(
                                 "Sign Up",
                                 style: TextStyle(
                                     color: Colors.white,
                                     fontSize: 22.0,
                                     fontWeight: FontWeight.w800),
-                              ))),
+                              ),
+                            ),
+                          ),
+                        ),
+                      ],
                     ),
-                  ],
+                  ),
                 ),
               ),
-            ),
-            const SizedBox(height: 40.0),
-          ],
+              const SizedBox(height: 40.0),
+            ],
+          ),
         ),
       ),
     );
   }
+
+// Helper method to build input fields
+  Widget _buildInputField({
+    required TextEditingController controller,
+    required String hint,
+    required String? Function(String?) validator,
+    bool isPassword = false,
+  }) {
+    return Container(
+      padding: const EdgeInsets.symmetric(vertical: 2.0, horizontal: 30.0),
+      decoration: BoxDecoration(
+        color: const Color(0xFFedf0f8),
+        borderRadius: BorderRadius.circular(30),
+      ),
+      child: TextFormField(
+        controller: controller,
+        decoration: InputDecoration(
+          border: InputBorder.none,
+          hintText: hint,
+          hintStyle: const TextStyle(
+            color: Color(0xFFb2b7bf),
+            fontSize: 18.0,
+          ),
+        ),
+        validator: validator,
+        obscureText: isPassword,
+      ),
+    );
+  }
+
+
 }
