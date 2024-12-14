@@ -15,7 +15,7 @@ class _TerminalPageState extends State<TerminalPage> {
   List<dynamic> terminals = [];
   List<dynamic> filteredTerminals = [];
   List<dynamic> admins = [];
-  String ip = "192.168.1.12";
+  String ip = "192.168.1.4";
   bool isLoading = false;
   final TextEditingController searchController = TextEditingController();
 
@@ -59,7 +59,7 @@ class _TerminalPageState extends State<TerminalPage> {
       }
 
       final response = await http.get(
-        Uri.parse('http://localhost:3000/api/v1/admin/terminals'), // Updated endpoint
+        Uri.parse('http://$ip:3000/api/v1/admin/terminals'), // Updated endpoint
         headers: {
           'Authorization': 'Bearer $token',
           'Accept': 'application/json',

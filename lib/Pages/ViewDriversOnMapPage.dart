@@ -6,6 +6,8 @@ import 'package:google_maps_flutter/google_maps_flutter.dart';
 import 'package:http/http.dart' as http;
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'dart:convert';
+const String ip = "192.168.1.4";
+
 
 class ViewDriversOnMapPage extends StatefulWidget {
   @override
@@ -55,7 +57,7 @@ class _ViewDriversPageState extends State<ViewDriversOnMapPage> {
       if (token == null) throw Exception('Token not found');
 
       final response = await http.get(
-        Uri.parse('http://192.168.1.12:3000/api/v1/line/drivers/locations'),
+        Uri.parse('http://$ip:3000/api/v1/line/drivers/locations'),
         headers: {'Authorization': 'Bearer $token'},
       );
 

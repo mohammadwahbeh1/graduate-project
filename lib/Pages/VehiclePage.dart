@@ -3,6 +3,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:http/http.dart' as http;
 import 'package:google_maps_flutter/google_maps_flutter.dart';
+const String ip = "192.168.1.4";
+
 
 class VehiclePage extends StatefulWidget {
   const VehiclePage({Key? key}) : super(key: key);
@@ -57,7 +59,7 @@ class _VehiclePageState extends State<VehiclePage> {
       }
 
       final response = await http.get(
-        Uri.parse('http://192.168.1.12:3000/api/v1/vehicle/'),
+        Uri.parse('http://$ip:3000/api/v1/vehicle/'),
         headers: {
           'Authorization': 'Bearer $token',
           'Accept': 'application/json',
@@ -92,7 +94,7 @@ class _VehiclePageState extends State<VehiclePage> {
       }
 
       final response = await http.get(
-        Uri.parse('http://192.168.1.12:3000/api/v1/admin/drivers'),
+        Uri.parse('http://$ip:3000/api/v1/admin/drivers'),
         headers: {
           'Authorization': 'Bearer $token',
           'Accept': 'application/json',
@@ -122,7 +124,7 @@ class _VehiclePageState extends State<VehiclePage> {
       }
 
       final response = await http.get(
-        Uri.parse('http://192.168.1.12:3000/api/v1/line/term/line'),
+        Uri.parse('http://$ip:3000/api/v1/line/term/line'),
         headers: {
           'Authorization': 'Bearer $token',
           'Accept': 'application/json',
@@ -217,7 +219,7 @@ class _VehiclePageState extends State<VehiclePage> {
       }
 
       final response = await http.post(
-        Uri.parse('http://192.168.1.12:3000/api/v1/vehicle/'),
+        Uri.parse('http://$ip:3000/api/v1/vehicle/'),
         headers: {
           'Authorization': 'Bearer $token',
           'Content-Type': 'application/json',
@@ -271,7 +273,7 @@ class _VehiclePageState extends State<VehiclePage> {
       }
 
       final response = await http.put(
-        Uri.parse('http://192.168.1.12:3000/api/v1/vehicle/$vehicleId'),
+        Uri.parse('http://$ip:3000/api/v1/vehicle/$vehicleId'),
         headers: {
           'Authorization': 'Bearer $token',
           'Content-Type': 'application/json',
@@ -316,7 +318,7 @@ class _VehiclePageState extends State<VehiclePage> {
       }
 
       final response = await http.delete(
-        Uri.parse('http://192.168.1.12:3000/api/v1/vehicle/$vehicleId'),
+        Uri.parse('http://$ip:3000/api/v1/vehicle/$vehicleId'),
         headers: {
           'Authorization': 'Bearer $token',
           'Accept': 'application/json',

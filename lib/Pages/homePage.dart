@@ -14,7 +14,7 @@ import 'profilePage.dart';
 import 'package:web_socket_channel/web_socket_channel.dart';
 import 'package:web_socket_channel/status.dart' as status;
 
-const String ip ="192.168.1.8";
+const String ip ="192.168.1.4";
 
 
 
@@ -378,7 +378,7 @@ String username="";
       return;
     }
 
-    final url = Uri.parse("http://192.168.1.8:3000/api/v1/users/Profile");
+    final url = Uri.parse("http://$ip:3000/api/v1/users/Profile");
 
     try {
       final response = await http.get(url, headers: {

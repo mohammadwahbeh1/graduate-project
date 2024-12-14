@@ -9,7 +9,7 @@ import 'package:untitled/Pages/Location Service.dart';
 import 'package:web_socket_channel/web_socket_channel.dart';
 import 'package:web_socket_channel/status.dart' as status;
 
-const String ip = "192.168.1.12";
+const String ip = "192.168.1.4";
 
 class DriverPage extends StatefulWidget {
   const DriverPage({super.key});
@@ -106,7 +106,7 @@ class _DriverPageState extends State<DriverPage> {
       return;
     }
 
-    final url = Uri.parse("http://192.168.1.8:3000/api/v1/users/Profile");
+    final url = Uri.parse("http://$ip:3000/api/v1/users/Profile");
 
     try {
       final response = await http.get(url, headers: {
@@ -428,15 +428,15 @@ class _DriverPageState extends State<DriverPage> {
                                   onConfirm: () {
                                     _cancelReservation(reservation['reservation_id']);
                                   },
-                                  confirmText: 'Cancel',
+                                  confirmText: 'Cancel' ,
                                 );
                               },
                               style: ElevatedButton.styleFrom(
-                                backgroundColor: Color(0xFFF2643A),
+                                backgroundColor: const Color(0xFFF2643A),
                                 shape: RoundedRectangleBorder(
                                   borderRadius: BorderRadius.circular(8.0),
                                 ),
-                                minimumSize: Size(double.infinity, 48),
+                                minimumSize: const Size(double.infinity, 48),
                               ),
                               child: const Text(
                                 'Reject',
@@ -786,15 +786,21 @@ class _DriverPageState extends State<DriverPage> {
       print("the response is :  $response");
 
       if (response.statusCode == 200) {
-        final responseData = jsonDecode(response.body);
-        final driverInfo = responseData['data']['driver'];
-        String driverName = driverInfo['username'];
-        String driverPhone = driverInfo['phone_number'];
 
-        _createNotification(
-          userId,
-          'Your taxi has been booked successfully by $driverName. Contact: $driverPhone.',
-        );
+
+        final responseData = jsonDecode(response.body);
+        if (responseData['data'] != null && responseData['data']['driver'] != null) {
+          final driverInfo = responseData['data']['driver'];
+          String driverName = driverInfo['username'] ?? 'Unknown';
+          String driverPhone = driverInfo['phone_number'] ?? 'N/A';
+
+          _createNotification(
+            userId,
+            'Your taxi has been booked successfully by $driverName. Contact: $driverPhone.',
+          );
+        } else {
+          _showErrorDialog('Driver information not found.');
+        }
 
         _fetchReservations();
         _showSuccessDialog('Reservation accepted successfully');

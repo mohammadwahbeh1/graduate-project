@@ -8,7 +8,10 @@ import 'package:jwt_decode/jwt_decode.dart';
 import 'package:provider/provider.dart';
 import 'package:http/http.dart' as http;
 
+
 import 'location_provider.dart';
+const String ip = "192.168.1.4";
+
 class LocationService {
   final FlutterSecureStorage _storage = const FlutterSecureStorage();
   Timer? _locationTimer;
@@ -86,7 +89,7 @@ class LocationService {
       String? token = await _storage.read(key: 'jwt_token');
       if (token != null) {
         final response = await http.get(
-          Uri.parse('http://192.168.1.12:3000/api/v1/terminals/terminal-position'),
+          Uri.parse('http://$ip:3000/api/v1/terminals/terminal-position'),
           headers: {
             'Authorization': 'Bearer $token',
           },
@@ -137,7 +140,7 @@ class LocationService {
       String? token = await _storage.read(key: 'jwt_token');
       if (token != null) {
         await http.patch(
-          Uri.parse('http://192.168.1.12:3000/api/v1/vehicle/increment'),
+          Uri.parse('http://$ip:3000/api/v1/vehicle/increment'),
           headers: {
             'Authorization': 'Bearer $token',
             'Content-Type': 'application/json',
@@ -157,7 +160,7 @@ class LocationService {
       String? token = await _storage.read(key: 'jwt_token');
       if (token != null) {
         await http.patch(
-          Uri.parse('http://192.168.1.12:3000/api/v1/vehicle/decrement'),
+          Uri.parse('http://$ip:3000/api/v1/vehicle/decrement'),
           headers: {
             'Authorization': 'Bearer $token',
             'Content-Type': 'application/json',
@@ -192,7 +195,7 @@ class LocationService {
 
       // Make the PATCH request to the backend
       final response = await http.patch(
-        Uri.parse('http://192.168.1.12:3000/api/v1/vehicle/update-location'),
+        Uri.parse('http://$ip:3000/api/v1/vehicle/update-location'),
         headers: {
           'Authorization': 'Bearer $token',
           'Content-Type': 'application/json',
