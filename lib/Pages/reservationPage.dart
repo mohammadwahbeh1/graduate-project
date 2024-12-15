@@ -42,7 +42,7 @@ class _ReservationsPageState extends State<ReservationsPage> {
             _reservations = data.map((reservation) => {
               "reservation_id": reservation['reservation_id'],
               "user_id": reservation['user_id'],
-              "driver_id": reservation['driver_id'], // إضافة السائق
+              "driver_id": reservation['driver_id'],
               "start_destination": reservation['start_destination'],
               "end_destination": reservation['end_destination'],
               "status": reservation['status'],
@@ -55,11 +55,11 @@ class _ReservationsPageState extends State<ReservationsPage> {
               "recurring_days": reservation['recurring_days']?.split(','),
               "description": reservation['description'],
               "phone_number": reservation['phone_number'],
-              "recurrence_pattern": reservation['recurrence_pattern'], // إضافة النمط المتكرر
-              "recurrence_interval": reservation['recurrence_interval'], // إضافة فاصل التكرار
+              "recurrence_pattern": reservation['recurrence_pattern'],
+              "recurrence_interval": reservation['recurrence_interval'],
               "recurrence_end_date": reservation['recurrence_end_date'] != null
                   ? DateTime.parse(reservation['recurrence_end_date'])
-                  : null, // إضافة تاريخ نهاية التكرار
+                  : null, 
             }).toList();
           });
         }
