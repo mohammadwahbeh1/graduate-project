@@ -3,11 +3,10 @@ import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 import 'package:intl/intl.dart';
 import 'dart:convert';
-import 'package:intl/intl.dart';
-import 'dart:convert';
 
 import 'Splash_screen.dart';
-const String ip ="192.168.1.8";
+
+const String ip = "192.168.1.8";
 
 class BookTaxiPage extends StatefulWidget {
   const BookTaxiPage({Key? key}) : super(key: key);
@@ -19,11 +18,10 @@ class BookTaxiPage extends StatefulWidget {
 class _BookTaxiPageState extends State<BookTaxiPage> {
   final _formKey = GlobalKey<FormState>();
 
-  final TextEditingController _phoneNumberController =
-  TextEditingController();
+  final TextEditingController _phoneNumberController = TextEditingController();
   String? _startDestination;
   String? _endDestination;
-  String _selectedType = 'Single';
+  // String _selectedType = 'Single';
   final TextEditingController _descriptionController = TextEditingController();
   DateTime? _selectedDate;
   TimeOfDay? _selectedTime;
@@ -38,6 +36,9 @@ class _BookTaxiPageState extends State<BookTaxiPage> {
     'Sat',
     'Sun'
   ];
+
+  String? _selectedRecurrencePattern;
+  DateTime? _recurrenceEndDate;
 
   final List<String> _allLocations = [
     'راس العين',
@@ -157,6 +158,13 @@ class _BookTaxiPageState extends State<BookTaxiPage> {
     'مستشفى رفيديا'
   ];
 
+  @override
+  void initState() {
+    super.initState();
+    _selectedRecurrencePattern = null;
+  }
+
+  @override
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: Colors.white,
@@ -181,14 +189,14 @@ class _BookTaxiPageState extends State<BookTaxiPage> {
               ),
               const SizedBox(height: 10),
               const Text(
-                'To get the ride of your taxi please select from the following:',
+                'To get a taxi ride, please choose from the following options:',
                 style: TextStyle(
                   fontSize: 16,
                   color: Colors.grey,
                 ),
               ),
               const SizedBox(height: 30),
-              // Location Selection Row
+              // Select destinations
               Row(
                 children: [
                   Expanded(
@@ -202,7 +210,7 @@ class _BookTaxiPageState extends State<BookTaxiPage> {
                         });
                       },
                       child: _buildDropdownPlaceholder(
-                        _startDestination ?? "Start Destination",
+                        _startDestination ?? "Start Location",
                       ),
                     ),
                   ),
@@ -218,38 +226,38 @@ class _BookTaxiPageState extends State<BookTaxiPage> {
                         });
                       },
                       child: _buildDropdownPlaceholder(
-                        _endDestination ?? "End Destination",
+                        _endDestination ?? "End Location",
                       ),
                     ),
                   ),
                 ],
               ),
               const SizedBox(height: 20),
-              // Single/Family Selection
-              Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: [
-                  Expanded(
-                    child: _buildSelectionButton(
-                        'Single', _selectedType == 'Single'),
-                  ),
-                  const SizedBox(width: 10),
-                  Expanded(
-                    child: _buildSelectionButton(
-                        'Family', _selectedType == 'Family'),
-                  ),
-                ],
-              ),
-              const SizedBox(height: 20),
-              // Date and Time Selection
+              // Removed "Single/Family" booking type section
+              /*
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                Expanded(
+                  child: _buildSelectionButton('Single', _selectedType == 'Single'),
+                ),
+                const SizedBox(width: 10),
+                Expanded(
+                  child: _buildSelectionButton('Family', _selectedType == 'Family'),
+                ),
+              ],
+            ),
+            const SizedBox(height: 20),
+            */
+              // Select date and time
               Row(
                 children: [
                   Expanded(
                     child: GestureDetector(
                       onTap: () => _selectDate(context),
                       child: Container(
-                        padding: EdgeInsets.symmetric(
-                            vertical: 15, horizontal: 10),
+                        padding:
+                        const EdgeInsets.symmetric(vertical: 15, horizontal: 10),
                         decoration: BoxDecoration(
                           border: Border.all(color: Colors.black),
                           borderRadius: BorderRadius.circular(10),
@@ -261,26 +269,25 @@ class _BookTaxiPageState extends State<BookTaxiPage> {
                             Text(
                               _selectedDate == null
                                   ? 'Select Date'
-                                  : DateFormat('MMM dd, yyyy').format(
-                                  _selectedDate!),
-                              style: TextStyle(
+                                  : DateFormat('MMM dd, yyyy').format(_selectedDate!),
+                              style: const TextStyle(
                                 color: Colors.black,
                                 fontWeight: FontWeight.bold,
                               ),
                             ),
-                            Icon(Icons.calendar_today, color: Colors.black),
+                            const Icon(Icons.calendar_today, color: Colors.black),
                           ],
                         ),
                       ),
                     ),
                   ),
-                  SizedBox(width: 15),
+                  const SizedBox(width: 15),
                   Expanded(
                     child: GestureDetector(
                       onTap: () => _selectTime(context),
                       child: Container(
-                        padding: EdgeInsets.symmetric(
-                            vertical: 15, horizontal: 10),
+                        padding:
+                        const EdgeInsets.symmetric(vertical: 15, horizontal: 10),
                         decoration: BoxDecoration(
                           border: Border.all(color: Colors.black),
                           borderRadius: BorderRadius.circular(10),
@@ -293,12 +300,12 @@ class _BookTaxiPageState extends State<BookTaxiPage> {
                               _selectedTime == null
                                   ? 'Select Time'
                                   : _selectedTime!.format(context),
-                              style: TextStyle(
+                              style: const TextStyle(
                                 color: Colors.black,
                                 fontWeight: FontWeight.bold,
                               ),
                             ),
-                            Icon(Icons.access_time, color: Colors.black),
+                            const Icon(Icons.access_time, color: Colors.black),
                           ],
                         ),
                       ),
@@ -307,7 +314,7 @@ class _BookTaxiPageState extends State<BookTaxiPage> {
                 ],
               ),
               const SizedBox(height: 20),
-              // Recurring Booking Option
+              // Recurring booking option
               Row(
                 children: [
                   Checkbox(
@@ -315,47 +322,88 @@ class _BookTaxiPageState extends State<BookTaxiPage> {
                     onChanged: (value) {
                       setState(() {
                         _isRecurring = value ?? false;
+                        if (!_isRecurring) {
+                          _selectedRecurrencePattern = null;
+                          _selectedDays = List.generate(7, (index) => false);
+                          _recurrenceEndDate = null;
+                        }
                       });
                     },
                   ),
-                  Text('Recurring Booking'),
+                  const Text('Recurring Booking'),
                 ],
               ),
               if (_isRecurring) ...[
                 const SizedBox(height: 15),
-                Container(
-                  height: 50,
-                  child: ListView.builder(
-                    scrollDirection: Axis.horizontal,
-                    itemCount: 7,
-                    itemBuilder: (context, index) {
-                      return Padding(
-                        padding: EdgeInsets.only(right: 8),
-                        child: FilterChip(
-                          label: Text(_weekDays[index]),
-                          selected: _selectedDays[index],
-                          onSelected: (bool selected) {
-                            setState(() {
-                              _selectedDays[index] = selected;
-                            });
-                          },
-                          backgroundColor: Colors.white,
-                          selectedColor: Colors.yellow,
-                          checkmarkColor: Colors.black,
-                          labelStyle: TextStyle(
-                            color: _selectedDays[index] ? Colors.black : Colors
-                                .grey,
+                // Select recurrence pattern (weekly or monthly)
+                _buildRecurrencePatternSelector(),
+                const SizedBox(height: 15),
+                // Display days selection if the pattern is Weekly
+                if (_selectedRecurrencePattern == 'Weekly') ...[
+                  Container(
+                    height: 50,
+                    child: ListView.builder(
+                      scrollDirection: Axis.horizontal,
+                      itemCount: 7,
+                      itemBuilder: (context, index) {
+                        return Padding(
+                          padding: const EdgeInsets.only(right: 8.0),
+                          child: FilterChip(
+                            label: Text(_weekDays[index]),
+                            selected: _selectedDays[index],
+                            onSelected: (bool selected) {
+                              setState(() {
+                                _selectedDays[index] = selected;
+                              });
+                            },
+                            backgroundColor: Colors.white,
+                            selectedColor: Colors.yellow,
+                            checkmarkColor: Colors.black,
+                            labelStyle: TextStyle(
+                              color: _selectedDays[index] ? Colors.black : Colors.grey,
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
+                        );
+                      },
+                    ),
+                  ),
+                ],
+                const SizedBox(height: 15),
+                // Select recurrence end date
+                GestureDetector(
+                  onTap: () => _selectRecurrenceEndDate(context),
+                  child: Container(
+                    padding:
+                    const EdgeInsets.symmetric(vertical: 15, horizontal: 10),
+                    decoration: BoxDecoration(
+                      border: Border.all(color: Colors.black),
+                      borderRadius: BorderRadius.circular(10),
+                      color: Colors.white,
+                    ),
+                    child: Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        Text(
+                          _recurrenceEndDate == null
+                              ? 'Select Recurrence End Date'
+                              : DateFormat('MMM dd, yyyy').format(_recurrenceEndDate!),
+                          style: const TextStyle(
+                            color: Colors.black,
                             fontWeight: FontWeight.bold,
                           ),
                         ),
-                      );
-                    },
+                        const Icon(Icons.calendar_today, color: Colors.black),
+                      ],
+                    ),
                   ),
                 ),
+                const SizedBox(height: 20),
               ],
-              const SizedBox(height: 20),
+              // Phone number
               _buildPhoneNumberRow(),
               const SizedBox(height: 20),
+              // Additional description (optional)
               TextFormField(
                 controller: _descriptionController,
                 maxLines: 4,
@@ -368,11 +416,12 @@ class _BookTaxiPageState extends State<BookTaxiPage> {
                   alignLabelWithHint: true,
                   focusedBorder: OutlineInputBorder(
                     borderRadius: BorderRadius.circular(8),
-                    borderSide: BorderSide(color: Colors.black, width: 2),
+                    borderSide: const BorderSide(color: Colors.black, width: 2),
                   ),
                 ),
               ),
               const SizedBox(height: 35),
+              // Book button
               Center(
                 child: ElevatedButton(
                   onPressed: () {
@@ -411,11 +460,11 @@ class _BookTaxiPageState extends State<BookTaxiPage> {
       context: context,
       initialDate: _selectedDate ?? DateTime.now(),
       firstDate: DateTime.now(),
-      lastDate: DateTime.now().add(Duration(days: 365)),
+      lastDate: DateTime.now().add(const Duration(days: 365)),
       builder: (context, child) {
         return Theme(
           data: Theme.of(context).copyWith(
-            colorScheme: ColorScheme.light(
+            colorScheme: const ColorScheme.light(
               primary: Colors.yellow,
               onPrimary: Colors.black,
             ),
@@ -438,7 +487,7 @@ class _BookTaxiPageState extends State<BookTaxiPage> {
       builder: (context, child) {
         return Theme(
           data: Theme.of(context).copyWith(
-            colorScheme: ColorScheme.light(
+            colorScheme: const ColorScheme.light(
               primary: Colors.yellow,
               onPrimary: Colors.black,
             ),
@@ -454,10 +503,9 @@ class _BookTaxiPageState extends State<BookTaxiPage> {
     }
   }
 
-
   Widget _buildDropdownPlaceholder(String text) {
     return Container(
-      padding: EdgeInsets.symmetric(vertical: 15, horizontal: 10),
+      padding: const EdgeInsets.symmetric(vertical: 15, horizontal: 10),
       decoration: BoxDecoration(
         border: Border.all(color: Colors.black),
         borderRadius: BorderRadius.circular(10),
@@ -468,12 +516,12 @@ class _BookTaxiPageState extends State<BookTaxiPage> {
         children: [
           Text(
             text,
-            style: TextStyle(
+            style: const TextStyle(
               color: Colors.black,
               fontWeight: FontWeight.bold,
             ),
           ),
-          Icon(Icons.arrow_drop_down, color: Colors.black),
+          const Icon(Icons.arrow_drop_down, color: Colors.black),
         ],
       ),
     );
@@ -484,14 +532,13 @@ class _BookTaxiPageState extends State<BookTaxiPage> {
     showModalBottomSheet(
       backgroundColor: Colors.grey[50],
       context: context,
-      shape: RoundedRectangleBorder(
+      shape: const RoundedRectangleBorder(
         borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
       ),
       isScrollControlled: true,
-      // Ensures the modal expands properly
       builder: (context) {
         List<String> filteredLocations = List.from(
-            locations); // Copy initial list
+            locations);
 
         return StatefulBuilder(
           builder: (context, setState) {
@@ -500,7 +547,6 @@ class _BookTaxiPageState extends State<BookTaxiPage> {
               child: Column(
                 mainAxisSize: MainAxisSize.min,
                 children: [
-                  // Handle the top bar with the back arrow and title
                   Container(
                     height: 5,
                     width: 50,
@@ -510,73 +556,72 @@ class _BookTaxiPageState extends State<BookTaxiPage> {
                     ),
                   ),
                   const SizedBox(height: 30),
-
-
+                  // عنوان النافذة
                   Row(
                     children: [
-                      // Back arrow button aligned to the left
+                      // زر العودة
                       IconButton(
-                        icon: Icon(Icons.arrow_back, color: Colors.black),
+                        icon:
+                        const Icon(Icons.arrow_back, color: Colors.black),
                         onPressed: () {
                           Navigator.pop(
-                              context); // Close the modal when pressed
+                              context);
                         },
                       ),
-                      // Center the Text in the middle of the Row
-
-
-                      Text(
-                        "Find a place",
-                        style: TextStyle(
-                          fontWeight: FontWeight.bold,
-                          fontSize: 18,
-                          color: Colors.black,
+                      const Expanded(
+                        child: Text(
+                          "Find a place",
+                          style: TextStyle(
+                            fontWeight: FontWeight.bold,
+                            fontSize: 18,
+                            color: Colors.black,
+                          ),
+                          textAlign: TextAlign.center,
                         ),
                       ),
-
-
+                      // للحفاظ على توازن العناصر في الصف
+                      const SizedBox(width: 48),
                     ],
                   ),
-
                   const SizedBox(height: 15),
-                  // Search TextField for filtering locations
+                  // حقل البحث لتصفية المواقع
                   TextField(
                     decoration: InputDecoration(
-                      hintText: "Search a place",
-                      prefixIcon: Icon(Icons.search, color: Colors.black),
+                      hintText: "Find a place",
+                      prefixIcon: const Icon(Icons.search, color: Colors.black),
                       border: OutlineInputBorder(
                         borderRadius: BorderRadius.circular(10),
-                        borderSide: BorderSide(color: Colors.grey),
+                        borderSide: const BorderSide(color: Colors.grey),
                       ),
                       focusedBorder: OutlineInputBorder(
                         borderRadius: BorderRadius.circular(10),
-                        borderSide: BorderSide(color: Colors.black, width: 2),
+                        borderSide: const BorderSide(
+                            color: Colors.black, width: 2),
                       ),
                     ),
                     onChanged: (query) {
                       setState(() {
-                        // Filter the list in real-time as the user types
                         filteredLocations = locations
-                            .where((location) =>
-                            location.toLowerCase().contains(
-                                query.toLowerCase()))
+                            .where((location) => location
+                            .toLowerCase()
+                            .contains(query.toLowerCase()))
                             .toList();
                       });
                     },
                     onSubmitted: (query) {
                       setState(() {
-                        // Ensure the filtered list is kept even when the keyboard is dismissed
                         filteredLocations = locations
-                            .where((location) =>
-                            location.toLowerCase().contains(
-                                query.toLowerCase()))
+                            .where((location) => location
+                            .toLowerCase()
+                            .contains(query.toLowerCase()))
                             .toList();
                       });
                     },
                   ),
                   const SizedBox(height: 15),
-                  // List of filtered locations displayed below the search bar
-                  Expanded(
+
+                  SizedBox(
+                    height: 400,
                     child: ListView.builder(
                       itemCount: filteredLocations.length,
                       itemBuilder: (context, index) {
@@ -585,20 +630,21 @@ class _BookTaxiPageState extends State<BookTaxiPage> {
                           child: ElevatedButton(
                             style: ElevatedButton.styleFrom(
                               backgroundColor: Colors.white,
-                              side: BorderSide(color: Colors.black),
+                              side: const BorderSide(color: Colors.black),
                               shape: RoundedRectangleBorder(
                                 borderRadius: BorderRadius.circular(10),
                               ),
-                              padding: EdgeInsets.symmetric(vertical: 18),
+                              padding:
+                              const EdgeInsets.symmetric(vertical: 18),
                             ),
                             onPressed: () {
                               onSelect(filteredLocations[index]);
                               Navigator.pop(
-                                  context); // Close the modal after selection
+                                  context); // إغلاق النافذة بعد الاختيار
                             },
                             child: Text(
                               filteredLocations[index],
-                              style: TextStyle(
+                              style: const TextStyle(
                                 color: Colors.black,
                                 fontWeight: FontWeight.bold,
                               ),
@@ -617,24 +663,25 @@ class _BookTaxiPageState extends State<BookTaxiPage> {
     );
   }
 
-
   Widget _buildPhoneNumberRow() {
     return Row(
       children: [
         Container(
-          padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 15),
+          padding:
+          const EdgeInsets.symmetric(horizontal: 10, vertical: 15),
           decoration: BoxDecoration(
             color: Colors.grey[200],
             borderRadius: BorderRadius.circular(8),
             border: Border.all(),
           ),
           child: Row(
-            children: [
-              const Icon(Icons.phone, color: Colors.black),
-              const SizedBox(width: 5),
-              const Text(
+            children: const [
+              Icon(Icons.phone, color: Colors.black),
+              SizedBox(width: 5),
+              Text(
                 '+970',
-                style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+                style: TextStyle(
+                    fontSize: 16, fontWeight: FontWeight.bold),
               ),
             ],
           ),
@@ -666,49 +713,79 @@ class _BookTaxiPageState extends State<BookTaxiPage> {
           return 'Please enter a valid phone number';
         }
         if (!RegExp(r'^\d+$').hasMatch(value)) {
-          return 'Phone number can only contain digits';
+          return 'Phone number must contain only numbers';
         }
         return null;
       },
     );
   }
 
-  Widget _buildSelectionButton(String label, bool isSelected) {
-    return GestureDetector(
-      onTap: () {
-        setState(() {
-          _selectedType = label;
-        });
-      },
-      child: Container(
-        height: 50,
-        decoration: BoxDecoration(
-          color: isSelected ? Colors.black : Colors.white,
+
+  Widget _buildRecurrencePatternSelector() {
+    return DropdownButtonFormField<String>(
+      decoration: InputDecoration(
+        labelText: 'Recurrence Pattern',
+        border: OutlineInputBorder(
           borderRadius: BorderRadius.circular(8),
-          border: Border.all(color: Colors.black),
-        ),
-        child: Center(
-          child: Text(
-            label,
-            style: TextStyle(
-              color: isSelected ? Colors.white : Colors.black,
-              fontSize: 16,
-              fontWeight: FontWeight.bold,
-            ),
-          ),
         ),
       ),
+      value: _selectedRecurrencePattern,
+      items: ['Weekly', 'Monthly']
+          .map((pattern) => DropdownMenuItem(
+        value: pattern,
+        child: Text(pattern == 'Weekly' ? 'Weekly' : 'Monthly'),
+      ))
+          .toList(),
+      onChanged: (value) {
+        setState(() {
+          _selectedRecurrencePattern = value;
+          if (value != 'Weekly') {
+            _selectedDays = List.generate(7, (index) => false);
+          }
+        });
+      },
+      validator: (value) {
+        if (_isRecurring && value == null) {
+          return 'Please select a recurrence pattern';
+        }
+        return null;
+      },
     );
   }
+
+  Future<void> _selectRecurrenceEndDate(BuildContext context) async {
+    final DateTime? picked = await showDatePicker(
+      context: context,
+      initialDate: _recurrenceEndDate ??
+          DateTime.now().add(const Duration(days: 30)),
+      firstDate: DateTime.now(),
+      lastDate: DateTime.now().add(const Duration(days: 365)),
+      builder: (context, child) {
+        return Theme(
+          data: Theme.of(context).copyWith(
+            colorScheme: const ColorScheme.light(
+              primary: Colors.yellow,
+              onPrimary: Colors.black,
+            ),
+          ),
+          child: child!,
+        );
+      },
+    );
+    if (picked != null && picked != _recurrenceEndDate) {
+      setState(() {
+        _recurrenceEndDate = picked;
+      });
+    }
+  }
+
 
   void _showConfirmationDialog() {
     showDialog(
       context: context,
       builder: (BuildContext context) {
         return Dialog(
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(16.0),
-          ),
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16.0)),
           backgroundColor: Colors.white,
           child: Padding(
             padding: const EdgeInsets.all(20.0),
@@ -757,9 +834,7 @@ class _BookTaxiPageState extends State<BookTaxiPage> {
       context: context,
       builder: (BuildContext context) {
         return Dialog(
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(16.0),
-          ),
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16.0)),
           backgroundColor: Colors.white,
           child: Padding(
             padding: const EdgeInsets.all(20.0),
@@ -771,8 +846,8 @@ class _BookTaxiPageState extends State<BookTaxiPage> {
                   style: TextStyle(fontSize: 22, fontWeight: FontWeight.bold),
                 ),
                 const SizedBox(height: 10),
-                Text(
-                  "The Taxi Booked Succesfully",
+                const Text(
+                  "The taxi has been successfully booked",
                   style: TextStyle(fontSize: 16),
                   textAlign: TextAlign.center,
                 ),
@@ -782,7 +857,7 @@ class _BookTaxiPageState extends State<BookTaxiPage> {
                   children: [
                     ElevatedButton(
                       onPressed: () {
-                        Navigator.of(context).pop(); // Close the error dialog
+                        Navigator.of(context).pop(); // Close the dialog
                       },
                       child: const Text('OK'),
                     ),
@@ -801,9 +876,7 @@ class _BookTaxiPageState extends State<BookTaxiPage> {
       context: context,
       builder: (BuildContext context) {
         return Dialog(
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(16.0),
-          ),
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16.0)),
           backgroundColor: Colors.white,
           child: Padding(
             padding: const EdgeInsets.all(20.0),
@@ -817,7 +890,7 @@ class _BookTaxiPageState extends State<BookTaxiPage> {
                 const SizedBox(height: 10),
                 Text(
                   errorMessage,
-                  style: TextStyle(fontSize: 16),
+                  style: const TextStyle(fontSize: 16),
                   textAlign: TextAlign.center,
                 ),
                 const SizedBox(height: 20),
@@ -826,7 +899,7 @@ class _BookTaxiPageState extends State<BookTaxiPage> {
                   children: [
                     ElevatedButton(
                       onPressed: () {
-                        Navigator.of(context).pop(); // Close the error dialog
+                        Navigator.of(context).pop(); // Close the dialog
                       },
                       child: const Text('OK'),
                     ),
@@ -840,11 +913,18 @@ class _BookTaxiPageState extends State<BookTaxiPage> {
     );
   }
 
+
   void _clearFields() {
     setState(() {
       _startDestination = null;
       _endDestination = null;
       _descriptionController.clear();
+      _selectedDate = null;
+      _selectedTime = null;
+      _isRecurring = false;
+      _selectedRecurrencePattern = null;
+      _recurrenceEndDate = null;
+      _selectedDays = List.generate(7, (index) => false);
     });
 
     _phoneNumberController.clear();
@@ -860,7 +940,6 @@ class _BookTaxiPageState extends State<BookTaxiPage> {
 
     var notificationDetails = {'message': message};
 
-
     final response = await http.post(
       Uri.parse('http://$ip:3000/api/v1/notifications'),
       headers: {
@@ -870,7 +949,6 @@ class _BookTaxiPageState extends State<BookTaxiPage> {
       body: jsonEncode(notificationDetails),
     );
 
-
     if (response.statusCode == 200) {
       print('Notification created successfully');
     } else {
@@ -878,12 +956,10 @@ class _BookTaxiPageState extends State<BookTaxiPage> {
     }
   }
 
-
   void _bookTaxi() async {
-    // Validation checks
+    // Validation
     if (_startDestination == _endDestination) {
-      _showErrorDialog(
-          'Start and end destinations cannot be the same or empty.');
+      _showErrorDialog('Start and end destinations cannot be the same or empty.');
       return;
     }
 
@@ -892,16 +968,25 @@ class _BookTaxiPageState extends State<BookTaxiPage> {
       return;
     }
 
-    // Add new validation for scheduled booking
+    // Scheduled booking validation
     if (_selectedDate != null && _selectedTime == null) {
-      _showErrorDialog(
-          'Please select both date and time for scheduled booking.');
+      _showErrorDialog('Please select both date and time for a scheduled booking.');
       return;
     }
 
-    if (_isRecurring && !_selectedDays.contains(true)) {
-      _showErrorDialog('Please select at least one day for recurring booking.');
-      return;
+    if (_isRecurring) {
+      if (_selectedRecurrencePattern == null) {
+        _showErrorDialog('Please select a recurrence pattern.');
+        return;
+      }
+      if (_selectedRecurrencePattern == 'Weekly' && !_selectedDays.contains(true)) {
+        _showErrorDialog('Please select at least one day for the weekly recurring booking.');
+        return;
+      }
+      if (_recurrenceEndDate == null) {
+        _showErrorDialog('Please select a recurrence end date.');
+        return;
+      }
     }
 
     // Prepare booking details
@@ -909,32 +994,35 @@ class _BookTaxiPageState extends State<BookTaxiPage> {
     String timeStamp = DateFormat.jm().format(DateTime.now());
     String? description = _descriptionController.text.trim();
 
-    // Create booking details map with new fields
-    var bookingDetails = {
-      'start_destination': _startDestination,
-      'end_destination': _endDestination,
-      'reservation_type': _selectedType,
-      'phone_number': '+970$phoneNumber',
-      'description': description.isNotEmpty ? description : null,
-
-      'scheduled_date': _selectedDate?.toIso8601String(),
-      'scheduled_time': _selectedTime != null
-          ? '${_selectedTime!.hour.toString().padLeft(2, '0')}:${_selectedTime!
-          .minute.toString().padLeft(2, '0')}:00'
-          : null,
-      'is_recurring': _isRecurring,
-      'recurring_days': _isRecurring
-          ? _weekDays
+    // Prepare recurring_days as a string (comma-separated values)
+    String recurringDays = '';
+    if (_isRecurring && _selectedRecurrencePattern == 'Weekly') {
+      recurringDays = _weekDays
           .asMap()
           .entries
           .where((entry) => _selectedDays[entry.key])
           .map((entry) => entry.value)
-          .toList()
+          .join(', ');
+    }
 
+    // Create booking details map with new fields
+    var bookingDetails = {
+      'start_destination': _startDestination,
+      'end_destination': _endDestination,
+      'phone_number': '+970$phoneNumber',
+      'description': description.isNotEmpty ? description : null,
+      'scheduled_date': _selectedDate?.toIso8601String(),
+      'scheduled_time': _selectedTime != null
+          ? '${_selectedTime!.hour.toString().padLeft(2, '0')}:${_selectedTime!.minute.toString().padLeft(2, '0')}:00'
           : null,
+      'is_recurring': _isRecurring,
+      'recurrence_pattern': _isRecurring ? _selectedRecurrencePattern : null,
+      'recurrence_interval': _isRecurring ? 1 : null, // This can be made adjustable later
+      'recurrence_end_date': _isRecurring ? _recurrenceEndDate?.toIso8601String() : null,
+      'recurring_days': recurringDays.isNotEmpty ? recurringDays : null, // Send as a string
     };
 
-    // Send request
+    // Send booking request
     String? token = await storage.read(key: 'jwt_token');
     if (token == null) return;
 
@@ -955,13 +1043,13 @@ class _BookTaxiPageState extends State<BookTaxiPage> {
         );
         _clearFields();
       } else {
-        print('Failed to book taxi: ${response.body}');
-        _showErrorDialog('Failed to book taxi. Please try again.');
+        print('Failed to book the taxi: ${response.body}');
+        _showErrorDialog('Failed to book the taxi. Please try again.');
       }
     } catch (e) {
-      print('Error booking taxi: $e');
-      _showErrorDialog('Network error. Please check your connection.');
+      print('Error in booking the taxi: $e');
+      _showErrorDialog('Network error. Please check your internet connection.');
     }
   }
-}
 
+}

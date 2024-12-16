@@ -34,7 +34,7 @@ class _homePageState extends State<homePage> {
   int notificationCount = 0;
   WebSocketChannel? _channel;
   int _currentIndex = 0;
-String username="";
+  String username="";
   final List<Widget> _pages = [
     Container(),  // Replace with your Home Page class
     ClosestPointPage(), // Replace with your Closest Point Page class
@@ -53,8 +53,12 @@ String username="";
   @override
   void initState() {
     super.initState();
-    fetchTerminals();
-    fetchUserProfile();
+    // Load data in parallel
+    Future.wait([
+      fetchTerminals(),
+      fetchUserProfile(),
+      fetchNotifications(),
+    ]);
     _initializeWebSocket();
   }
 
@@ -247,7 +251,7 @@ String username="";
                                       int notificationId = notification['id']; // Get notification ID
 
                                       try {
-                                        
+
                                         await _handleMarkAsRead(notificationId);
 
 
@@ -373,12 +377,12 @@ String username="";
 
     if (token == null) {
       setState(() {
-         username = "No Token Found";
+        username = "No Token Found";
       });
       return;
     }
 
-    final url = Uri.parse("http://192.168.1.8:3000/api/v1/users/Profile");
+    final url = Uri.parse("http://$ip:3000/api/v1/users/Profile");
 
     try {
       final response = await http.get(url, headers: {
@@ -538,6 +542,8 @@ String username="";
                 height: 200,
                 width: double.infinity,
                 fit: BoxFit.cover,
+                cacheWidth: 600,
+                cacheHeight: 400,
               ),
               Positioned(
                 bottom: 0,
@@ -613,71 +619,71 @@ String username="";
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-    appBar: _currentIndex != 2 ? PreferredSize(
-      preferredSize: Size.fromHeight(50.0),
-      child: AppBar(
-        title: Text(
-          _getAppBarTitle(),
-          style: TextStyle(fontWeight: FontWeight.w500),
-        ),
-        backgroundColor: Color(0xFFFED300),
-        centerTitle: true,
-        actions: [
-          Stack(
-            children: [
-              IconButton(
-                icon: Image.asset(
-                  'assets/notification.png',
-                  width: 30,
-                  height: 30,
+      appBar: _currentIndex != 2 ? PreferredSize(
+        preferredSize: Size.fromHeight(50.0),
+        child: AppBar(
+          title: Text(
+            _getAppBarTitle(),
+            style: TextStyle(fontWeight: FontWeight.w500),
+          ),
+          backgroundColor: Color(0xFFFED300),
+          centerTitle: true,
+          actions: [
+            Stack(
+              children: [
+                IconButton(
+                  icon: Image.asset(
+                    'assets/notification.png',
+                    width: 30,
+                    height: 30,
+                  ),
+                  onPressed: () {
+                    _showNotifications(context);
+                  },
                 ),
-                onPressed: () {
-                  _showNotifications(context);
-                },
-              ),
-              Positioned(
-                right: 8,
-                top: 8,
-                child: Container(
-                  padding: const EdgeInsets.all(2),
-                  decoration: BoxDecoration(
-                    color: Colors.red,
-                    borderRadius: BorderRadius.circular(10),
-                  ),
-                  constraints: const BoxConstraints(
-                    minWidth: 16,
-                    minHeight: 16,
-                  ),
-                  child: Text(
-                    '$notificationCount',
-                    style: const TextStyle(
-                      color: Colors.white,
-                      fontSize: 12,
+                Positioned(
+                  right: 8,
+                  top: 8,
+                  child: Container(
+                    padding: const EdgeInsets.all(2),
+                    decoration: BoxDecoration(
+                      color: Colors.red,
+                      borderRadius: BorderRadius.circular(10),
                     ),
-                    textAlign: TextAlign.center,
+                    constraints: const BoxConstraints(
+                      minWidth: 16,
+                      minHeight: 16,
+                    ),
+                    child: Text(
+                      '$notificationCount',
+                      style: const TextStyle(
+                        color: Colors.white,
+                        fontSize: 12,
+                      ),
+                      textAlign: TextAlign.center,
+                    ),
                   ),
                 ),
-              ),
-            ],
-          ),
-          IconButton(
-            icon: const Icon(
-              Icons.person,
-              size: 30,
-              color: Colors.black,
+              ],
             ),
-            onPressed: () {
-              _showProfileOptions(context);
-            },
-          ),
-        ],
-      ),
-    ) : null, // Return null when Book Taxi tab is selected
-    drawer: buildDrawer(context),
-    body: _currentIndex == 0
-        ? _buildHomeContent()
-        : _pages[_currentIndex],
-    bottomNavigationBar: _buildCustomBottomNavigationBar(),
+            IconButton(
+              icon: const Icon(
+                Icons.person,
+                size: 30,
+                color: Colors.black,
+              ),
+              onPressed: () {
+                _showProfileOptions(context);
+              },
+            ),
+          ],
+        ),
+      ) : null, // Return null when Book Taxi tab is selected
+      drawer: buildDrawer(context),
+      body: _currentIndex == 0
+          ? _buildHomeContent()
+          : _pages[_currentIndex],
+      bottomNavigationBar: _buildCustomBottomNavigationBar(),
     );
 
   }
@@ -689,6 +695,7 @@ String username="";
         : ListView.builder(
       itemCount: terminals.length,
       itemBuilder: (context, index) {
+
         return buildCard(
           context,
           terminals[index]['terminal_name']!,

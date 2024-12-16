@@ -68,6 +68,8 @@ dependencies:
   flutter_slidable: ^3.1.1
   percent_indicator: ^4.0.0
 
+  table_calendar: ^3.0.8
+
 
 
 
@@ -76,6 +78,7 @@ dependencies:
 
   cupertino_icons: ^1.0.2
   flutter_svg: ^1.0.0
+  flutter_webrtc: ^0.12.3
 uses-material-design: true
 
 

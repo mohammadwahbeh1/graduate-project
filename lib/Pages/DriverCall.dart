@@ -1,8 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
+import 'package:permission_handler/permission_handler.dart';
 import 'dart:convert';
-
 import 'Splash_screen.dart';
+import 'package:flutter_webrtc/flutter_webrtc.dart';
+import 'package:web_socket_channel/web_socket_channel.dart';
+import 'WebRTC.dart'; // Import your WebRTC signaling class
 
 const String ip = "192.168.1.8";
 
@@ -20,16 +23,69 @@ class _CallDriverPageState extends State<CallDriverPage> {
   List<bool> isSpeakingList = []; // Track speaking for each card
   bool isLoading = true;
   TextEditingController searchController = TextEditingController();
+  String targetId="";
+  bool isMicActive = false;  // WebRTC
+  late WebRTCSignaling signaling;
+  late MediaStream localStream;
 
   @override
   void initState() {
     super.initState();
     _fetchDrivers();
+    _requestPermissions();
+    _initializeWebRTC();
+
   }
+
+  Future<void> _requestPermissions() async {
+    PermissionStatus status = await Permission.microphone.request();
+    print("Microphone permission status: $status");
+    if (status.isGranted) {
+      // Permissions are granted, initialize WebRTC
+      await _initializeWebRTC();
+    } else if (status.isDenied || status.isPermanentlyDenied) {
+      // Handle denied permissions
+      _showErrorDialog('Microphone permission is required to use this feature.');
+    }
+  }
+
+
+
+  Future<void> _initializeWebRTC() async {
+    try {
+      String? userId = await storage.read(key: 'user_id');
+
+      if (userId == null) {
+        _showErrorDialog('User ID is missing.');
+        return;
+      }
+
+      // Initialize with empty targetId - it will be set when making a call
+      signaling = WebRTCSignaling(
+          WebSocketChannel.connect(
+              Uri.parse('ws://$ip:3000/ws/notifications?userId=$userId')
+          ),
+          ''  // Empty initial targetId
+      );
+
+      localStream = await navigator.mediaDevices.getUserMedia({
+        'audio': true,
+        'video': false,
+      });
+
+      await signaling.initialize();
+
+    } catch (e) {
+      _showErrorDialog('Failed to initialize WebRTC: $e');
+    }
+  }
+
+
 
   Future<void> _fetchDrivers() async {
     try {
       String? token = await storage.read(key: 'jwt_token');
+
 
       if (token == null || token.isEmpty) {
         _showErrorDialog('Token is missing or invalid');
@@ -84,19 +140,37 @@ class _CallDriverPageState extends State<CallDriverPage> {
     );
   }
 
-  void _startListening(int index) {
+  void _startListening(int index) async {
+    final driver = filteredDrivers![index];
+    targetId = driver['user_id'].toString();
+
+    // Log the targetId
+    print('Starting call to driver with ID: $targetId');
+
     setState(() {
-      isRecordingList[index] = true; // Start recording for specific card
+      isRecordingList[index] = true;
     });
+
+    // Pass the targetId when starting the call
+    await signaling.startCall(localStream, targetId);
+
     ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(content: Text('Recording...')),
+      SnackBar(content: Text('Calling driver ${driver['username']}...')),
     );
   }
 
-  void _stopListening(int index) {
+  void _stopListening(int index) async {
+    // Stop recording and end the call
     setState(() {
       isRecordingList[index] = false; // Stop recording for specific card
     });
+
+    await signaling.handleMessage({
+      'type': 'endCall',
+      'targetId': targetId,
+
+    });
+
     ScaffoldMessenger.of(context).showSnackBar(
       const SnackBar(content: Text('Stopped Recording')),
     );
@@ -116,6 +190,36 @@ class _CallDriverPageState extends State<CallDriverPage> {
       }
     });
   }
+  void _toggleMic(int index) async {
+    setState(() {
+      isMicActive = !isMicActive;
+      isRecordingList[index] = isMicActive;
+    });
+
+    final driver = filteredDrivers![index];
+    targetId = driver['user_id'].toString();
+
+    if (isMicActive) {
+      print("Target driver ID: $targetId");
+      await signaling.startCall(localStream, targetId);
+      localStream.getAudioTracks().forEach((track) {
+        track.enabled = true;
+      });
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Calling driver ${driver['username']}...')),
+      );
+    } else {
+      localStream.getAudioTracks().forEach((track) {
+        track.enabled = false;
+      });
+      await signaling.stopCall();
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Call Ended')),
+      );
+    }
+  }
+
+
 
   @override
   Widget build(BuildContext context) {
@@ -194,34 +298,25 @@ class _CallDriverPageState extends State<CallDriverPage> {
                             ),
                           ),
                           const SizedBox(width: 10),
-                          GestureDetector(
-                            onLongPressStart: (_) {
-                              _startListening(index); // Start recording for this card
-                            },
-                            onLongPressEnd: (_) {
-                              _stopListening(index); // Stop recording for this card
-                            },
+                          InkWell(
+                            onTap: () => _toggleMic(index),  // Changed from _toggleMic(0) to _toggleMic(index)
                             child: AnimatedContainer(
-                              duration:
-                              const Duration(milliseconds: 200),
-                              width:
-                              isRecordingList[index] ? 60 : 50,
-                              height:
-                              isRecordingList[index] ? 60 : 50,
+                              duration: const Duration(milliseconds: 200),
+                              width: isRecordingList[index] ? 60 : 50,  // Changed from [0] to [index]
+                              height: isRecordingList[index] ? 60 : 50,  // Changed from [0] to [index]
                               decoration: BoxDecoration(
-                                color: isRecordingList[index]
-                                    ? Colors.red
-                                    : Colors.green, // Green when idle, red when recording
-                                borderRadius:
-                                BorderRadius.circular(50),
+                                color: isRecordingList[index] ? Colors.red : Colors.green,  // Changed from [0] to [index]
+                                borderRadius: BorderRadius.circular(50),
                               ),
                               child: const Icon(
-                                Icons.mic, // Microphone icon
+                                Icons.mic,
                                 color: Colors.white,
                                 size: 30,
                               ),
                             ),
-                          ),
+                          )
+
+
                         ],
                       ),
                     ),

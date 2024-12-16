@@ -1,15 +1,17 @@
+// driver_page.dart
 import 'package:flutter/material.dart';
-import 'package:provider/provider.dart';
-import 'package:untitled/Pages/profilePage.dart';
-import 'LineMangerCall.dart';
+import 'accepted_reservations_page.dart';
 import 'loginPage.dart';
+import 'LineMangerCall.dart';
+import 'profilePage.dart';
 import 'package:http/http.dart' as http;
 import 'dart:convert';
 import 'package:untitled/Pages/Location Service.dart';
 import 'package:web_socket_channel/web_socket_channel.dart';
-import 'package:web_socket_channel/status.dart' as status;
+import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 
 const String ip = "192.168.1.8";
+final storage = FlutterSecureStorage();
 
 class DriverPage extends StatefulWidget {
   const DriverPage({super.key});
@@ -20,27 +22,21 @@ class DriverPage extends StatefulWidget {
 
 class _DriverPageState extends State<DriverPage> {
   List<dynamic> pendingReservations = [];
-  List<dynamic> acceptedReservations = [];
   List<dynamic> filteredPendingReservations = [];
-  List<dynamic> filteredAcceptedReservations = [];
-  bool isPending = true;
   bool isLoading = true;
   String searchQuery = '';
-  String username='';
+  String username = '';
   final locationService = LocationService();
   WebSocketChannel? _channel;
 
   @override
   void initState() {
     super.initState();
-    _fetchReservations();
+    _fetchPendingReservations();
     fetchUserProfile();
     WidgetsBinding.instance.addPostFrameCallback((_) {
-
       locationService.startTracking(context);
     });
-
-
   }
 
   @override
@@ -50,52 +46,44 @@ class _DriverPageState extends State<DriverPage> {
     _channel?.sink.close();
   }
 
-  // Function to filter reservations based on search query
   void _filterReservations() {
     setState(() {
-      if (isPending) {
-        filteredPendingReservations = pendingReservations
-            .where((reservation) {
-          return reservation['User']['username']
-              .toLowerCase()
-              .contains(searchQuery.toLowerCase()) ||
-              reservation['phone_number']
-                  .toLowerCase()
-                  .contains(searchQuery.toLowerCase()) ||
-              reservation['start_destination']
-                  .toLowerCase()
-                  .contains(searchQuery.toLowerCase()) ||
-              reservation['end_destination']
-                  .toLowerCase()
-                  .contains(searchQuery.toLowerCase()) ||
-              reservation['created_at']
-                  .toLowerCase()
-                  .contains(searchQuery.toLowerCase());
-        })
-            .toList();
-      } else {
-        filteredAcceptedReservations = acceptedReservations
-            .where((reservation) {
-          return reservation['User']['username']
-              .toLowerCase()
-              .contains(searchQuery.toLowerCase()) ||
-              reservation['phone_number']
-                  .toLowerCase()
-                  .contains(searchQuery.toLowerCase()) ||
-              reservation['start_destination']
-                  .toLowerCase()
-                  .contains(searchQuery.toLowerCase()) ||
-              reservation['end_destination']
-                  .toLowerCase()
-                  .contains(searchQuery.toLowerCase()) ||
-              reservation['created_at']
-                  .toLowerCase()
-                  .contains(searchQuery.toLowerCase());
-        })
-            .toList();
-      }
+      List<dynamic> filteredList = pendingReservations.where((reservation) {
+        String username = reservation['User'] != null
+            ? reservation['User']['username'] ?? ''
+            : '';
+        return username.toLowerCase().contains(searchQuery.toLowerCase()) ||
+            (reservation['phone_number'] != null &&
+                reservation['phone_number']
+                    .toLowerCase()
+                    .contains(searchQuery.toLowerCase())) ||
+            (reservation['start_destination'] != null &&
+                reservation['start_destination']
+                    .toLowerCase()
+                    .contains(searchQuery.toLowerCase())) ||
+            (reservation['end_destination'] != null &&
+                reservation['end_destination']
+                    .toLowerCase()
+                    .contains(searchQuery.toLowerCase())) ||
+            (reservation['created_at'] != null &&
+                reservation['created_at']
+                    .toLowerCase()
+                    .contains(searchQuery.toLowerCase())) ||
+            (reservation['recurrence_pattern'] != null &&
+                reservation['recurrence_pattern']
+                    .toLowerCase()
+                    .contains(searchQuery.toLowerCase())) ||
+            (reservation['recurring_days'] != null &&
+                reservation['recurring_days']
+                    .toLowerCase()
+                    .contains(searchQuery.toLowerCase()));
+      }).toList();
+
+      filteredPendingReservations = filteredList;
     });
   }
+
+  // دالة لجلب بيانات المستخدم
   Future<void> fetchUserProfile() async {
     String? token = await storage.read(key: 'jwt_token');
 
@@ -106,7 +94,7 @@ class _DriverPageState extends State<DriverPage> {
       return;
     }
 
-    final url = Uri.parse("http://192.168.1.8:3000/api/v1/users/Profile");
+    final url = Uri.parse("http://$ip:3000/api/v1/users/Profile");
 
     try {
       final response = await http.get(url, headers: {
@@ -134,14 +122,12 @@ class _DriverPageState extends State<DriverPage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-
-
       appBar: AppBar(
         title: const Text(
           "Driver Dashboard",
           style: TextStyle(fontWeight: FontWeight.w500),
         ),
-        backgroundColor: Color(0xFFF5CF24),
+        backgroundColor: const Color(0xFFF5CF24),
         centerTitle: true,
         actions: [
           IconButton(
@@ -156,27 +142,22 @@ class _DriverPageState extends State<DriverPage> {
           ),
         ],
       ),
-
       drawer: buildDrawer(context),
-      body:
-
-      isLoading
+      body: isLoading
           ? const Center(child: CircularProgressIndicator())
           : Column(
         children: [
           Padding(
             padding: const EdgeInsets.all(16.0),
             child: TextField(
-
               decoration: const InputDecoration(
-
                 hintText: 'Search',
                 border: OutlineInputBorder(
-                  borderRadius: BorderRadius.all(Radius.circular(12)),                 ),
+                  borderRadius: BorderRadius.all(Radius.circular(12)),
+                ),
                 prefixIcon: Icon(Icons.search),
                 fillColor: Colors.white,
                 filled: true,
-
               ),
               onChanged: (value) {
                 setState(() {
@@ -189,280 +170,47 @@ class _DriverPageState extends State<DriverPage> {
           Expanded(
             child: ListView(
               children: [
-                if (isPending && filteredPendingReservations.isNotEmpty) ...[
+                if (filteredPendingReservations.isNotEmpty) ...[
                   for (var reservation in filteredPendingReservations)
-                    Card(
-                      color: Colors.white,
-                      elevation: 8,
-                      margin: const EdgeInsets.symmetric(
-                          vertical: 8.0, horizontal: 16.0),
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(15),
-                      ),
-                      child: Padding(
-                        padding: const EdgeInsets.all(16.0),
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Row(
-                              mainAxisAlignment:
-                              MainAxisAlignment.spaceBetween,
-                              children: [
-                                Text(
-                                  "Ride #${reservation['reservation_id']}",
-                                  style: const TextStyle(
-                                    fontWeight: FontWeight.bold,
-                                    fontSize: 18,
-                                  ),
-                                ),
-                              ],
-                            ),
-                            const SizedBox(height: 8),
-                            Text(
-                              "${reservation['created_at']}",
-                              style: const TextStyle(color: Colors.grey),
-                            ),
-                            const Divider(height: 20, color: Colors.grey),
-                            Row(
-                              children: [
-                                Container(
-                                  padding: EdgeInsets.all(8),
-                                  decoration: BoxDecoration(
-                                    color: Color(0xFFF5CF24),
-                                    shape: BoxShape.circle,
-                                    border: Border.all(
-                                      color: Color(0xFFFCF3C2),
-                                      width: 2,
-                                    ),
-                                  ),
-                                  child: Icon(
-                                    Icons.my_location_outlined,
-                                    color: Colors.black,
-                                    size: 30, // icon size
-                                  ),
-                                ),
-                                const SizedBox(width: 8),
-                                Expanded(
-                                  child: Text(
-                                    "Pick Up: ${reservation['start_destination']}",
-                                    style: const TextStyle(
-                                        fontSize: 14,
-                                        fontWeight: FontWeight.w500),
-                                  ),
-                                ),
-                              ],
-                            ),
-                            const SizedBox(height: 8),
-                            Row(
-                              children: [
-                                Container(
-                                  padding: EdgeInsets.all(8),
-                                  decoration: BoxDecoration(
-                                    color: Color(0xFFF5CF24),
-                                    shape: BoxShape.circle,
-                                    border: Border.all(
-                                      color: Color(0xFFFCF3C2),
-                                      width: 2, // border width
-                                    ),
-                                  ),
-                                  child: Icon(
-                                    Icons.location_on_outlined,
-                                    color: Colors.black,
-                                    size: 30, // icon size
-                                  ),
-                                ),
-                                const SizedBox(width: 8),
-                                Expanded(
-                                  child: Text(
-                                    "Drop Off: ${reservation['end_destination']}",
-                                    style: const TextStyle(
-                                        fontSize: 14,
-                                        fontWeight: FontWeight.w500),
-                                  ),
-                                ),
-                              ],
-                            ),
-                            const SizedBox(height: 8),
-                            Text(
-                              "Description: ${reservation['description'] ?? 'No description provided.'}",
-                              style: const TextStyle(
-                                  fontSize: 14, color: Colors.black),
-                            ),
-                            const SizedBox(height: 16),
-                            ElevatedButton(
-                              onPressed: () {
-                                _showConfirmationDialog(
-                                  context: context,
-                                  title: 'Accept Reservation',
-                                  message: 'Are you sure you want to accept this reservation?',
-                                  onConfirm: () {
-                                    _acceptReservation(
-                                      reservation['reservation_id'],
-                                      reservation['user_id'].toString(),
-                                    );
-                                  },
-                                  confirmText: 'Accept',
-                                );
-                              },
-                              style: ElevatedButton.styleFrom(
-                                backgroundColor: Color(0xFFF5CF24),
-                                shape: RoundedRectangleBorder(
-                                  borderRadius: BorderRadius.circular(8.0),
-                                ),
-                                minimumSize: Size(double.infinity, 48),
-                              ),
-                              child: const Text(
-                                'Accept',
-                                style: TextStyle(
-                                    fontWeight: FontWeight.bold,
-                                    color: Colors.black),
-                              ),
-                            ),
-                          ],
-                        ),
-                      ),
+                    _buildReservationCard(
+                      reservation: reservation,
+                      isPending: true,
+                      onAction: () {
+                        _showConfirmationDialog(
+                          context: context,
+                          title: 'Accept Reservation',
+                          message:
+                          'Are you sure you want to accept this reservation?',
+                          onConfirm: () {
+                            _acceptReservation(
+                              reservation['reservation_id'],
+                              reservation['user_id'].toString(),
+                            );
+                          },
+                          confirmText: 'Accept',
+                        );
+                      },
                     ),
                 ],
-                if (isPending && filteredPendingReservations.isEmpty)
-                  const Center(child: Text("No pending reservations.")),
-
-                if (!isPending && filteredAcceptedReservations.isNotEmpty) ...[
-                  for (var reservation in filteredAcceptedReservations)
-                    Card(
-                      color: Colors.white,
-                      elevation: 8,
-                      margin: const EdgeInsets.symmetric(vertical: 8.0, horizontal: 16.0),
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(15),
-                      ),
-                      child: Padding(
-                        padding: const EdgeInsets.all(16.0),
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Row(
-                              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                              children: [
-                                Text(
-                                  "Ride #${reservation['reservation_id']}",
-                                  style: const TextStyle(
-                                    fontWeight: FontWeight.bold,
-                                    fontSize: 18,
-                                  ),
-                                ),
-                              ],
-                            ),
-                            const SizedBox(height: 8),
-                            Text(
-                              "${reservation['created_at']}",
-                              style: const TextStyle(color: Colors.grey),
-                            ),
-                            const Divider(height: 20, color: Colors.grey),
-                            Row(
-                              children: [
-                                Container(
-                                  padding: EdgeInsets.all(8),
-                                  decoration: BoxDecoration(
-                                    color: Color(0xFFF5CF24),
-                                    shape: BoxShape.circle,
-                                    border: Border.all(
-                                      color: Color(0xFFFCF3C2),
-                                      width: 2,
-                                    ),
-                                  ),
-                                  child: Icon(
-                                    Icons.my_location_outlined,
-                                    color: Colors.black,
-                                    size: 30, // icon size
-                                  ),
-                                ),
-                                const SizedBox(width: 8),
-                                Expanded(
-                                  child: Text(
-                                    "Pick Up: ${reservation['start_destination']}",
-                                    style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w500),
-                                  ),
-                                ),
-                              ],
-                            ),
-                            const SizedBox(height: 8),
-                            Row(
-                              children: [
-                                Container(
-                                  padding: EdgeInsets.all(8),
-                                  decoration: BoxDecoration(
-                                    color: Color(0xFFF5CF24),
-                                    shape: BoxShape.circle,
-                                    border: Border.all(
-                                      color: Color(0xFFFCF3C2),
-                                      width: 2, // border width
-                                    ),
-                                  ),
-                                  child: Icon(
-                                    Icons.location_on_outlined,
-                                    color: Colors.black,
-                                    size: 30, // icon size
-                                  ),
-                                ),
-                                const SizedBox(width: 8),
-                                Expanded(
-                                  child: Text(
-                                    "Drop Off: ${reservation['end_destination']}",
-                                    style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w500),
-                                  ),
-                                ),
-                              ],
-                            ),
-                            const SizedBox(height: 8),
-                            Text(
-                              "Description: ${reservation['description'] ?? 'No description provided.'}",
-                              style: const TextStyle(fontSize: 14, color: Colors.black),
-                            ),
-                            const SizedBox(height: 16),
-                            ElevatedButton(
-                              onPressed: () {
-                                _showConfirmationDialog(
-                                  context: context,
-                                  title: 'Reject Reservation',
-                                  message: 'Are you sure you want to reject this reservation?',
-                                  onConfirm: () {
-                                    _cancelReservation(reservation['reservation_id']);
-                                  },
-                                  confirmText: 'Cancel',
-                                );
-                              },
-                              style: ElevatedButton.styleFrom(
-                                backgroundColor: Color(0xFFF2643A),
-                                shape: RoundedRectangleBorder(
-                                  borderRadius: BorderRadius.circular(8.0),
-                                ),
-                                minimumSize: Size(double.infinity, 48),
-                              ),
-                              child: const Text(
-                                'Reject',
-                                style: TextStyle(fontWeight: FontWeight.bold, color: Colors.black,fontSize: 16),
-                              ),
-                            ),
-                          ],
-                        ),
-                      ),
-                    ),
-                ],
-                if (!isPending && filteredAcceptedReservations.isEmpty)
-                  const Center(child: Text("No accepted reservations.")),
+                if (filteredPendingReservations.isEmpty)
+                  const Padding(
+                    padding: EdgeInsets.all(16.0),
+                    child: Center(child: Text("No pending reservations.")),
+                  ),
               ],
             ),
           ),
         ],
       ),
       bottomNavigationBar: BottomNavigationBar(
-        currentIndex: isPending ? 0 : 1,
+        currentIndex: 0,
         onTap: (index) {
-          setState(() {
-            isPending = index == 0;
-            isLoading = true;
-            _fetchReservations();
-          });
+          if (index == 1) {
+            Navigator.push(
+              context,
+              MaterialPageRoute(builder: (context) => const AcceptedReservationsPage()),
+            );
+          }
         },
         items: const [
           BottomNavigationBarItem(
@@ -474,6 +222,181 @@ class _DriverPageState extends State<DriverPage> {
             label: 'Accepted Reservations',
           ),
         ],
+      ),
+    );
+  }
+
+  // دالة لبناء بطاقة الحجز
+  Widget _buildReservationCard({
+    required Map<String, dynamic> reservation,
+    required bool isPending,
+    required VoidCallback onAction,
+  }) {
+    // التعامل مع بيانات المستخدم المفقودة
+    String username = reservation['User'] != null
+        ? reservation['User']['username'] ?? 'Unknown'
+        : 'Unknown';
+    String phoneNumber = reservation['phone_number'] ?? 'N/A';
+
+    return Card(
+      color: Colors.white,
+      elevation: 8,
+      margin: const EdgeInsets.symmetric(vertical: 8.0, horizontal: 16.0),
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(15),
+      ),
+      child: Padding(
+        padding: const EdgeInsets.all(16.0),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            // عنوان الحجز
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                Text(
+                  "Ride #${reservation['reservation_id']}",
+                  style: const TextStyle(
+                    fontWeight: FontWeight.bold,
+                    fontSize: 18,
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: 8),
+            // تاريخ الإنشاء
+            Text(
+              "Created At: ${reservation['created_at']}",
+              style: const TextStyle(color: Colors.grey),
+            ),
+            const Divider(height: 20, color: Colors.grey),
+            // نقطة الانطلاق
+            Row(
+              children: [
+                Container(
+                  padding: const EdgeInsets.all(8),
+                  decoration: BoxDecoration(
+                    color: const Color(0xFFF5CF24),
+                    shape: BoxShape.circle,
+                    border: Border.all(
+                      color: const Color(0xFFFCF3C2),
+                      width: 2,
+                    ),
+                  ),
+                  child: const Icon(
+                    Icons.my_location_outlined,
+                    color: Colors.black,
+                    size: 30,
+                  ),
+                ),
+                const SizedBox(width: 8),
+                Expanded(
+                  child: Text(
+                    "Pick Up: ${reservation['start_destination']}",
+                    style: const TextStyle(
+                        fontSize: 14, fontWeight: FontWeight.w500),
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: 8),
+            // نقطة الوصول
+            Row(
+              children: [
+                Container(
+                  padding: const EdgeInsets.all(8),
+                  decoration: BoxDecoration(
+                    color: const Color(0xFFF5CF24),
+                    shape: BoxShape.circle,
+                    border: Border.all(
+                      color: const Color(0xFFFCF3C2),
+                      width: 2,
+                    ),
+                  ),
+                  child: const Icon(
+                    Icons.location_on_outlined,
+                    color: Colors.black,
+                    size: 30,
+                  ),
+                ),
+                const SizedBox(width: 8),
+                Expanded(
+                  child: Text(
+                    "Drop Off: ${reservation['end_destination']}",
+                    style: const TextStyle(
+                        fontSize: 14, fontWeight: FontWeight.w500),
+                  ),
+                ),
+                Expanded(
+                  child: Text(
+                    "Start_date: ${reservation['scheduled_date']}",
+                    style: const TextStyle(
+                        fontSize: 14, fontWeight: FontWeight.w500),
+                  ),
+                ),
+                Expanded(
+                  child: Text(
+                    "at: ${reservation['scheduled_time']}",
+                    style: const TextStyle(
+                        fontSize: 14, fontWeight: FontWeight.w500),
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: 8),
+            // الوصف
+            Text(
+              "Description: ${reservation['description'] ?? 'No description provided.'}",
+              style: const TextStyle(fontSize: 14, color: Colors.black),
+            ),
+            const SizedBox(height: 8),
+            // تفاصيل التكرار إذا كانت موجودة
+            if (reservation['is_recurring'] == true) ...[
+              const Text(
+                "Recurring: Yes",
+                style: TextStyle(fontSize: 14, color: Colors.black),
+              ),
+              Text(
+                "Pattern: ${reservation['recurrence_pattern'] ?? 'N/A'}",
+                style: const TextStyle(fontSize: 14, color: Colors.black),
+              ),
+              Text(
+                "Interval: ${reservation['recurrence_interval'] ?? 'N/A'}",
+                style: const TextStyle(fontSize: 14, color: Colors.black),
+              ),
+              Text(
+                "End Date: ${reservation['recurrence_end_date'] ?? 'N/A'}",
+                style: const TextStyle(fontSize: 14, color: Colors.black),
+              ),
+              if (reservation['recurring_days'] != null)
+                Text(
+                  "Days: ${reservation['recurring_days']}",
+                  style: const TextStyle(fontSize: 14, color: Colors.black),
+                ),
+              const SizedBox(height: 8),
+            ],
+            const SizedBox(height: 16),
+            // زر الإجراء (قبول أو رفض)
+            ElevatedButton(
+              onPressed: onAction,
+              style: ElevatedButton.styleFrom(
+                backgroundColor:
+                isPending ? const Color(0xFFF5CF24) : const Color(0xFFF2643A),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(8.0),
+                ),
+                minimumSize: const Size(double.infinity, 48),
+              ),
+              child: Text(
+                isPending ? 'Accept' : 'Reject',
+                style: const TextStyle(
+                    fontWeight: FontWeight.bold,
+                    color: Colors.black,
+                    fontSize: 16),
+              ),
+            ),
+          ],
+        ),
       ),
     );
   }
@@ -490,43 +413,38 @@ class _DriverPageState extends State<DriverPage> {
             decoration: const BoxDecoration(
               color: Color(0xFFF5CF24),
             ),
-            child:  Column(
+            child: Column(
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
                 // Profile Picture
-                CircleAvatar(
+                const CircleAvatar(
                   radius: 50,
                   backgroundImage: AssetImage('assets/profile.jpg'),
                 ),
-                SizedBox(height: 23),
+                const SizedBox(height: 23),
                 // User Information
                 Text(
                   username,
-                  style: TextStyle(
+                  style: const TextStyle(
                     color: Colors.black,
                     fontSize: 20,
                     fontWeight: FontWeight.bold,
-
                   ),
                 ),
-
-
-                // Stats Row
-
               ],
             ),
           ),
-          SizedBox(height: 20),
-          // Drawer List Items (your existing logic)
+          const SizedBox(height: 20),
+          // Drawer List Items
           ListTile(
-            leading:  const Icon(Icons.map, size: 28),
+            leading: const Icon(Icons.map, size: 28),
             title: const Text('My Routes', style: TextStyle(fontSize: 16)),
             onTap: () {
               Navigator.pop(context);
               _navigateToMyRoutes(context);
             },
           ),
-          SizedBox(height: 20),
+          const SizedBox(height: 20),
           ListTile(
             leading: const Icon(Icons.contact_phone),
             title: const Text('Contact with Us'),
@@ -534,7 +452,7 @@ class _DriverPageState extends State<DriverPage> {
               Navigator.pop(context);
             },
           ),
-          SizedBox(height: 20),
+          const SizedBox(height: 20),
           ListTile(
             leading: const Icon(Icons.notifications, size: 28),
             title: const Text('Notifications', style: TextStyle(fontSize: 16)),
@@ -543,7 +461,7 @@ class _DriverPageState extends State<DriverPage> {
               _navigateToNotifications(context);
             },
           ),
-          SizedBox(height: 20),
+          const SizedBox(height: 20),
           ListTile(
             leading: const Icon(Icons.supervisor_account, size: 28),
             title: const Text('Line Manager', style: TextStyle(fontSize: 16)),
@@ -555,7 +473,7 @@ class _DriverPageState extends State<DriverPage> {
               );
             },
           ),
-          SizedBox(height: 20),
+          const SizedBox(height: 20),
           ListTile(
             leading: const Icon(Icons.logout),
             title: const Text('Log out'),
@@ -572,7 +490,7 @@ class _DriverPageState extends State<DriverPage> {
     );
   }
 
-
+  // دالة عرض نافذة التأكيد
   void _showConfirmationDialog({
     required BuildContext context,
     required String title,
@@ -595,7 +513,8 @@ class _DriverPageState extends State<DriverPage> {
               children: [
                 Text(
                   title,
-                  style: const TextStyle(fontSize: 22, fontWeight: FontWeight.bold),
+                  style:
+                  const TextStyle(fontSize: 22, fontWeight: FontWeight.bold),
                 ),
                 const SizedBox(height: 10),
                 Text(
@@ -610,6 +529,9 @@ class _DriverPageState extends State<DriverPage> {
                     ElevatedButton(
                       onPressed: () => Navigator.of(context).pop(),
                       child: const Text('Cancel'),
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: Colors.grey,
+                      ),
                     ),
                     ElevatedButton(
                       onPressed: () {
@@ -628,9 +550,7 @@ class _DriverPageState extends State<DriverPage> {
     );
   }
 
-
-
-
+  // دالة عرض خيارات الملف الشخصي
   void _showProfileOptions(BuildContext context) {
     showDialog(
       context: context,
@@ -647,7 +567,8 @@ class _DriverPageState extends State<DriverPage> {
                     Navigator.pop(context);
                     Navigator.push(
                       context,
-                      MaterialPageRoute(builder: (context) => const ProfilePage()),
+                      MaterialPageRoute(
+                          builder: (context) => const ProfilePage()),
                     );
                   },
                 ),
@@ -658,18 +579,22 @@ class _DriverPageState extends State<DriverPage> {
       },
     );
   }
+
+  // دالة للتنقل إلى صفحة "My Routes"
   void _navigateToMyRoutes(BuildContext context) {
     ScaffoldMessenger.of(context).showSnackBar(
       const SnackBar(content: Text('Navigating to My Routes...')),
     );
   }
 
+  // دالة للتنقل إلى صفحة "Notifications"
   void _navigateToNotifications(BuildContext context) {
     ScaffoldMessenger.of(context).showSnackBar(
       const SnackBar(content: Text('Navigating to Notifications...')),
     );
   }
-  // Success dialog
+
+  // دالة عرض رسالة النجاح
   void _showSuccessDialog(String message) {
     showDialog(
       context: context,
@@ -690,7 +615,7 @@ class _DriverPageState extends State<DriverPage> {
     );
   }
 
-  // Error dialog
+  // دالة عرض رسالة الخطأ
   void _showErrorDialog(String message) {
     showDialog(
       context: context,
@@ -710,8 +635,9 @@ class _DriverPageState extends State<DriverPage> {
       },
     );
   }
-  // Fetch reservations from the API
-  Future<void> _fetchReservations() async {
+
+  // دالة جلب الحجوزات المعلقة من الـ API
+  Future<void> _fetchPendingReservations() async {
     try {
       String? token = await storage.read(key: 'jwt_token');
 
@@ -725,31 +651,69 @@ class _DriverPageState extends State<DriverPage> {
           setState(() {
             pendingReservations = json.decode(pendingResponse.body)['data'];
             filteredPendingReservations = List.from(pendingReservations);
-          });
-        }
-
-        final acceptedResponse = await http.get(
-          Uri.parse('http://$ip:3000/api/v1/reservation/driver/reservations'),
-          headers: {'Authorization': 'Bearer $token'},
-        );
-
-        if (acceptedResponse.statusCode == 200) {
-          setState(() {
-            acceptedReservations = json.decode(acceptedResponse.body)['data'];
-            filteredAcceptedReservations = List.from(acceptedReservations);
             isLoading = false;
           });
+        } else {
+          setState(() {
+            isLoading = false;
+          });
+          _showErrorDialog('Failed to load pending reservations.');
         }
+
+        // فلترة الحجوزات بعد جلبها
+        _filterReservations();
       }
     } catch (error) {
-
       setState(() {
         isLoading = false;
       });
+      print("Error fetching pending reservations: $error");
+      _showErrorDialog('Error fetching pending reservations.');
     }
   }
+
+  Future<void> _acceptReservation(int reservationId, String userId) async {
+    try {
+      String? token = await storage.read(key: 'jwt_token');
+      final response = await http.patch(
+        Uri.parse('http://$ip:3000/api/v1/reservation/accept/$reservationId'),
+        headers: {'Authorization': 'Bearer $token'},
+      );
+      print("the response is :  $response");
+
+      if (response.statusCode == 200) {
+        final responseData = jsonDecode(response.body);
+        if (responseData['data'] != null) {
+          final driverInfo = responseData['data'];
+          String driverName = driverInfo['driver_id'].toString() ?? 'Unknown';
+          String driverPhone = driverInfo['phone_number'].toString() ?? 'N/A';
+
+          _createNotification(
+            userId,
+            'Your taxi has been booked successfully by $driverName. Contact: $driverPhone.',
+          );
+        } else {
+          _showErrorDialog('Driver information not found.');
+        }
+
+        _fetchPendingReservations();
+        _showSuccessDialog('Reservation accepted successfully');
+        setState(() {
+          filteredPendingReservations.removeWhere(
+                (reservation) => reservation['reservation_id'] == reservationId,
+          );
+        });
+      } else {
+        _showErrorDialog('Error accepting reservation');
+      }
+    } catch (e) {
+      _showErrorDialog('Error accepting reservation: $e');
+    }
+  }
+
+  // دالة إنشاء الإشعارات
   void _createNotification(String userId, String message) async {
-    // Instead of sending via WebSocket, send to backend server
+    // إرسال الإشعار إلى الخادم الخلفي
     String? token = await storage.read(key: 'jwt_token');
     if (token == null) return;
 
@@ -773,65 +737,4 @@ class _DriverPageState extends State<DriverPage> {
       print('Failed to create notification: ${response.body}');
     }
   }
-
-
-
-  Future<void> _acceptReservation(int reservationId, String userId) async {
-    try {
-      String? token = await storage.read(key: 'jwt_token');
-      final response = await http.patch(
-        Uri.parse('http://$ip:3000/api/v1/reservation/accept/$reservationId'),
-        headers: {'Authorization': 'Bearer $token'},
-      );
-      print("the response is :  $response");
-
-      if (response.statusCode == 200) {
-        final responseData = jsonDecode(response.body);
-        final driverInfo = responseData['data']['driver'];
-        String driverName = driverInfo['username'];
-        String driverPhone = driverInfo['phone_number'];
-
-        _createNotification(
-          userId,
-          'Your taxi has been booked successfully by $driverName. Contact: $driverPhone.',
-        );
-
-        _fetchReservations();
-        _showSuccessDialog('Reservation accepted successfully');
-        setState(() {
-          filteredPendingReservations.removeWhere(
-                (reservation) => reservation['reservation_id'] == reservationId,
-          );
-        });
-      } else {
-        _showErrorDialog('Error accepting reservation');
-      }
-    } catch (e) {
-      _showErrorDialog('Error accepting reservation: $e');
-    }
-  }
-
-
-  // Cancel reservation
-  Future<void> _cancelReservation(int reservationId) async {
-    try {
-      String? token = await storage.read(key: 'jwt_token');
-      final response = await http.patch(
-        Uri.parse('http://$ip:3000/api/v1/reservation/cancel/$reservationId'),
-        headers: {'Authorization': 'Bearer $token'},
-      );
-
-      if (response.statusCode == 200) {
-        _fetchReservations();
-        _showSuccessDialog('Reservation cancelled successfully');
-      } else {
-        _showErrorDialog('Error canceling reservation');
-      }
-    } catch (e) {
-      _showErrorDialog('Error canceling reservation: $e');
-    }
-  }
-
-
-
 }
