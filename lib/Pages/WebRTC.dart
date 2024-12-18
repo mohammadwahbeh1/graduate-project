@@ -9,6 +9,8 @@ class WebRTCSignaling {
   late MediaStream? remoteStream;
   bool isInitiator = false;
   bool isCallStarted = false;
+  bool isRemoteAudioMuted = false;
+  bool isAvailable = true;
 
   WebRTCSignaling(this.channel, this.targetId) {
     channel.stream.listen((message) {
@@ -18,6 +20,14 @@ class WebRTCSignaling {
 
   void updateTargetId(String newTargetId) {
     targetId = newTargetId;
+  }
+
+  void setAvailability(bool available) {
+    isAvailable = available;
+    channel.sink.add(jsonEncode({
+      'type': 'status',
+      'status': available ? 'available' : 'unavailable'
+    }));
   }
 
   Future<void> initialize() async {
@@ -42,6 +52,9 @@ class WebRTCSignaling {
     });
 
     _setupPeerConnectionListeners();
+
+    // Set initial availability
+    setAvailability(true);
   }
 
   void _setupPeerConnectionListeners() {
@@ -95,17 +108,20 @@ class WebRTCSignaling {
   }
 
   Future<void> startCall(MediaStream localStream, String callTargetId) async {
+    if (!isAvailable) {
+      print('Cannot start call while unavailable');
+      return;
+    }
+
     if (isCallStarted) return;
     isCallStarted = true;
 
     updateTargetId(callTargetId);
 
-    // Enable local audio tracks
     localStream.getAudioTracks().forEach((track) {
       track.enabled = true;
     });
 
-    // Add audio transceiver
     await _peerConnection.addTransceiver(
         track: localStream.getAudioTracks().first,
         kind: RTCRtpMediaType.RTCRtpMediaTypeAudio,
@@ -132,6 +148,13 @@ class WebRTCSignaling {
   Future<void> handleMessage(Map<String, dynamic> message) async {
     if (message['type'] != 'webrtc') return;
 
+    if (!isAvailable && message['subtype'] == 'offer') {
+      _sendSignalingMessage('reject', {
+        'reason': 'unavailable'
+      }, message['fromUserId']);
+      return;
+    }
+
     final subtype = message['subtype'];
     final data = message['data'];
 
@@ -148,10 +171,19 @@ class WebRTCSignaling {
         case 'candidate':
           await _handleCandidate(data);
           break;
+
+        case 'reject':
+          _handleReject(data);
+          break;
       }
     } catch (e) {
       print('Error during signaling: $e');
     }
+  }
+
+  void _handleReject(Map<String, dynamic> data) {
+    print('Call rejected: ${data['reason']}');
+    stopCall();
   }
 
   Future<void> _handleOffer(Map<String, dynamic> data, String fromUserId) async {
@@ -249,8 +281,19 @@ class WebRTCSignaling {
       print('Error during stopCall: $e');
     }
   }
+
+  void toggleRemoteAudio() {
+    if (remoteStream != null) {
+      isRemoteAudioMuted = !isRemoteAudioMuted;
+      remoteStream!.getAudioTracks().forEach((track) {
+        track.enabled = !isRemoteAudioMuted;
+      });
+    }
+  }
+
   Future<void> dispose() async {
     isCallStarted = false;
+    isAvailable = false;
     await _peerConnection.close();
     channel.sink.close();
     if (remoteStream != null) {
@@ -258,4 +301,3 @@ class WebRTCSignaling {
     }
   }
 }
-
