@@ -6,7 +6,7 @@ import 'package:flutter_rating_bar/flutter_rating_bar.dart';
 import 'package:jwt_decoder/jwt_decoder.dart';
 import 'package:flutter_slidable/flutter_slidable.dart';
 
-const String ip = "192.168.1.8";
+const String ip = "192.168.1.4";
 
 class ReviewPage extends StatefulWidget {
   final String terminalId;

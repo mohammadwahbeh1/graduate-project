@@ -1,6 +1,5 @@
 // driver_page.dart
 import 'package:flutter/material.dart';
-import 'Recommendationspage.dart';
 import 'accepted_reservations_page.dart';
 import 'loginPage.dart';
 import 'LineMangerCall.dart';
@@ -11,7 +10,7 @@ import 'package:untitled/Pages/Location Service.dart';
 import 'package:web_socket_channel/web_socket_channel.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 
-const String ip = "192.168.1.8";
+const String ip = "192.168.1.4";
 final storage = FlutterSecureStorage();
 
 class DriverPage extends StatefulWidget {
@@ -211,11 +210,6 @@ class _DriverPageState extends State<DriverPage> {
               context,
               MaterialPageRoute(builder: (context) => const AcceptedReservationsPage()),
             );
-          } else if (index == 2) {
-            Navigator.push(
-              context,
-              MaterialPageRoute(builder: (context) => const Recommendationspage()),
-            );
           }
         },
         items: const [
@@ -227,23 +221,18 @@ class _DriverPageState extends State<DriverPage> {
             icon: Icon(Icons.check),
             label: 'Accepted Reservations',
           ),
-          BottomNavigationBarItem(
-            icon: Icon(Icons.recommend),
-            label: 'Recommendations',
-          ),
         ],
       ),
     );
   }
 
-
-
+  // دالة لبناء بطاقة الحجز
   Widget _buildReservationCard({
     required Map<String, dynamic> reservation,
     required bool isPending,
     required VoidCallback onAction,
   }) {
-
+    // التعامل مع بيانات المستخدم المفقودة
     String username = reservation['User'] != null
         ? reservation['User']['username'] ?? 'Unknown'
         : 'Unknown';
@@ -261,7 +250,7 @@ class _DriverPageState extends State<DriverPage> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-
+            // عنوان الحجز
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
@@ -275,7 +264,7 @@ class _DriverPageState extends State<DriverPage> {
               ],
             ),
             const SizedBox(height: 8),
-
+            // تاريخ الإنشاء
             Text(
               "Created At: ${reservation['created_at']}",
               style: const TextStyle(color: Colors.grey),
@@ -311,7 +300,7 @@ class _DriverPageState extends State<DriverPage> {
               ],
             ),
             const SizedBox(height: 8),
-
+            // نقطة الوصول
             Row(
               children: [
                 Container(
@@ -355,13 +344,13 @@ class _DriverPageState extends State<DriverPage> {
               ],
             ),
             const SizedBox(height: 8),
-
+            // الوصف
             Text(
               "Description: ${reservation['description'] ?? 'No description provided.'}",
               style: const TextStyle(fontSize: 14, color: Colors.black),
             ),
             const SizedBox(height: 8),
-
+            // تفاصيل التكرار إذا كانت موجودة
             if (reservation['is_recurring'] == true) ...[
               const Text(
                 "Recurring: Yes",
@@ -387,7 +376,7 @@ class _DriverPageState extends State<DriverPage> {
               const SizedBox(height: 8),
             ],
             const SizedBox(height: 16),
-
+            // زر الإجراء (قبول أو رفض)
             ElevatedButton(
               onPressed: onAction,
               style: ElevatedButton.styleFrom(
@@ -501,7 +490,7 @@ class _DriverPageState extends State<DriverPage> {
     );
   }
 
-
+  // دالة عرض نافذة التأكيد
   void _showConfirmationDialog({
     required BuildContext context,
     required String title,
@@ -561,7 +550,7 @@ class _DriverPageState extends State<DriverPage> {
     );
   }
 
-
+  // دالة عرض خيارات الملف الشخصي
   void _showProfileOptions(BuildContext context) {
     showDialog(
       context: context,
@@ -591,21 +580,21 @@ class _DriverPageState extends State<DriverPage> {
     );
   }
 
-
+  // دالة للتنقل إلى صفحة "My Routes"
   void _navigateToMyRoutes(BuildContext context) {
     ScaffoldMessenger.of(context).showSnackBar(
       const SnackBar(content: Text('Navigating to My Routes...')),
     );
   }
 
-
+  // دالة للتنقل إلى صفحة "Notifications"
   void _navigateToNotifications(BuildContext context) {
     ScaffoldMessenger.of(context).showSnackBar(
       const SnackBar(content: Text('Navigating to Notifications...')),
     );
   }
 
-
+  // دالة عرض رسالة النجاح
   void _showSuccessDialog(String message) {
     showDialog(
       context: context,
@@ -626,7 +615,7 @@ class _DriverPageState extends State<DriverPage> {
     );
   }
 
-
+  // دالة عرض رسالة الخطأ
   void _showErrorDialog(String message) {
     showDialog(
       context: context,

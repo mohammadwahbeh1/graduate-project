@@ -4,7 +4,7 @@ import 'dart:convert';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:intl/intl.dart';
 
-const String ip = "192.168.1.8";
+const String ip = "192.168.1.4";
 final storage = FlutterSecureStorage();
 
 class ReservationsPage extends StatefulWidget {
@@ -19,10 +19,7 @@ class _ReservationsPageState extends State<ReservationsPage> {
   @override
   void initState() {
     super.initState();
-
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      _fetchReservations();
-    });
+    _fetchReservations();
   }
 
   Future<void> _fetchReservations() async {
@@ -62,7 +59,7 @@ class _ReservationsPageState extends State<ReservationsPage> {
               "recurrence_interval": reservation['recurrence_interval'],
               "recurrence_end_date": reservation['recurrence_end_date'] != null
                   ? DateTime.parse(reservation['recurrence_end_date'])
-                  : null,
+                  : null, 
             }).toList();
           });
         }

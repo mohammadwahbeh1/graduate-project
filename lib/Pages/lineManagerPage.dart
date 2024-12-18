@@ -7,6 +7,7 @@ import 'package:http/http.dart' as http;
 
 import 'ViewDriversOnMapPage.dart';
 import 'loginPage.dart';
+const String ip = "192.168.1.4";
 
 
 class LineManagerPage extends StatefulWidget {
@@ -29,7 +30,7 @@ class _LineManagerPageState extends State<LineManagerPage> {
       return;
     }
 
-    final url = Uri.parse("http://192.168.1.8:3000/api/v1/users/Profile");
+    final url = Uri.parse("http://$ip:3000/api/v1/users/Profile");
 
     try {
       final response = await http.get(url, headers: {

@@ -8,6 +8,7 @@ import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:geocoding/geocoding.dart';
 import 'dart:math' as math;
 
+const ip = '192.168.1.4';
 class SearchResult {
   final String lineName;
   final String description;
@@ -267,7 +268,7 @@ class _ClosestPointPageState extends State<ClosestPointPage> {
     try {
       String? token = await storage.read(key: 'jwt_token');
       final response = await http.get(
-        Uri.parse('http://192.168.1.8:3000/api/v1/line/all'),
+        Uri.parse('http://$ip:3000/api/v1/line/all'),
         headers: {'Authorization': 'Bearer $token'},
       );
 
@@ -350,7 +351,7 @@ class _ClosestPointPageState extends State<ClosestPointPage> {
     try {
       String? token = await storage.read(key: 'jwt_token');
       final response = await http.get(
-        Uri.parse('http://192.168.1.8:3000/api/v1/line/location?lineName=$lineName'),
+        Uri.parse('http://$ip:3000/api/v1/line/location?lineName=$lineName'),
         headers: {'Authorization': 'Bearer $token'},
       );
 

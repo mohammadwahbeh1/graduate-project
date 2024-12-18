@@ -2,6 +2,7 @@ import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:http/http.dart' as http;
+const String ip = "192.168.1.4";
 
 class EditProfilePage extends StatefulWidget {
   final Map<String, String> userData; // Pass user data to this page
@@ -24,6 +25,7 @@ class _EditProfilePageState extends State<EditProfilePage> {
   final storage = const FlutterSecureStorage(); // For storing JWT token
   bool isLoading = false; // To track loading state
   String? errorMessage; // To store error messages
+
 
   @override
   void initState() {
@@ -68,7 +70,7 @@ class _EditProfilePageState extends State<EditProfilePage> {
 
       if (token != null) {
         final response = await http.patch(
-          Uri.parse('http://192.168.1.8:3000/api/v1/users/profile'),
+          Uri.parse('http://$ip:3000/api/v1/users/profile'),
           headers: {
             'Authorization': 'Bearer $token',
             'Content-Type': 'application/json',

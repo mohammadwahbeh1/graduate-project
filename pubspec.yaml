@@ -66,9 +66,11 @@ dependencies:
   jwt_decode: ^0.3.0
 
   flutter_slidable: ^3.1.1
+  table_calendar: ^3.0.8
   percent_indicator: ^4.0.0
 
   table_calendar: ^3.0.8
+
 
 
 
