@@ -55,9 +55,10 @@ class _homePageState extends State<homePage> {
     super.initState();
     // Load data in parallel
     Future.wait([
+    fetchNotifications(),
       fetchTerminals(),
       fetchUserProfile(),
-      fetchNotifications(),
+
     ]);
     _initializeWebSocket();
   }

@@ -21,12 +21,10 @@ class _LineManagerCallState extends State<LineManagerCall> {
   Map<String, dynamic>? lineManager;
   bool isLoading = true;
   bool isMicActive = false;
-
-  // States
   List<bool> isRecordingList = [];
   List<bool> isSpeakingList = [];
-
-  // WebRTC
+  bool isConnected = true;
+  bool canReceiveCalls = true;
   late WebRTCSignaling signaling;
   late MediaStream localStream;
 
@@ -58,7 +56,8 @@ class _LineManagerCallState extends State<LineManagerCall> {
       }
       signaling = WebRTCSignaling(
         WebSocketChannel.connect(
-            Uri.parse('ws://$ip:3000/ws/notifications?userId=${userId}')),
+            Uri.parse('ws://$ip:3000/ws/notifications?userId=$userId')
+        ),
         "",
       );
 
@@ -68,6 +67,10 @@ class _LineManagerCallState extends State<LineManagerCall> {
       });
 
       await signaling.initialize();
+
+      // Set initial availability status
+      signaling.setAvailability(true);
+
     } catch (e) {
       _showErrorDialog('Failed to initialize WebRTC: $e');
     }
@@ -86,7 +89,6 @@ class _LineManagerCallState extends State<LineManagerCall> {
         Uri.parse('http://$ip:3000/api/v1/line/drivers/line-manager'),
         headers: {'Authorization': 'Bearer $token'},
       );
-      print("Response: ${response.body}");
 
       if (response.statusCode == 200) {
         setState(() {
@@ -130,6 +132,13 @@ class _LineManagerCallState extends State<LineManagerCall> {
   }
 
   void _toggleMic(int index) async {
+    if (!isConnected || !canReceiveCalls) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Calls are currently disabled')),
+      );
+      return;
+    }
+
     setState(() {
       isMicActive = !isMicActive;
       isRecordingList[index] = isMicActive;
@@ -143,19 +152,57 @@ class _LineManagerCallState extends State<LineManagerCall> {
         track.enabled = true;
       });
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Recording Started')),
+        const SnackBar(content: Text('Call Started')),
       );
     } else {
       localStream.getAudioTracks().forEach((track) {
         track.enabled = false;
       });
-      await signaling.stopCall(); // Use stopCall instead of dispose
+      await signaling.stopCall();
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Recording Stopped')),
+        const SnackBar(content: Text('Call Ended')),
       );
     }
   }
 
+  void _toggleAvailability() async {
+    setState(() {
+      isConnected = !isConnected;
+      canReceiveCalls = !canReceiveCalls;
+    });
+
+    if (!isConnected) {
+      // Stop ongoing calls
+      if (isMicActive) {
+        await signaling.stopCall();
+        localStream.getAudioTracks().forEach((track) {
+          track.enabled = false;
+        });
+      }
+
+      // Reset states
+      setState(() {
+        isRecordingList = List.filled(1, false);
+        isMicActive = false;
+      });
+
+      // Update availability status
+      signaling.setAvailability(false);
+
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('All calls disabled - Cannot make or receive calls')),
+      );
+    } else {
+      await _initializeWebRTC();
+
+      // Update availability status
+      signaling.setAvailability(true);
+
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Calls enabled - Ready to make and receive calls')),
+      );
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -163,6 +210,35 @@ class _LineManagerCallState extends State<LineManagerCall> {
       appBar: AppBar(
         title: const Text('Line Manager'),
         backgroundColor: Colors.yellow,
+        actions: [
+          Padding(
+            padding: const EdgeInsets.only(right: 16.0),
+            child: InkWell(
+              onTap: _toggleAvailability,
+              child: Container(
+                padding: const EdgeInsets.all(8.0),
+                decoration: BoxDecoration(
+                  color: isConnected ? Colors.green : Colors.red,
+                  borderRadius: BorderRadius.circular(8),
+                ),
+                child: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Icon(
+                      isConnected ? Icons.phone_enabled : Icons.phone_disabled,
+                      color: Colors.white,
+                    ),
+                    const SizedBox(width: 8),
+                    Text(
+                      isConnected ? 'Available' : 'Unavailable',
+                      style: const TextStyle(color: Colors.white),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+          ),
+        ],
       ),
       body: isLoading
           ? const Center(child: CircularProgressIndicator())
@@ -182,53 +258,25 @@ class _LineManagerCallState extends State<LineManagerCall> {
             ),
             title: Text(
               lineManager!['name'],
-              style: const TextStyle(
-                  fontWeight: FontWeight.bold, fontSize: 18),
+              style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 18),
             ),
             subtitle: Text('Phone: ${lineManager!['phone']}'),
-            trailing: Row(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                AnimatedContainer(
-                  duration: const Duration(milliseconds: 200),
-                  width: isSpeakingList[0] ? 60 : 50,
-                  height: isSpeakingList[0] ? 60 : 50,
-                  decoration: BoxDecoration(
-                    shape: BoxShape.circle,
-                    color:
-                    isSpeakingList[0] ? Colors.blue : Colors.grey,
-                    border: Border.all(
-                      color: Colors.white,
-                      width: 2,
-                    ),
-                  ),
-                  child: Icon(
-                    Icons.volume_up,
-                    color: Colors.white,
-                    size: isSpeakingList[0] ? 30 : 25,
-                  ),
+            trailing: InkWell(
+              onTap: () => _toggleMic(0),
+              child: AnimatedContainer(
+                duration: const Duration(milliseconds: 200),
+                width: isRecordingList[0] ? 60 : 50,
+                height: isRecordingList[0] ? 60 : 50,
+                decoration: BoxDecoration(
+                  color: isRecordingList[0] ? Colors.red : Colors.green,
+                  borderRadius: BorderRadius.circular(50),
                 ),
-                const SizedBox(width: 10),
-                InkWell(
-                  onTap: () => _toggleMic(0),
-                  child: AnimatedContainer(
-                    duration: const Duration(milliseconds: 200),
-                    width: isRecordingList[0] ? 60 : 50,
-                    height: isRecordingList[0] ? 60 : 50,
-                    decoration: BoxDecoration(
-                      color: isRecordingList[0]
-                          ? Colors.red
-                          : Colors.green,
-                      borderRadius: BorderRadius.circular(50),
-                    ),
-                    child: const Icon(
-                      Icons.mic,
-                      color: Colors.white,
-                      size: 30,
-                    ),
-                  ),
+                child: const Icon(
+                  Icons.mic,
+                  color: Colors.white,
+                  size: 30,
                 ),
-              ],
+              ),
             ),
           ),
         ),
