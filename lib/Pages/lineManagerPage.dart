@@ -1,6 +1,7 @@
 import 'dart:convert';
 
 import 'package:flutter/material.dart';
+import 'package:untitled/Pages/DriversAndLinesPage.dart';
 import 'package:untitled/Pages/profilePage.dart';
 import 'DriverCall.dart';
 import 'package:http/http.dart' as http;
@@ -112,7 +113,7 @@ class _LineManagerPageState extends State<LineManagerPage> {
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
                 // Profile Picture
-                CircleAvatar(
+                const CircleAvatar(
                   radius: 50,
                   backgroundImage: AssetImage('assets/profile.jpg'), // Replace with your image path
                 ),
@@ -120,7 +121,7 @@ class _LineManagerPageState extends State<LineManagerPage> {
                 // User Information
                 Text(
                   username,
-                  style: TextStyle(
+                  style: const TextStyle(
                     color: Colors.black,
                     fontSize: 20,
                     fontWeight: FontWeight.bold,
@@ -134,16 +135,7 @@ class _LineManagerPageState extends State<LineManagerPage> {
               ],
             ),
           ),
-          SizedBox(height: 20),
-          // Drawer List Items (your existing logic)
-          ListTile(
-            leading:  const Icon(Icons.directions_bus, size: 28),
-            title: const Text('Manage Lines', style: TextStyle(fontSize: 16)),
-            onTap: () {
-              Navigator.pop(context);
 
-            },
-          ),
           SizedBox(height: 20),
           ListTile(
             leading:  const Icon(Icons.map_outlined, size: 28),
@@ -156,17 +148,7 @@ class _LineManagerPageState extends State<LineManagerPage> {
               );
             },
           ),
-          SizedBox(height: 20),
 
-          ListTile(
-            leading: const Icon(Icons.supervised_user_circle,size: 28,),
-            title: const Text('View Drivers', style: TextStyle(fontSize: 16)),
-            onTap: () {
-              Navigator.pop(context);
-
-
-            },
-          ),
 
 
           SizedBox(height: 20),

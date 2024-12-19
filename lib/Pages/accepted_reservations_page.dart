@@ -1,6 +1,6 @@
 // accepted_reservations_page.dart
 import 'package:flutter/material.dart';
-import 'package:table_calendar/table_calendar.dart';
+import 'package:table_calendar/table_calendar.dart'; // Import the calendar package
 import 'driverPage.dart';
 import 'loginPage.dart';
 import 'LineMangerCall.dart';
@@ -10,8 +10,9 @@ import 'dart:convert';
 import 'package:untitled/Pages/Location Service.dart';
 import 'package:web_socket_channel/web_socket_channel.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
+import 'package:intl/intl.dart'; // For date formatting
 
-const String ip = "192.168.1.8";
+const String ip = "192.168.1.4";
 final storage = FlutterSecureStorage();
 
 class AcceptedReservationsPage extends StatefulWidget {
@@ -31,7 +32,7 @@ class _AcceptedReservationsPageState extends State<AcceptedReservationsPage> {
   final locationService = LocationService();
   WebSocketChannel? _channel;
 
-  // إضافة متغيرات للتقويم
+  // Calendar variables
   CalendarFormat _calendarFormat = CalendarFormat.month;
   DateTime _focusedDay = DateTime.now();
   DateTime? _selectedDay;
@@ -54,7 +55,7 @@ class _AcceptedReservationsPageState extends State<AcceptedReservationsPage> {
     _channel?.sink.close();
   }
 
-
+  // Filter reservations based on search query
   void _filterReservations() {
     setState(() {
       List<dynamic> filteredList = acceptedReservations.where((reservation) {
@@ -83,16 +84,16 @@ class _AcceptedReservationsPageState extends State<AcceptedReservationsPage> {
                     .toLowerCase()
                     .contains(searchQuery.toLowerCase())) ||
             (reservation['recurring_days'] != null &&
-                reservation['recurring_days']
-                    .toLowerCase()
-                    .contains(searchQuery.toLowerCase()));
+                _parseRecurringDays(reservation['recurring_days'])
+                    .any((day) =>
+                    day.toLowerCase().contains(searchQuery.toLowerCase())));
       }).toList();
 
       filteredAcceptedReservations = filteredList;
     });
   }
 
-
+  // Fetch user profile data
   Future<void> fetchUserProfile() async {
     String? token = await storage.read(key: 'jwt_token');
 
@@ -125,6 +126,17 @@ class _AcceptedReservationsPageState extends State<AcceptedReservationsPage> {
         username = "Error";
       });
       print("Error fetching user profile: $e");
+    }
+  }
+
+  // Helper function to parse recurring_days
+  List<String> _parseRecurringDays(dynamic recurringDays) {
+    if (recurringDays is String) {
+      return recurringDays.split(',').map((s) => s.trim()).toList();
+    } else if (recurringDays is List<dynamic>) {
+      return recurringDays.map((s) => s.toString().trim()).toList();
+    } else {
+      return [];
     }
   }
 
@@ -165,12 +177,13 @@ class _AcceptedReservationsPageState extends State<AcceptedReservationsPage> {
       ),
       drawer: buildDrawer(context),
       endDrawer: SizedBox(
-        width: MediaQuery.of(context).size.width * 0.8,
+        width: MediaQuery.of(context).size.width * 0.8, // 80% of screen width
         child: Drawer(
           child: Padding(
             padding: const EdgeInsets.all(16.0),
             child: Column(
               children: [
+                // Header and Calendar
                 Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
@@ -208,12 +221,36 @@ class _AcceptedReservationsPageState extends State<AcceptedReservationsPage> {
                         shape: BoxShape.circle,
                       ),
                     ),
+                    calendarBuilders: CalendarBuilders(
+                      markerBuilder: (context, date, events) {
+                        if (events.isNotEmpty) {
+                          return Positioned(
+                            bottom: 1,
+                            child: Container(
+                              padding: const EdgeInsets.all(4),
+                              decoration: const BoxDecoration(
+                                shape: BoxShape.circle,
+                                color: Colors.redAccent,
+                              ),
+                              child: Text(
+                                '${events.length}',
+                                style: const TextStyle(
+                                  color: Colors.white,
+                                  fontSize: 12,
+                                ),
+                              ),
+                            ),
+                          );
+                        }
+                        return const SizedBox();
+                      },
+                    ),
                     onDaySelected: (selectedDay, focusedDay) {
                       setState(() {
                         _selectedDay = selectedDay;
                         _focusedDay = focusedDay;
                       });
-                      Navigator.pop(context);
+                      Navigator.pop(context); // Close endDrawer
                       Navigator.push(
                         context,
                         MaterialPageRoute(
@@ -244,7 +281,7 @@ class _AcceptedReservationsPageState extends State<AcceptedReservationsPage> {
           : SingleChildScrollView(
         child: Column(
           children: [
-            // شريط البحث
+            // Search bar
             Padding(
               padding: const EdgeInsets.all(16.0),
               child: TextField(
@@ -267,7 +304,7 @@ class _AcceptedReservationsPageState extends State<AcceptedReservationsPage> {
               ),
             ),
             const SizedBox(height: 16),
-            // قائمة الحجوزات
+            // Reservations list
             ListView.builder(
               shrinkWrap: true,
               physics: const NeverScrollableScrollPhysics(),
@@ -303,7 +340,7 @@ class _AcceptedReservationsPageState extends State<AcceptedReservationsPage> {
         ),
       ),
       bottomNavigationBar: BottomNavigationBar(
-        currentIndex: 1, // ثابت على 1 للصفحة الجديدة
+        currentIndex: 1, // Fixed to 1 for the Accepted Reservations page
         onTap: (index) {
           if (index == 0) {
             Navigator.pushReplacement(
@@ -326,15 +363,19 @@ class _AcceptedReservationsPageState extends State<AcceptedReservationsPage> {
     );
   }
 
+  // Get events for a specific day
   List<dynamic> _getEventsForDay(DateTime day) {
-    return _reservationsByDate[DateTime(day.year, day.month, day.day)] ?? [];
+    DateTime key = DateTime(day.year, day.month, day.day);
+    return _reservationsByDate[key] ?? [];
   }
 
+  // Build reservation card
   Widget _buildReservationCard({
     required Map<String, dynamic> reservation,
     required bool isPending,
     required VoidCallback onAction,
   }) {
+    // Handle missing user data
     String username = reservation['User'] != null
         ? reservation['User']['username'] ?? 'Unknown'
         : 'Unknown';
@@ -352,7 +393,7 @@ class _AcceptedReservationsPageState extends State<AcceptedReservationsPage> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            // عنوان الحجز
+            // Reservation title
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
@@ -366,11 +407,13 @@ class _AcceptedReservationsPageState extends State<AcceptedReservationsPage> {
               ],
             ),
             const SizedBox(height: 8),
+            // Created at date
             Text(
               "Created At: ${reservation['created_at']}",
               style: const TextStyle(color: Colors.grey),
             ),
             const Divider(height: 20, color: Colors.grey),
+            // Pick Up location
             Row(
               children: [
                 Container(
@@ -400,6 +443,7 @@ class _AcceptedReservationsPageState extends State<AcceptedReservationsPage> {
               ],
             ),
             const SizedBox(height: 8),
+            // Drop Off location
             Row(
               children: [
                 Container(
@@ -429,19 +473,23 @@ class _AcceptedReservationsPageState extends State<AcceptedReservationsPage> {
               ],
             ),
             const SizedBox(height: 8),
+            // Description and schedule
             Text(
               "Description: ${reservation['description'] ?? 'No description provided.'}",
               style: const TextStyle(fontSize: 14, color: Colors.black),
             ),
             Text(
-              "Start: ${reservation['scheduled_date'] ?? 'لم يحدد '}",
+              "Start Date: ${reservation['scheduled_date'] != null && reservation['scheduled_time'] != null ? '${reservation['scheduled_date']} at ${reservation['scheduled_time']}' : 'Not specified'}",
               style: const TextStyle(fontSize: 14, color: Colors.black),
             ),
+
             Text(
-              "Start: ${reservation['scheduled_time'] ?? 'لم يحدد '}",
+              "End Date: ${reservation['recurrence_end_date'] ?? 'Not specified'}",
               style: const TextStyle(fontSize: 14, color: Colors.black),
             ),
+
             const SizedBox(height: 8),
+            // Recurrence details
             if (reservation['is_recurring'] == true) ...[
               const Text(
                 "Recurring: Yes",
@@ -451,14 +499,6 @@ class _AcceptedReservationsPageState extends State<AcceptedReservationsPage> {
                 "Pattern: ${reservation['recurrence_pattern'] ?? 'N/A'}",
                 style: const TextStyle(fontSize: 14, color: Colors.black),
               ),
-              Text(
-                "Interval: ${reservation['recurrence_interval'] ?? 'N/A'}",
-                style: const TextStyle(fontSize: 14, color: Colors.black),
-              ),
-              Text(
-                "End Date: ${reservation['recurrence_end_date'] ?? 'N/A'}",
-                style: const TextStyle(fontSize: 14, color: Colors.black),
-              ),
               if (reservation['recurring_days'] != null)
                 Text(
                   "Days: ${reservation['recurring_days']}",
@@ -466,6 +506,7 @@ class _AcceptedReservationsPageState extends State<AcceptedReservationsPage> {
                 ),
               const SizedBox(height: 8),
             ],
+            // User details
             if (!isPending && reservation['User'] != null) ...[
               Text(
                 "User: $username",
@@ -595,6 +636,7 @@ class _AcceptedReservationsPageState extends State<AcceptedReservationsPage> {
     );
   }
 
+  // Show confirmation dialog
   void _showConfirmationDialog({
     required BuildContext context,
     required String title,
@@ -654,6 +696,7 @@ class _AcceptedReservationsPageState extends State<AcceptedReservationsPage> {
     );
   }
 
+  // Show profile options dialog
   void _showProfileOptions(BuildContext context) {
     showDialog(
       context: context,
@@ -683,18 +726,21 @@ class _AcceptedReservationsPageState extends State<AcceptedReservationsPage> {
     );
   }
 
+  // Navigate to "My Routes" page
   void _navigateToMyRoutes(BuildContext context) {
     ScaffoldMessenger.of(context).showSnackBar(
       const SnackBar(content: Text('Navigating to My Routes...')),
     );
   }
 
+  // Navigate to "Notifications" page
   void _navigateToNotifications(BuildContext context) {
     ScaffoldMessenger.of(context).showSnackBar(
       const SnackBar(content: Text('Navigating to Notifications...')),
     );
   }
 
+  // Show success dialog
   void _showSuccessDialog(String message) {
     showDialog(
       context: context,
@@ -715,6 +761,7 @@ class _AcceptedReservationsPageState extends State<AcceptedReservationsPage> {
     );
   }
 
+  // Show error dialog
   void _showErrorDialog(String message) {
     showDialog(
       context: context,
@@ -761,6 +808,7 @@ class _AcceptedReservationsPageState extends State<AcceptedReservationsPage> {
           _showErrorDialog('Failed to load accepted reservations.');
         }
 
+        // Filter reservations after fetching
         _filterReservations();
       }
     } catch (error) {
@@ -772,29 +820,159 @@ class _AcceptedReservationsPageState extends State<AcceptedReservationsPage> {
     }
   }
 
-  // دالة لرسم الحجوزات حسب التاريخ
+  // Map reservations to dates, handling recurrence
   void _mapReservationsByDate() {
     _reservationsByDate.clear();
     for (var reservation in acceptedReservations) {
-      String dateStr = reservation['scheduled_date'];
+      String? dateStr = reservation['scheduled_date'];
       if (dateStr != null) {
-        DateTime date = DateTime.parse(dateStr);
-        DateTime key = DateTime(date.year, date.month, date.day);
-        if (_reservationsByDate.containsKey(key)) {
-          _reservationsByDate[key]!.add(reservation);
+        DateTime startDate;
+        try {
+          // التحقق من تنسيق التاريخ باستخدام DateFormat
+          // إذا كان التنسيق مختلفًا، قم بتعديله هنا
+          // على سبيل المثال، إذا كان التنسيق 'dd-MM-yyyy':
+          // startDate = DateFormat('dd-MM-yyyy').parse(dateStr);
+          startDate = DateTime.parse(dateStr);
+        } catch (e) {
+          print("Invalid date format for reservation ID ${reservation['reservation_id']}: $dateStr");
+          continue; // Skip reservations with invalid date format
+        }
+
+        DateTime key = DateTime(startDate.year, startDate.month, startDate.day);
+        String? recurrencePattern = reservation['recurrence_pattern'];
+        bool isRecurring = reservation['is_recurring'] ?? false;
+
+        if (!isRecurring || recurrencePattern == null) {
+          // Non-recurring reservation
+          _reservationsByDate.putIfAbsent(key, () => []).add(reservation);
         } else {
-          _reservationsByDate[key] = [reservation];
+          // Recurring reservation
+          String? endDateStr = reservation['recurrence_end_date'];
+          if (endDateStr == null) continue;
+          DateTime endDate;
+          try {
+            endDate = DateTime.parse(endDateStr);
+          } catch (e) {
+            print("Invalid end date format for reservation ID ${reservation['reservation_id']}: $endDateStr");
+            continue; // Skip if end date is invalid
+          }
+
+          List<String> recurringDays = _parseRecurringDays(reservation['recurring_days']);
+
+          List<DateTime> occurrenceDates;
+          if (recurrencePattern.toLowerCase() == 'weekly') {
+            occurrenceDates = _generateWeeklyOccurrences(startDate, endDate, recurringDays);
+          } else if (recurrencePattern.toLowerCase() == 'monthly') {
+            // For monthly recurrence, repeat the same day each month
+            occurrenceDates = _generateMonthlyOccurrences(startDate, endDate);
+          } else {
+            continue; // Skip unsupported patterns
+          }
+
+          for (var date in occurrenceDates) {
+            DateTime occKey = DateTime(date.year, date.month, date.day);
+            _reservationsByDate.putIfAbsent(occKey, () => []).add(reservation);
+          }
         }
       }
     }
+
+    // Debug: Print reservations by date to verify correctness
+    _reservationsByDate.forEach((date, reservations) {
+      print('Date: $date, Reservations Count: ${reservations.length}');
+    });
   }
 
+  // Generate weekly occurrences without using interval
+  List<DateTime> _generateWeeklyOccurrences(
+      DateTime startDate, DateTime endDate, List<String> recurringDays) {
+    List<DateTime> dates = [];
+
+    if (recurringDays.isEmpty) {
+      // إذا لم يتم تحديد أيام، نستخدم يوم البداية
+      recurringDays = [DateFormat.E().format(startDate)];
+    }
+
+    // تحويل أسماء الأيام إلى أرقام (1 = الاثنين، ..., 7 = الأحد)
+    List<int> weekdays = recurringDays.map((day) {
+      switch (day.toLowerCase()) {
+        case 'monday':
+        case 'mon':
+          return DateTime.monday;
+        case 'tuesday':
+        case 'tue':
+          return DateTime.tuesday;
+        case 'wednesday':
+        case 'wed':
+          return DateTime.wednesday;
+        case 'thursday':
+        case 'thu':
+          return DateTime.thursday;
+        case 'friday':
+        case 'fri':
+          return DateTime.friday;
+        case 'saturday':
+        case 'sat':
+          return DateTime.saturday;
+        case 'sunday':
+        case 'sun':
+          return DateTime.sunday;
+        default:
+          return DateTime.monday; // الافتراضي إلى الاثنين إذا لم يتم التعرف
+      }
+    }).toSet().toList(); // إزالة التكرارات
+
+    for (var weekday in weekdays) {
+      DateTime occurrence = _nextInstanceOfWeekday(startDate, weekday);
+      while (!occurrence.isAfter(endDate)) {
+        dates.add(occurrence);
+        occurrence = occurrence.add(Duration(days: 7));
+      }
+    }
+
+    dates.sort();
+    return dates;
+  }
+
+  // Generate monthly occurrences by repeating the same day each month
+  List<DateTime> _generateMonthlyOccurrences(
+      DateTime startDate, DateTime endDate) {
+    List<DateTime> dates = [];
+    int day = startDate.day;
+    DateTime current = DateTime(startDate.year, startDate.month, day);
+
+    while (!current.isAfter(endDate)) {
+      dates.add(current);
+
+      // Move to next month
+      int newMonth = current.month + 1;
+      int newYear = current.year;
+      if (newMonth > 12) {
+        newMonth = 1;
+        newYear += 1;
+      }
+
+      // Handle months with fewer days
+      int lastDayOfNewMonth = DateTime(newYear, newMonth + 1, 0).day;
+      int dayToUse = day > lastDayOfNewMonth ? lastDayOfNewMonth : day;
+      current = DateTime(newYear, newMonth, dayToUse);
+    }
+
+    return dates;
+  }
+
+  // Helper function to find the next instance of a weekday
+  DateTime _nextInstanceOfWeekday(DateTime from, int weekday) {
+    int daysToAdd = (weekday - from.weekday + 7) % 7;
+    return from.add(Duration(days: daysToAdd));
+  }
+
+  // Cancel reservation
   Future<void> _cancelReservation(int reservationId) async {
     try {
       String? token = await storage.read(key: 'jwt_token');
       final response = await http.patch(
-        Uri.parse(
-            'http://$ip:3000/api/v1/reservation/cancel/$reservationId'),
+        Uri.parse('http://$ip:3000/api/v1/reservation/cancel/$reservationId'),
         headers: {'Authorization': 'Bearer $token'},
       );
 
@@ -809,13 +987,15 @@ class _AcceptedReservationsPageState extends State<AcceptedReservationsPage> {
     }
   }
 
+  // Create notification (optional)
   void _createNotification(String userId, String message) async {
+    // Send notification to backend
     String? token = await storage.read(key: 'jwt_token');
     if (token == null) return;
 
     var notificationDetails = {
-      'userId': userId,
-      'message': message,
+      'userId': userId, // ID of the user receiving the notification
+      'message': message, // The notification message
     };
 
     final response = await http.post(
@@ -835,7 +1015,7 @@ class _AcceptedReservationsPageState extends State<AcceptedReservationsPage> {
   }
 }
 
-
+// New page to display reservations by date
 class ReservationsByDatePage extends StatefulWidget {
   final DateTime selectedDate;
 
@@ -857,6 +1037,17 @@ class _ReservationsByDatePageState extends State<ReservationsByDatePage> {
     _fetchReservationsForDate();
   }
 
+  // Helper function to parse recurring_days
+  List<String> _parseRecurringDays(dynamic recurringDays) {
+    if (recurringDays is String) {
+      return recurringDays.split(',').map((s) => s.trim()).toList();
+    } else if (recurringDays is List<dynamic>) {
+      return recurringDays.map((s) => s.toString().trim()).toList();
+    } else {
+      return [];
+    }
+  }
+
   Future<void> _fetchReservationsForDate() async {
     try {
       String? token = await storage.read(key: 'jwt_token');
@@ -871,17 +1062,104 @@ class _ReservationsByDatePageState extends State<ReservationsByDatePage> {
         if (response.statusCode == 200) {
           final data = json.decode(response.body);
           List<dynamic> allReservations = data['data'];
-          setState(() {
-            reservationsForDate = allReservations.where((reservation) {
-              String dateStr = reservation['scheduled_date'];
+          List<dynamic> matchedReservations = [];
+
+          DateTime selectedDate = DateTime(widget.selectedDate.year,
+              widget.selectedDate.month, widget.selectedDate.day);
+
+          for (var reservation in allReservations) {
+            // Non-recurring reservations
+            if (reservation['is_recurring'] == false ||
+                reservation['is_recurring'] == null) {
+              String? dateStr = reservation['scheduled_date'];
               if (dateStr != null) {
-                DateTime date = DateTime.parse(dateStr);
-                return date.year == widget.selectedDate.year &&
-                    date.month == widget.selectedDate.month &&
-                    date.day == widget.selectedDate.day;
+                DateTime date;
+                try {
+                  // تأكد من تنسيق التاريخ
+                  date = DateTime.parse(dateStr);
+                } catch (e) {
+                  print("Invalid date format for reservation ID ${reservation['reservation_id']}: $dateStr");
+                  continue; // Skip if date is invalid
+                }
+                if (isSameDay(date, selectedDate)) {
+                  matchedReservations.add(reservation);
+                }
               }
-              return false;
-            }).toList();
+            }
+            // Recurring reservations
+            else if (reservation['is_recurring'] == true) {
+              String? dateStr = reservation['scheduled_date'];
+              String? recurrencePattern = reservation['recurrence_pattern'];
+              String? endDateStr = reservation['recurrence_end_date'];
+              List<String> recurringDays =
+              _parseRecurringDays(reservation['recurring_days']);
+
+              if (dateStr == null ||
+                  recurrencePattern == null ||
+                  endDateStr == null) {
+                continue; // Skip if essential fields are missing
+              }
+
+              DateTime startDate;
+              DateTime endDate;
+              try {
+                startDate = DateTime.parse(dateStr);
+                endDate = DateTime.parse(endDateStr);
+              } catch (e) {
+                print("Invalid date format for reservation ID ${reservation['reservation_id']}: $dateStr or $endDateStr");
+                continue; // Skip if dates are invalid
+              }
+
+              if (selectedDate.isBefore(startDate) ||
+                  selectedDate.isAfter(endDate)) {
+                continue; // The selected date is outside the recurrence period
+              }
+
+              if (recurrencePattern.toLowerCase() == 'weekly') {
+                // Check if selectedDate is one of the recurring days
+                List<int> weekdays = recurringDays.map((day) {
+                  switch (day.toLowerCase()) {
+                    case 'monday':
+                    case 'mon':
+                      return DateTime.monday;
+                    case 'tuesday':
+                    case 'tue':
+                      return DateTime.tuesday;
+                    case 'wednesday':
+                    case 'wed':
+                      return DateTime.wednesday;
+                    case 'thursday':
+                    case 'thu':
+                      return DateTime.thursday;
+                    case 'friday':
+                    case 'fri':
+                      return DateTime.friday;
+                    case 'saturday':
+                    case 'sat':
+                      return DateTime.saturday;
+                    case 'sunday':
+                    case 'sun':
+                      return DateTime.sunday;
+                    default:
+                      return DateTime.monday; // Default to Monday if unrecognized
+                  }
+                }).toSet().toList(); // Remove duplicates
+
+                if (weekdays.contains(selectedDate.weekday)) {
+                  matchedReservations.add(reservation);
+                }
+              } else if (recurrencePattern.toLowerCase() == 'monthly') {
+                // Check if selectedDate is the same day of the month as startDate
+                if (startDate.day == selectedDate.day) {
+                  matchedReservations.add(reservation);
+                }
+              }
+              // Add more patterns if needed
+            }
+          }
+
+          setState(() {
+            reservationsForDate = matchedReservations;
             isLoading = false;
           });
         } else {
@@ -900,6 +1178,7 @@ class _ReservationsByDatePageState extends State<ReservationsByDatePage> {
     }
   }
 
+  // Show error dialog
   void _showErrorDialog(String message) {
     showDialog(
       context: context,
@@ -920,6 +1199,7 @@ class _ReservationsByDatePageState extends State<ReservationsByDatePage> {
     );
   }
 
+  // Show success dialog
   void _showSuccessDialog(String message) {
     showDialog(
       context: context,
@@ -940,6 +1220,7 @@ class _ReservationsByDatePageState extends State<ReservationsByDatePage> {
     );
   }
 
+  // Cancel reservation
   Future<void> _cancelReservation(int reservationId) async {
     try {
       String? token = await storage.read(key: 'jwt_token');
@@ -959,11 +1240,13 @@ class _ReservationsByDatePageState extends State<ReservationsByDatePage> {
     }
   }
 
+  // Build reservation card
   Widget _buildReservationCard({
     required Map<String, dynamic> reservation,
     required bool isPending,
     required VoidCallback onAction,
   }) {
+    // Handle missing user data
     String username = reservation['User'] != null
         ? reservation['User']['username'] ?? 'Unknown'
         : 'Unknown';
@@ -981,6 +1264,7 @@ class _ReservationsByDatePageState extends State<ReservationsByDatePage> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
+            // Reservation title
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
@@ -994,11 +1278,13 @@ class _ReservationsByDatePageState extends State<ReservationsByDatePage> {
               ],
             ),
             const SizedBox(height: 8),
+            // Created at date
             Text(
               "Created At: ${reservation['created_at']}",
               style: const TextStyle(color: Colors.grey),
             ),
             const Divider(height: 20, color: Colors.grey),
+            // Pick Up location
             Row(
               children: [
                 Container(
@@ -1028,7 +1314,7 @@ class _ReservationsByDatePageState extends State<ReservationsByDatePage> {
               ],
             ),
             const SizedBox(height: 8),
-            // نقطة الوصول
+            // Drop Off location
             Row(
               children: [
                 Container(
@@ -1058,19 +1344,23 @@ class _ReservationsByDatePageState extends State<ReservationsByDatePage> {
               ],
             ),
             const SizedBox(height: 8),
+            // Description and schedule
             Text(
               "Description: ${reservation['description'] ?? 'No description provided.'}",
               style: const TextStyle(fontSize: 14, color: Colors.black),
             ),
             Text(
-              "Start: ${reservation['scheduled_date'] ?? 'لم يحدد '}",
+              "Start Date: ${reservation['scheduled_date'] != null && reservation['scheduled_time'] != null ? '${reservation['scheduled_date']} at ${reservation['scheduled_time']}' : 'Not specified'}",
               style: const TextStyle(fontSize: 14, color: Colors.black),
             ),
+
             Text(
-              "Start: ${reservation['scheduled_time'] ?? 'لم يحدد '}",
+              "End Date: ${reservation['recurrence_end_date'] ?? 'Not specified'}",
               style: const TextStyle(fontSize: 14, color: Colors.black),
             ),
+
             const SizedBox(height: 8),
+            // Recurrence details
             if (reservation['is_recurring'] == true) ...[
               const Text(
                 "Recurring: Yes",
@@ -1080,14 +1370,6 @@ class _ReservationsByDatePageState extends State<ReservationsByDatePage> {
                 "Pattern: ${reservation['recurrence_pattern'] ?? 'N/A'}",
                 style: const TextStyle(fontSize: 14, color: Colors.black),
               ),
-              Text(
-                "Interval: ${reservation['recurrence_interval'] ?? 'N/A'}",
-                style: const TextStyle(fontSize: 14, color: Colors.black),
-              ),
-              Text(
-                "End Date: ${reservation['recurrence_end_date'] ?? 'N/A'}",
-                style: const TextStyle(fontSize: 14, color: Colors.black),
-              ),
               if (reservation['recurring_days'] != null)
                 Text(
                   "Days: ${reservation['recurring_days']}",
@@ -1095,6 +1377,7 @@ class _ReservationsByDatePageState extends State<ReservationsByDatePage> {
                 ),
               const SizedBox(height: 8),
             ],
+            // User details
             if (!isPending && reservation['User'] != null) ...[
               Text(
                 "User: $username",
@@ -1171,7 +1454,7 @@ class _ReservationsByDatePageState extends State<ReservationsByDatePage> {
     );
   }
 
-  // دالة عرض نافذة التأكيد
+  // Show confirmation dialog
   void _showConfirmationDialog({
     required BuildContext context,
     required String title,

@@ -6,7 +6,7 @@ import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:untitled/Pages/profilePage.dart';
 import 'dart:math' as math;
 
-const String ip = "192.168.1.8";
+const String ip = "192.168.1.4";
 final storage = FlutterSecureStorage();
 
 class Recommendationspage extends StatefulWidget {
