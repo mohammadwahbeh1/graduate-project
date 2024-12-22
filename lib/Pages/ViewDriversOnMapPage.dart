@@ -35,11 +35,11 @@ class _ViewDriversPageState extends State<ViewDriversOnMapPage> {
     final ui.Image image = await decodeImageFromList(bytes);
 
     final PictureRecorder recorder = PictureRecorder();
-    final Canvas canvas = Canvas(recorder, Rect.fromPoints(Offset(0, 0), Offset(100, 100)));
+    final Canvas canvas = Canvas(recorder, Rect.fromPoints(const Offset(0, 0), const Offset(100, 100)));
     canvas.drawImageRect(
         image,
         Rect.fromLTWH(0, 0, image.width.toDouble(), image.height.toDouble()),
-        Rect.fromLTWH(0, 0, 100, 100),
+        const Rect.fromLTWH(0, 0, 100, 100),
         Paint()
     );
 
@@ -153,7 +153,7 @@ class _ViewDriversPageState extends State<ViewDriversOnMapPage> {
     return Scaffold(
       appBar: AppBar(
         title: const Text('Drivers on Map'),
-        backgroundColor: Color(0xFFF5CF24),
+        backgroundColor: const Color(0xFFF5CF24),
       ),
       body: Stack(
         children: [

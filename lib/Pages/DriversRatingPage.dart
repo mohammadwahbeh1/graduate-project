@@ -27,13 +27,15 @@ class DriverRating {
 }
 
 class DriversRatingPage extends StatefulWidget {
+  const DriversRatingPage({super.key});
+
   @override
   _DriversRatingPageState createState() => _DriversRatingPageState();
 }
 
 class _DriversRatingPageState extends State<DriversRatingPage>
     with SingleTickerProviderStateMixin {
-  final FlutterSecureStorage storage = FlutterSecureStorage();
+  final FlutterSecureStorage storage = const FlutterSecureStorage();
   List<DriverRating> _drivers = [];
   bool _isLoading = true;
   String? _errorMessage;
@@ -126,7 +128,7 @@ class _DriversRatingPageState extends State<DriversRatingPage>
 
   Widget buildHistogramChart() {
     if (_drivers.isEmpty) {
-      return Center(
+      return const Center(
           child: Text(
             "No data available to display.",
             style: TextStyle(color: Colors.white),
@@ -138,22 +140,22 @@ class _DriversRatingPageState extends State<DriversRatingPage>
       child: SfCartesianChart(
         primaryXAxis: CategoryAxis(
           labelRotation: 45,
-          majorGridLines: MajorGridLines(width: 0),
-          labelStyle: TextStyle(color: Colors.white),
+          majorGridLines: const MajorGridLines(width: 0),
+          labelStyle: const TextStyle(color: Colors.white),
         ),
         primaryYAxis: NumericAxis(
           minimum: 0,
           maximum: 5,
           interval: 1,
           majorGridLines:
-          MajorGridLines(width: 0.5, color: Colors.white30),
-          labelStyle: TextStyle(color: Colors.white),
+          const MajorGridLines(width: 0.5, color: Colors.white30),
+          labelStyle: const TextStyle(color: Colors.white),
         ),
         backgroundColor: Colors.transparent,
         plotAreaBackgroundColor: Colors.transparent,
         title: ChartTitle(
           text: 'Driver Rating Distribution',
-          textStyle: TextStyle(
+          textStyle: const TextStyle(
             color: Colors.white,
             fontSize: 18,
             fontWeight: FontWeight.bold,
@@ -168,7 +170,7 @@ class _DriversRatingPageState extends State<DriversRatingPage>
             yValueMapper: (DriverRating driver, _) => driver.avgRating,
             name: 'Ratings',
             color: Colors.orangeAccent,
-            dataLabelSettings: DataLabelSettings(
+            dataLabelSettings: const DataLabelSettings(
               isVisible: true,
               textStyle: TextStyle(
                 fontSize: 10,
@@ -186,7 +188,7 @@ class _DriversRatingPageState extends State<DriversRatingPage>
     return Padding(
       padding: const EdgeInsets.all(16.0),
       child: SfRadialGauge(
-        title: GaugeTitle(
+        title: const GaugeTitle(
           text: 'Average Rating',
           textStyle: TextStyle(
             fontSize: 16,
@@ -199,7 +201,7 @@ class _DriversRatingPageState extends State<DriversRatingPage>
             minimum: 0,
             maximum: 5,
             interval: 1,
-            axisLineStyle: AxisLineStyle(
+            axisLineStyle: const AxisLineStyle(
               thickness: 0.2,
               color: Colors.white30,
               thicknessUnit: GaugeSizeUnit.factor,
@@ -224,7 +226,7 @@ class _DriversRatingPageState extends State<DriversRatingPage>
               NeedlePointer(
                 value: averageRating,
                 needleColor: Colors.redAccent,
-                knobStyle: KnobStyle(color: Colors.red),
+                knobStyle: const KnobStyle(color: Colors.red),
                 needleLength: 0.7,
               )
             ],
@@ -233,13 +235,13 @@ class _DriversRatingPageState extends State<DriversRatingPage>
                 widget: averageRating > 0
                     ? Text(
                   averageRating.toStringAsFixed(1),
-                  style: TextStyle(
+                  style: const TextStyle(
                     fontSize: 20,
                     fontWeight: FontWeight.bold,
                     color: Colors.white,
                   ),
                 )
-                    : Text(
+                    : const Text(
                   "No Ratings",
                   style: TextStyle(
                     fontSize: 20,
@@ -259,7 +261,7 @@ class _DriversRatingPageState extends State<DriversRatingPage>
 
   Widget buildPieChart() {
     if (_drivers.isEmpty) {
-      return Center(
+      return const Center(
           child: Text(
             "No data available to display.",
             style: TextStyle(color: Colors.white),
@@ -304,7 +306,7 @@ class _DriversRatingPageState extends State<DriversRatingPage>
       child: SfCircularChart(
         title: ChartTitle(
           text: 'Ratings Distribution',
-          textStyle: TextStyle(
+          textStyle: const TextStyle(
             color: Colors.white,
             fontSize: 18,
             fontWeight: FontWeight.bold,
@@ -313,7 +315,7 @@ class _DriversRatingPageState extends State<DriversRatingPage>
         legend: Legend(
           isVisible: true,
           overflowMode: LegendItemOverflowMode.wrap,
-          textStyle: TextStyle(color: Colors.white),
+          textStyle: const TextStyle(color: Colors.white),
         ),
         series: <PieSeries<_PieData, String>>[
           PieSeries<_PieData, String>(
@@ -367,7 +369,7 @@ class _DriversRatingPageState extends State<DriversRatingPage>
       return Center(
         child: FadeTransition(
           opacity: _animationController,
-          child: CircularProgressIndicator(
+          child: const CircularProgressIndicator(
             valueColor:
             AlwaysStoppedAnimation<Color>(Colors.orangeAccent),
           ),
@@ -379,7 +381,7 @@ class _DriversRatingPageState extends State<DriversRatingPage>
       return Center(
         child: Text(
           _errorMessage!,
-          style: TextStyle(color: Colors.red, fontSize: 16),
+          style: const TextStyle(color: Colors.red, fontSize: 16),
         ),
       );
     }
@@ -387,11 +389,11 @@ class _DriversRatingPageState extends State<DriversRatingPage>
     return SingleChildScrollView(
       child: Column(
         children: [
-          SizedBox(height: 20),
+          const SizedBox(height: 20),
           // Gradient Background with Average Rating Gauge
           Container(
             width: double.infinity,
-            padding: EdgeInsets.all(16),
+            padding: const EdgeInsets.all(16),
             decoration: BoxDecoration(
               gradient: LinearGradient(
                 colors: [Colors.lightBlue.shade200, Colors.blue.shade400],
@@ -410,18 +412,18 @@ class _DriversRatingPageState extends State<DriversRatingPage>
                     color: Colors.white,
                   ),
                 ),
-                SizedBox(height: 20),
+                const SizedBox(height: 20),
                 buildAverageRatingGauge(),
               ],
             ),
           ),
-          SizedBox(height: 30),
-          Divider(color: Colors.white54, thickness: 1.5),
-          SizedBox(height: 10),
+          const SizedBox(height: 30),
+          const Divider(color: Colors.white54, thickness: 1.5),
+          const SizedBox(height: 10),
           buildPieChart(),
-          SizedBox(height: 30),
+          const SizedBox(height: 30),
           buildHistogramChart(),
-          SizedBox(height: 30),
+          const SizedBox(height: 30),
         ],
       ),
     );
@@ -446,11 +448,11 @@ class _DriversRatingPageState extends State<DriversRatingPage>
               Container(
                 width: double.infinity,
                 padding:
-                EdgeInsets.symmetric(horizontal: 16, vertical: 20),
-                decoration: BoxDecoration(
+                const EdgeInsets.symmetric(horizontal: 16, vertical: 20),
+                decoration: const BoxDecoration(
                   color: Colors.transparent,
                 ),
-                child: Column(
+                child: const Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(

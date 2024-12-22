@@ -504,8 +504,6 @@ class _VehiclePageState extends State<VehiclePage> {
                     }
                     Navigator.of(context).pop();
                   },
-                  child: Text(isEdit ? 'Update' : 'Create',
-                      style: const TextStyle(color: Colors.white)),
                   style: ElevatedButton.styleFrom(
                     backgroundColor: secondaryColor,
                     padding: const EdgeInsets.symmetric(
@@ -514,6 +512,8 @@ class _VehiclePageState extends State<VehiclePage> {
                       borderRadius: BorderRadius.circular(30),
                     ),
                   ),
+                  child: Text(isEdit ? 'Update' : 'Create',
+                      style: const TextStyle(color: Colors.white)),
                 ),
               ],
             );
