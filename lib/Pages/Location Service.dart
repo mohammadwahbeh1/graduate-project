@@ -1,75 +1,98 @@
 import 'dart:async';
 import 'dart:convert';
-
 import 'package:flutter/cupertino.dart';
+import 'package:flutter/material.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:geolocator/geolocator.dart';
 import 'package:jwt_decode/jwt_decode.dart';
 import 'package:provider/provider.dart';
 import 'package:http/http.dart' as http;
-
 import 'location_provider.dart';
+
 class LocationService {
   final FlutterSecureStorage _storage = const FlutterSecureStorage();
   Timer? _locationTimer;
-
-  // Terminal's latitude and longitude (fetch from API)
   double terminalLatitude = 0.0;
   double terminalLongitude = 0.0;
   Position? _lastPosition;
-
-  // Flag to track whether the driver is inside the range
   bool _isInRange = false;
+  final String googleRoadsApiKey = "AIzaSyBUyuByMAu02NKWp76MsQ1xRWHKb2FsWEg";
+  final String ip = "http://192.168.1.5:3000";
 
   Future<void> startTracking(BuildContext context) async {
     bool isDriver = await _isDriver();
-    if (isDriver) {
-      // Check and request permissions
-      LocationPermission permission = await Geolocator.checkPermission();
+    if (!isDriver) return;
+    LocationPermission permission = await Geolocator.checkPermission();
+    if (permission == LocationPermission.denied) {
+      permission = await Geolocator.requestPermission();
       if (permission == LocationPermission.denied) {
-        permission = await Geolocator.requestPermission();
-        if (permission == LocationPermission.denied) {
-          print('Location permissions are denied');
-          return;
-        }
-      }
-
-      if (permission == LocationPermission.deniedForever) {
-        print('Location permissions are permanently denied');
         return;
       }
-
-      // Fetch the terminal location once (you can store this in a global state)
-      await _fetchTerminalLocation();
-
-      // Start periodic updates for the driver's location
-      _locationTimer = Timer.periodic(const Duration(minutes: 1), (_) async {
-        Position position = await Geolocator.getCurrentPosition(
-          desiredAccuracy: LocationAccuracy.high,
+    }
+    if (permission == LocationPermission.deniedForever) {
+      return;
+    }
+    await _fetchTerminalLocation();
+    _locationTimer = Timer.periodic(const Duration(minutes: 1), (_) async {
+      Position position = await Geolocator.getCurrentPosition(
+        desiredAccuracy: LocationAccuracy.high,
+      );
+      await _checkSpeedAndWarn(context, position);
+      if (_lastPosition != null) {
+        double distance = Geolocator.distanceBetween(
+          _lastPosition!.latitude,
+          _lastPosition!.longitude,
+          position.latitude,
+          position.longitude,
         );
-        if(_lastPosition!=null){
-          double distance= Geolocator.distanceBetween(
-              _lastPosition!.latitude,
-              _lastPosition!.longitude ,
-              position.latitude,
-              position.longitude);
-          if(distance>=10){
-            _updateVehicleLocation();
-            _lastPosition=position;
-          }
+        if (distance >= 10) {
+          _updateVehicleLocation();
+          _lastPosition = position;
         }
-        else{
-          _lastPosition=position;
-          print("the last position is : $_lastPosition");
+      } else {
+        _lastPosition = position;
+      }
+      _updateDriverLocation(position);
+      Provider.of<LocationProvider>(context, listen: false).updatePosition(position);
+    });
+  }
+
+  Future<double?> _fetchSpeedLimit(double latitude, double longitude) async {
+    final Uri url = Uri.parse(
+      "https://roads.googleapis.com/v1/speedLimits?path=$latitude,$longitude&key=$googleRoadsApiKey",
+    );
+    try {
+      final response = await http.get(url);
+      if (response.statusCode == 200) {
+        final data = jsonDecode(response.body);
+        if (data['speedLimits'] != null && (data['speedLimits'] as List).isNotEmpty) {
+          final speedInfo = data['speedLimits'][0];
+          final limit = speedInfo['speedLimit'];
+          return limit.toDouble();
         }
-        _updateDriverLocation(position);
-        Provider.of<LocationProvider>(context, listen: false).updatePosition(position);
-        print('Position updated: ${position.latitude}, ${position.longitude}');
-      });
+      }
+    } catch (_) {}
+    return null;
+  }
+
+  Future<void> _checkSpeedAndWarn(BuildContext context, Position position) async {
+    double speedInKmh = position.speed * 3.6;
+    double? roadSpeedLimit = await _fetchSpeedLimit(position.latitude, position.longitude);
+    double actualSpeedLimit = roadSpeedLimit ?? 50.0;
+    if (speedInKmh > actualSpeedLimit) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(
+            "تحذير! سرعتك الحالية ${speedInKmh.toStringAsFixed(1)} وتتجاوز الحد المسموح $actualSpeedLimit",
+            style: const TextStyle(color: Colors.white),
+          ),
+          backgroundColor: Colors.red,
+          duration: const Duration(seconds: 5),
+        ),
+      );
     }
   }
 
-  // Define the _isDriver method to check if the user is a driver
   Future<bool> _isDriver() async {
     String? token = await _storage.read(key: 'jwt_token');
     if (token != null) {
@@ -79,142 +102,96 @@ class LocationService {
     return false;
   }
 
-  // Fetch terminal location (call your API here)
   Future<void> _fetchTerminalLocation() async {
-    // Assuming you have an API endpoint to fetch terminal info
     try {
       String? token = await _storage.read(key: 'jwt_token');
       if (token != null) {
         final response = await http.get(
-          Uri.parse('http://192.168.1.8:3000/api/v1/terminals/terminal-position'),
+          Uri.parse('$ip/api/v1/terminals/terminal-position'),
           headers: {
             'Authorization': 'Bearer $token',
           },
         );
-
         if (response.statusCode == 200) {
           final data = jsonDecode(response.body);
           terminalLatitude = data['latitude'];
           terminalLongitude = data['longitude'];
-        } else {
-          print("Error fetching terminal location");
         }
       }
-    } catch (e) {
-      print("Error fetching terminal location: $e");
-    }
+    } catch (_) {}
   }
 
-  // Calculate the distance between the driver's position and the terminal
   Future<void> _updateDriverLocation(Position position) async {
-    // Calculate the distance between the driver's position and the terminal
     double distance = Geolocator.distanceBetween(
       position.latitude,
       position.longitude,
       terminalLatitude,
       terminalLongitude,
     );
-    print('Distance: $distance meters');
-
-    // If the driver is within 500 meters and wasn't already inside, increment the count
     if (distance <= 500 && !_isInRange) {
-      _isInRange = true; // Set the flag to true
-      print('Driver entered the range');
+      _isInRange = true;
       await _incrementVehicleCount();
-    }
-
-    // If the driver is outside of 500 meters and was previously inside, decrement the count
-    if (distance > 500 && _isInRange) {
-      _isInRange = false; // Set the flag to false
-      print('Driver exited the range');
+    } else if (distance > 500 && _isInRange) {
+      _isInRange = false;
       await _decrementVehicleCount();
     }
   }
 
-  // Call the backend to increment the vehicle count
   Future<void> _incrementVehicleCount() async {
     try {
       String? token = await _storage.read(key: 'jwt_token');
       if (token != null) {
         await http.patch(
-          Uri.parse('http://192.168.1.8:3000/api/v1/vehicle/increment'),
+          Uri.parse('$ip/api/v1/vehicle/increment'),
           headers: {
             'Authorization': 'Bearer $token',
             'Content-Type': 'application/json',
           },
         );
-
-        print("Vehicle count incremented successfully.");
       }
-    } catch (e) {
-      print("Error incrementing vehicle count: $e");
-    }
+    } catch (_) {}
   }
 
-  // Call the backend to decrement the vehicle count
   Future<void> _decrementVehicleCount() async {
     try {
       String? token = await _storage.read(key: 'jwt_token');
       if (token != null) {
         await http.patch(
-          Uri.parse('http://192.168.1.8:3000/api/v1/vehicle/decrement'),
+          Uri.parse('$ip/api/v1/vehicle/decrement'),
           headers: {
             'Authorization': 'Bearer $token',
             'Content-Type': 'application/json',
           },
         );
-
-        print("Vehicle count decremented successfully.");
       }
-    } catch (e) {
-      print("Error decrementing vehicle count: $e");
-    }
+    } catch (_) {}
   }
+
   Future<void> _updateVehicleLocation() async {
     try {
-      // Retrieve JWT token from secure storage
       String? token = await _storage.read(key: 'jwt_token');
-      if (token == null) {
-        print("JWT token not found.");
-        return;
-      }
-
-      if (_lastPosition == null) {
-        print("No last known position to update vehicle location.");
-        return;
-      }
-
-      // Prepare the payload with the driver's current location
+      if (token == null) return;
+      if (_lastPosition == null) return;
       final body = jsonEncode({
         'latitude': _lastPosition!.latitude,
         'longitude': _lastPosition!.longitude,
       });
-
-      // Make the PATCH request to the backend
       final response = await http.patch(
-        Uri.parse('http://192.168.1.8:3000/api/v1/vehicle/update-location'),
+        Uri.parse('$ip/api/v1/vehicle/update-location'),
         headers: {
           'Authorization': 'Bearer $token',
           'Content-Type': 'application/json',
         },
         body: body,
       );
-
-      // Handle the response
       if (response.statusCode == 200) {
         final responseData = jsonDecode(response.body);
         print("Vehicle location updated successfully: ${responseData['vehicle']}");
-      } else {
-        print("Failed to update vehicle location. Response: ${response.body}");
       }
-    } catch (e) {
-      print("Error updating vehicle location: $e");
-    }
+    } catch (_) {}
   }
 
-
-  // Stop location tracking
   void stopTracking() {
-    _locationTimer?.cancel(); // Stop the periodic timer when tracking is stopped
+    _locationTimer?.cancel();
   }
 }

@@ -3,7 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:http/http.dart' as http;
 import 'package:google_maps_flutter/google_maps_flutter.dart';
-const String ip = "192.168.1.4";
+const String ip = "192.168.1.5";
 
 
 class VehiclePage extends StatefulWidget {
@@ -577,10 +577,10 @@ class _VehiclePageState extends State<VehiclePage> {
         child: Row(
           children: [
             // Vehicle Icon
-            CircleAvatar(
+            const CircleAvatar(
               radius: 30,
               backgroundColor: primaryColor,
-              child: const Icon(
+              child: Icon(
                 Icons.location_on,
                 size: 30,
                 color: Colors.white,
@@ -594,7 +594,7 @@ class _VehiclePageState extends State<VehiclePage> {
                 children: [
                   Text(
                     'Vehicle ID: ${vehicle['vehicle_id']}',
-                    style: TextStyle(
+                    style: const TextStyle(
                       fontWeight: FontWeight.bold,
                       fontSize: 18,
                       color: secondaryColor,

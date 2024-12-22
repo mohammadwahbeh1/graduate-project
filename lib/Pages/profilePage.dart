@@ -4,7 +4,7 @@ import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:http/http.dart' as http;
 import './EditProfilePage.dart';
 
-const String ip = "192.168.1.4";  // Make sure to use the correct IP for your backend
+const String ip = "192.168.1.5";  // Make sure to use the correct IP for your backend
 
 class ProfilePage extends StatefulWidget {
   const ProfilePage({Key? key}) : super(key: key);

@@ -751,7 +751,6 @@ class __MapSelectionDialogState extends State<_MapSelectionDialog> {
   }
 }
 
-// مربع حوار لعرض موقع الخط على الخريطة
 class _LineLocationDialog extends StatelessWidget {
   final String lineId;
   final double latitude;

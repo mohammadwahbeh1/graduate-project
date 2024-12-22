@@ -3,8 +3,9 @@ import 'package:http/http.dart' as http;
 import 'dart:convert';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:intl/intl.dart';
+import 'package:flutter_rating_bar/flutter_rating_bar.dart';
 
-const String ip = "192.168.1.4";
+const String ip = "192.168.1.5";
 final storage = FlutterSecureStorage();
 
 class ReservationsPage extends StatefulWidget {
@@ -59,7 +60,7 @@ class _ReservationsPageState extends State<ReservationsPage> {
               "recurrence_interval": reservation['recurrence_interval'],
               "recurrence_end_date": reservation['recurrence_end_date'] != null
                   ? DateTime.parse(reservation['recurrence_end_date'])
-                  : null, 
+                  : null,
             }).toList();
           });
         }
@@ -95,9 +96,7 @@ class _ReservationsPageState extends State<ReservationsPage> {
           SnackBar(content: Text('Reservation removed successfully')),
         );
         await _fetchReservations();
-
       }
-
     } catch (e) {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text('Error removing reservation: $e')),
@@ -149,13 +148,12 @@ class _ReservationsPageState extends State<ReservationsPage> {
 
       if (response.statusCode == 200) {
         setState(() {
-          reservation['status'] = 'Confirmed'; // تحديث حالة الحجز محليًا
+          reservation['status'] = 'Confirmed';
         });
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Reservation resumed successfully')),
+          const SnackBar(content: Text('Reservation resumed successfully')),
         );
-        await _fetchReservations();  // إعادة تحميل البيانات بعد التجديد
-
+        await _fetchReservations();
       }
     } catch (e) {
       ScaffoldMessenger.of(context).showSnackBar(
@@ -164,52 +162,6 @@ class _ReservationsPageState extends State<ReservationsPage> {
     }
   }
 
-  @override
-  Widget build(BuildContext context) {
-    return Scaffold(
-      body: _isLoading
-          ? Center(child: CircularProgressIndicator())
-          : RefreshIndicator(
-        onRefresh: _fetchReservations,
-        child: _reservations.isEmpty
-            ? _buildEmptyState()
-            : _buildReservationsList(),
-      ),
-    );
-  }
-
-  Widget _buildEmptyState() {
-    return Center(
-      child: Column(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [
-          Icon(Icons.calendar_today_outlined, size: 80, color: Colors.grey[400]),
-          SizedBox(height: 16),
-          Text(
-            "No Reservations Yet",
-            style: TextStyle(
-              fontSize: 24,
-              fontWeight: FontWeight.bold,
-              color: Colors.grey[800],
-            ),
-          ),
-          SizedBox(height: 8),
-          Text(
-            "Your reservations will appear here",
-            style: TextStyle(fontSize: 16, color: Colors.grey[600]),
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildReservationsList() {
-    return ListView.builder(
-      padding: EdgeInsets.all(16),
-      itemCount: _reservations.length,
-      itemBuilder: (context, index) => _buildReservationCard(_reservations[index]),
-    );
-  }
   Future<void> _renewReservation(Map<String, dynamic> reservation) async {
     String? token = await storage.read(key: 'jwt_token');
 
@@ -230,10 +182,9 @@ class _ReservationsPageState extends State<ReservationsPage> {
           reservation['status'] = 'Confirmed';
         });
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Reservation renewed successfully')),
+          const SnackBar(content: Text('Reservation renewed successfully')),
         );
-        await _fetchReservations();  // إعادة تحميل البيانات بعد التجديد
-
+        await _fetchReservations();
       }
     } catch (e) {
       ScaffoldMessenger.of(context).showSnackBar(
@@ -242,12 +193,160 @@ class _ReservationsPageState extends State<ReservationsPage> {
     }
   }
 
+  void _showRatingDialog(Map<String, dynamic> reservation) {
+    double _ratingValue = 3.0;
+    TextEditingController _commentController = TextEditingController();
+
+    showDialog(
+      context: context,
+      builder: (BuildContext context) {
+        return AlertDialog(
+          title: const Text('Rate the Driver'),
+          content: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              RatingBar.builder(
+                initialRating: _ratingValue,
+                minRating: 1,
+                direction: Axis.horizontal,
+                allowHalfRating: true,
+                itemSize: 30,
+                itemBuilder: (context, _) => const Icon(Icons.star, color: Colors.amber),
+                onRatingUpdate: (rating) {
+                  _ratingValue = rating;
+                },
+              ),
+              const SizedBox(height: 16),
+              TextField(
+                controller: _commentController,
+                decoration: const InputDecoration(
+                  labelText: 'Add a comment',
+                ),
+              ),
+            ],
+          ),
+          actions: [
+            TextButton(
+              child: const Text('Cancel', style: TextStyle(color: Colors.red)),
+              onPressed: () => Navigator.pop(context),
+            ),
+            ElevatedButton(
+              child: const Text('Submit'),
+              onPressed: () {
+                Navigator.pop(context);
+                _submitRating(
+                  reservationId: reservation['reservation_id'].toString(),
+                  driverId: reservation['driver_id'].toString(),
+                  rating: _ratingValue.toString(),
+                  comment: _commentController.text,
+                );
+              },
+            ),
+          ],
+        );
+      },
+    );
+  }
+
+  Future<void> _submitRating({
+    required String reservationId,
+    required String driverId,
+    required String rating,
+    required String comment,
+  }) async {
+    String? token = await storage.read(key: 'jwt_token');
+
+    try {
+      final response = await http.post(
+        Uri.parse('http://$ip:3000/api/v1/driver-ratings/'),
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': 'Bearer $token',
+        },
+        body: json.encode({
+          "reservation_id": reservationId,
+          "driver_id": driverId,
+          "rating": rating,
+          "comment": comment
+        }),
+      );
+
+      if (response.statusCode == 201) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Rating created successfully')),
+        );
+      } else if (response.statusCode == 200) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Rating updated successfully')),
+        );
+      } else {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(
+              'Failed to submit rating. Code: ${response.statusCode}',
+            ),
+          ),
+        );
+      }
+    } catch (e) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Error submitting rating: $e')),
+      );
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      body: _isLoading
+          ? const Center(child: CircularProgressIndicator())
+          : RefreshIndicator(
+        onRefresh: _fetchReservations,
+        child: _reservations.isEmpty
+            ? _buildEmptyState()
+            : _buildReservationsList(),
+      ),
+    );
+  }
+
+  Widget _buildEmptyState() {
+    return Center(
+      child: Column(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          Icon(Icons.calendar_today_outlined, size: 80, color: Colors.grey[400]),
+          const SizedBox(height: 16),
+          Text(
+            "No Reservations Yet",
+            style: TextStyle(
+              fontSize: 24,
+              fontWeight: FontWeight.bold,
+              color: Colors.grey[800],
+            ),
+          ),
+          const SizedBox(height: 8),
+          Text(
+            "Your reservations will appear here",
+            style: TextStyle(fontSize: 16, color: Colors.grey[600]),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildReservationsList() {
+    return ListView.builder(
+      padding: const EdgeInsets.all(16),
+      itemCount: _reservations.length,
+      itemBuilder: (context, index) =>
+          _buildReservationCard(_reservations[index]),
+    );
+  }
 
   Widget _buildReservationCard(Map<String, dynamic> reservation) {
     Color statusColor;
     IconData statusIcon;
 
-    // تحديد اللون والأيقونة بناءً على حالة الحجز
     switch (reservation['status'].toString().toLowerCase()) {
       case 'confirmed':
         statusColor = Colors.green;
@@ -286,8 +385,8 @@ class _ReservationsPageState extends State<ReservationsPage> {
             trailing: Row(
               mainAxisSize: MainAxisSize.min,
               children: [
-                // زر "Cancel" إذا كانت الحالة ليست "confirmed" أو "pause"
-                if (reservation['status'].toString().toLowerCase() != 'confirmed' && reservation['status'].toString().toLowerCase() != 'pause')
+                if (reservation['status'].toString().toLowerCase() != 'confirmed' &&
+                    reservation['status'].toString().toLowerCase() != 'pause')
                   TextButton.icon(
                     icon: Icon(Icons.cancel, color: Colors.red),
                     label: Text('Cancel', style: TextStyle(color: Colors.red)),
@@ -297,7 +396,6 @@ class _ReservationsPageState extends State<ReservationsPage> {
                     ),
                     onPressed: () => _deleteReservation(reservation['reservation_id']),
                   ),
-                // زر "Pause" إذا كانت الحالة "confirmed"
                 if (reservation['status'].toString().toLowerCase() == 'confirmed') ...[
                   const SizedBox(width: 8),
                   TextButton.icon(
@@ -319,23 +417,32 @@ class _ReservationsPageState extends State<ReservationsPage> {
                     ),
                     onPressed: () => _deleteReservation(reservation['reservation_id']),
                   ),
-                ],
-                // زر "Resume" إذا كانت الحالة "pause"
-                if (reservation['status'].toString().toLowerCase() == 'pause') ...[
                   SizedBox(width: 8),
                   TextButton.icon(
+                    icon: Icon(Icons.star, color: Colors.amber),
+                    label: Text('Rate Driver', style: TextStyle(color: Colors.amber[800])),
+                    style: TextButton.styleFrom(
+                      backgroundColor: Colors.amber.withOpacity(0.1),
+                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+                    ),
+                    onPressed: () => _showRatingDialog(reservation),
+                  ),
+                ],
+                if (reservation['status'].toString().toLowerCase() == 'pause') ...[
+                  const SizedBox(width: 8),
+                  TextButton.icon(
                     icon: const Icon(Icons.play_arrow, color: Colors.green),
-                    label: Text('Resume', style: TextStyle(color: Colors.green)),
+                    label: const Text('Resume', style: TextStyle(color: Colors.green)),
                     style: TextButton.styleFrom(
                       backgroundColor: Colors.green.withOpacity(0.1),
                       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
                     ),
                     onPressed: () => _resumeReservation(reservation),
                   ),
-                  SizedBox(width: 8),
+                  const SizedBox(width: 8),
                   TextButton.icon(
                     icon: const Icon(Icons.cancel, color: Colors.red),
-                    label: Text('Cancel', style: TextStyle(color: Colors.red)),
+                    label: const Text('Cancel', style: TextStyle(color: Colors.red)),
                     style: TextButton.styleFrom(
                       backgroundColor: Colors.red.withOpacity(0.1),
                       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
@@ -343,11 +450,10 @@ class _ReservationsPageState extends State<ReservationsPage> {
                     onPressed: () => _deleteReservation(reservation['reservation_id']),
                   ),
                 ],
-                // زر "Renew" إذا كانت الحالة "cancelled"
                 if (reservation['status'].toString().toLowerCase() == 'cancelled')
                   TextButton.icon(
-                    icon: Icon(Icons.refresh, color: Colors.green),
-                    label: Text('Renew', style: TextStyle(color: Colors.green)),
+                    icon: const Icon(Icons.refresh, color: Colors.green),
+                    label: const Text('Renew', style: TextStyle(color: Colors.green)),
                     style: TextButton.styleFrom(
                       backgroundColor: Colors.green.withOpacity(0.1),
                       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
@@ -357,29 +463,23 @@ class _ReservationsPageState extends State<ReservationsPage> {
               ],
             ),
           ),
-          Divider(),
+          const Divider(),
           Padding(
-            padding: EdgeInsets.all(16),
+            padding: const EdgeInsets.all(16),
             child: Column(
               children: [
-                // عرض معلومات الرحلة
                 _buildRouteInfo(reservation['start_destination'], reservation['end_destination']),
-                SizedBox(height: 16),
-                // عرض معلومات الموعد إذا كانت موجودة
+                const SizedBox(height: 16),
                 if (reservation['scheduled_date'] != null)
                   _buildScheduledInfo(
                     reservation['scheduled_date'],
                     reservation['scheduled_time'],
                     reservation['reservation_id'],
                   ),
-                // عرض أيام التكرار إذا كانت موجودة
                 if (reservation['is_recurring'] == true)
                   _buildRecurringDays(reservation['recurring_days'], reservation['reservation_id']),
-                // عرض معلومات الاتصال (الهاتف والوصف)
                 _buildContactInfo(reservation['phone_number'], reservation['description']),
-                // عرض معلومات السائق إذا كانت موجودة
                 if (reservation['driver_id'] != null) _buildDriverInfo(reservation['driver_id']),
-                // عرض معلومات التكرار (نمط التكرار والفاصل الزمني)
                 if (reservation['recurrence_pattern'] != null)
                   _buildRecurrenceInfo(reservation),
               ],
@@ -389,6 +489,7 @@ class _ReservationsPageState extends State<ReservationsPage> {
       ),
     );
   }
+
   Widget _buildRouteInfo(String start, String end) {
     return Row(
       children: [
@@ -397,11 +498,11 @@ class _ReservationsPageState extends State<ReservationsPage> {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Text('From', style: TextStyle(color: Colors.grey[600])),
-              Text(start, style: TextStyle(fontWeight: FontWeight.bold)),
+              Text(start, style: const TextStyle(fontWeight: FontWeight.bold)),
             ],
           ),
         ),
-        Icon(Icons.arrow_forward, color: Colors.grey),
+        const Icon(Icons.arrow_forward, color: Colors.grey),
         Expanded(
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.end,
@@ -417,24 +518,24 @@ class _ReservationsPageState extends State<ReservationsPage> {
 
   Widget _buildScheduledInfo(DateTime date, String? time, int reservationId) {
     return Container(
-      padding: EdgeInsets.all(8),
+      padding: const EdgeInsets.all(8),
       decoration: BoxDecoration(
         color: Colors.blue.withOpacity(0.1),
         borderRadius: BorderRadius.circular(8),
       ),
       child: Row(
         children: [
-          Icon(Icons.event, color: Colors.blue),
-          SizedBox(width: 8),
+          const Icon(Icons.event, color: Colors.blue),
+          const SizedBox(width: 8),
           Text(
             DateFormat('MMM dd, yyyy').format(date),
-            style: TextStyle(fontWeight: FontWeight.bold),
+            style: const TextStyle(fontWeight: FontWeight.bold),
           ),
           if (time != null) ...[
-            SizedBox(width: 90),
-            Icon(Icons.access_time, color: Colors.blue),
-            SizedBox(width: 10),
-            Text(time, style: TextStyle(fontWeight: FontWeight.bold)),
+            const SizedBox(width: 90),
+            const Icon(Icons.access_time, color: Colors.blue),
+            const SizedBox(width: 10),
+            Text(time, style: const TextStyle(fontWeight: FontWeight.bold)),
           ],
         ],
       ),
@@ -460,9 +561,11 @@ class _ReservationsPageState extends State<ReservationsPage> {
           Wrap(
             spacing: 8,
             runSpacing: 8,
-            children: days.map((day) => Chip(
+            children: days
+                .map((day) => Chip(
               label: Text(day),
-            )).toList(),
+            ))
+                .toList(),
           ),
         ],
       ),
@@ -495,31 +598,32 @@ class _ReservationsPageState extends State<ReservationsPage> {
         ],
       ),
     );
-  }}
+  }
 
-Widget _buildDriverInfo(int driverId) {
-  return Padding(
-    padding: const EdgeInsets.only(top: 8.0),
-    child: Row(
-      children: [
-        Icon(Icons.directions_car, color: Colors.grey),
-        SizedBox(width: 8),
-        Text('Driver ID: $driverId'),
-      ],
-    ),
-  );
-}
+  Widget _buildDriverInfo(int driverId) {
+    return Padding(
+      padding: const EdgeInsets.only(top: 8.0),
+      child: Row(
+        children: [
+          const Icon(Icons.directions_car, color: Colors.grey),
+          const SizedBox(width: 8),
+          Text('Driver ID: $driverId'),
+        ],
+      ),
+    );
+  }
 
-Widget _buildRecurrenceInfo(Map<String, dynamic> reservation) {
-  return Padding(
-    padding: const EdgeInsets.only(top: 8.0),
-    child: Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Text('Recurrence Pattern: ${reservation['recurrence_pattern']}'),
-        if (reservation['recurrence_end_date'] != null)
-          Text('Recurrence Ends: ${DateFormat('MMM dd, yyyy').format(reservation['recurrence_end_date'])}'),
-      ],
-    ),
-  );
+  Widget _buildRecurrenceInfo(Map<String, dynamic> reservation) {
+    return Padding(
+      padding: const EdgeInsets.only(top: 8.0),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text('Recurrence Pattern: ${reservation['recurrence_pattern']}'),
+          if (reservation['recurrence_end_date'] != null)
+            Text('Recurrence Ends: ${DateFormat('MMM dd, yyyy').format(reservation['recurrence_end_date'])}'),
+        ],
+      ),
+    );
+  }
 }

@@ -1,5 +1,6 @@
 // driver_page.dart
 import 'package:flutter/material.dart';
+import 'package:untitled/Pages/Recommendationspage.dart';
 import 'accepted_reservations_page.dart';
 import 'loginPage.dart';
 import 'LineMangerCall.dart';
@@ -10,7 +11,7 @@ import 'package:untitled/Pages/Location Service.dart';
 import 'package:web_socket_channel/web_socket_channel.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 
-const String ip = "192.168.1.4";
+const String ip = "192.168.1.5";
 final storage = FlutterSecureStorage();
 
 class DriverPage extends StatefulWidget {
@@ -83,7 +84,6 @@ class _DriverPageState extends State<DriverPage> {
     });
   }
 
-  // دالة لجلب بيانات المستخدم
   Future<void> fetchUserProfile() async {
     String? token = await storage.read(key: 'jwt_token');
 
@@ -226,13 +226,11 @@ class _DriverPageState extends State<DriverPage> {
     );
   }
 
-  // دالة لبناء بطاقة الحجز
   Widget _buildReservationCard({
     required Map<String, dynamic> reservation,
     required bool isPending,
     required VoidCallback onAction,
   }) {
-    // التعامل مع بيانات المستخدم المفقودة
     String username = reservation['User'] != null
         ? reservation['User']['username'] ?? 'Unknown'
         : 'Unknown';
@@ -264,7 +262,6 @@ class _DriverPageState extends State<DriverPage> {
               ],
             ),
             const SizedBox(height: 8),
-            // تاريخ الإنشاء
             Text(
               "Created At: ${reservation['created_at']}",
               style: const TextStyle(color: Colors.grey),
@@ -455,11 +452,13 @@ class _DriverPageState extends State<DriverPage> {
           const SizedBox(height: 20),
           ListTile(
             leading: const Icon(Icons.notifications, size: 28),
-            title: const Text('Notifications', style: TextStyle(fontSize: 16)),
+            title: const Text('Recommendationspage', style: TextStyle(fontSize: 16)),
             onTap: () {
               Navigator.pop(context);
-              _navigateToNotifications(context);
-            },
+              Navigator.push(
+                context,
+                MaterialPageRoute(builder: (context) => const Recommendationspage()),
+              );            },
           ),
           const SizedBox(height: 20),
           ListTile(
@@ -490,7 +489,6 @@ class _DriverPageState extends State<DriverPage> {
     );
   }
 
-  // دالة عرض نافذة التأكيد
   void _showConfirmationDialog({
     required BuildContext context,
     required String title,
@@ -636,7 +634,6 @@ class _DriverPageState extends State<DriverPage> {
     );
   }
 
-  // دالة جلب الحجوزات المعلقة من الـ API
   Future<void> _fetchPendingReservations() async {
     try {
       String? token = await storage.read(key: 'jwt_token');

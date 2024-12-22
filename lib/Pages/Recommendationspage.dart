@@ -6,7 +6,7 @@ import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:untitled/Pages/profilePage.dart';
 import 'dart:math' as math;
 
-const String ip = "192.168.1.4";
+const String ip = "192.168.1.5";
 final storage = FlutterSecureStorage();
 
 class Recommendationspage extends StatefulWidget {
@@ -305,9 +305,9 @@ class _RecommendationspageState extends State<Recommendationspage> {
 
         if (pendingResponse.statusCode == 200) {
 
-            pendingReservations = json.decode(pendingResponse.body)['data'];
+          pendingReservations = json.decode(pendingResponse.body)['data'];
 
-            isLoading = false;
+          isLoading = false;
 
           await _getCurrentLocation();
           _calculateTheDes();
@@ -650,87 +650,87 @@ class _RecommendationspageState extends State<Recommendationspage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-        appBar: AppBar(
+      appBar: AppBar(
         title: const Text(
-        "Recommendations",
-        style: TextStyle(fontWeight: FontWeight.w500),
-    ),
-    backgroundColor: const Color(0xFFF5CF24),
-    centerTitle: true,
-    actions: [
-    IconButton(
-    icon: const Icon(
-    Icons.person,
-    size: 30,
-    color: Colors.black,
-    ),
-    onPressed: () {
-      _showProfileOptions(context);
-    },
-    ),
-    ],
-    ),
-    body: isLoading
-    ? const Center(child: CircularProgressIndicator())
-    : Column(
-    children: [
-      Padding(
-        padding: const EdgeInsets.all(16.0),
-        child: TextField(
-          decoration: const InputDecoration(
-            hintText: 'Search',
-            border: OutlineInputBorder(
-              borderRadius: BorderRadius.all(Radius.circular(12)),
-            ),
-            prefixIcon: Icon(Icons.search),
-            fillColor: Colors.white,
-            filled: true,
-          ),
-          onChanged: (value) {
-            setState(() {
-              searchQuery = value;
-              _filterReservations();
-            });
-          },
+          "Recommendations",
+          style: TextStyle(fontWeight: FontWeight.w500),
         ),
+        backgroundColor: const Color(0xFFF5CF24),
+        centerTitle: true,
+        actions: [
+          IconButton(
+            icon: const Icon(
+              Icons.person,
+              size: 30,
+              color: Colors.black,
+            ),
+            onPressed: () {
+              _showProfileOptions(context);
+            },
+          ),
+        ],
       ),
-      Expanded(
-        child: ListView(
-          children: [
-            if (filteredPendingReservations.isNotEmpty) ...[
-              for (var reservation in filteredPendingReservations)
-                _buildReservationCard(
-                  reservation: reservation,
-                  isPending: true,
-                  onAction: () {
-                    _showConfirmationDialog(
-                      context: context,
-                      title: 'Accept Reservation',
-                      message:
-                      'Are you sure you want to accept this reservation?',
-                      onConfirm: () {
-                        _acceptReservation(
-                          reservation['reservation_id'],
-                          reservation['user_id'].toString(),
+      body: isLoading
+          ? const Center(child: CircularProgressIndicator())
+          : Column(
+        children: [
+          Padding(
+            padding: const EdgeInsets.all(16.0),
+            child: TextField(
+              decoration: const InputDecoration(
+                hintText: 'Search',
+                border: OutlineInputBorder(
+                  borderRadius: BorderRadius.all(Radius.circular(12)),
+                ),
+                prefixIcon: Icon(Icons.search),
+                fillColor: Colors.white,
+                filled: true,
+              ),
+              onChanged: (value) {
+                setState(() {
+                  searchQuery = value;
+                  _filterReservations();
+                });
+              },
+            ),
+          ),
+          Expanded(
+            child: ListView(
+              children: [
+                if (filteredPendingReservations.isNotEmpty) ...[
+                  for (var reservation in filteredPendingReservations)
+                    _buildReservationCard(
+                      reservation: reservation,
+                      isPending: true,
+                      onAction: () {
+                        _showConfirmationDialog(
+                          context: context,
+                          title: 'Accept Reservation',
+                          message:
+                          'Are you sure you want to accept this reservation?',
+                          onConfirm: () {
+                            _acceptReservation(
+                              reservation['reservation_id'],
+                              reservation['user_id'].toString(),
+                            );
+                          },
+                          confirmText: 'Accept',
                         );
                       },
-                      confirmText: 'Accept',
-                    );
-                  },
-                ),
-            ],
-            if (filteredPendingReservations.isEmpty)
-              const Padding(
-                padding: EdgeInsets.all(16.0),
-                child: Center(
-                  child: Text("No pending reservations."),
-                ),
-              ),
-          ],
-        ),
+                    ),
+                ],
+                if (filteredPendingReservations.isEmpty)
+                  const Padding(
+                    padding: EdgeInsets.all(16.0),
+                    child: Center(
+                      child: Text("No pending reservations."),
+                    ),
+                  ),
+              ],
+            ),
+          ),
+        ],
       ),
-    ],
-    ),
     );
   }
 }
