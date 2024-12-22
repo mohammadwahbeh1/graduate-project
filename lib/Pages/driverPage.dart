@@ -11,7 +11,7 @@ import 'package:untitled/Pages/Location Service.dart';
 import 'package:web_socket_channel/web_socket_channel.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 
-const String ip = "192.168.1.5";
+const String ip = "192.168.1.8";
 final storage = FlutterSecureStorage();
 
 class DriverPage extends StatefulWidget {
@@ -211,6 +211,14 @@ class _DriverPageState extends State<DriverPage> {
               MaterialPageRoute(builder: (context) => const AcceptedReservationsPage()),
             );
           }
+
+         else if(index == 2){
+            Navigator.push(
+              context,
+                MaterialPageRoute(builder: (context) => const Recommendationspage()),
+            );
+
+          }
         },
         items: const [
           BottomNavigationBarItem(
@@ -220,6 +228,10 @@ class _DriverPageState extends State<DriverPage> {
           BottomNavigationBarItem(
             icon: Icon(Icons.check),
             label: 'Accepted Reservations',
+          ),
+          BottomNavigationBarItem(
+            icon: Icon(Icons.check),
+            label: 'Recomindation',
           ),
         ],
       ),
