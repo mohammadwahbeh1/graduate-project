@@ -158,25 +158,25 @@ class _LoginPageState extends State<LoginPage> {
 
   @override
   Widget build(BuildContext context) {
-    final isWeb = kIsWeb; // تحديد إذا كان التطبيق يعمل كويب
+    final isWeb = kIsWeb;
 
     return Scaffold(
       backgroundColor: Colors.white,
       body: (isLoading)
           ? Center(child: CircularProgressIndicator())
-          : Center( // يجعل التصميم في وسط الشاشة
+          : Center(
         child: Container(
           width: isWeb ? 500 : MediaQuery
               .of(context)
               .size
-              .width, // تقليل العرض للويب
+              .width,
           padding: EdgeInsets.symmetric(
-            horizontal: isWeb ? 30.0 : 20.0, // ضبط المسافات بناءً على الجهاز
+            horizontal: isWeb ? 30.0 : 20.0,
           ),
           child: SingleChildScrollView(
             child: Column(
               mainAxisAlignment: MainAxisAlignment.center,
-              // وضع العناصر في الوسط
+
               children: [
                 const SizedBox(height: 30),
                 // الشعار
@@ -184,7 +184,7 @@ class _LoginPageState extends State<LoginPage> {
                   width: isWeb ? 200 : MediaQuery
                       .of(context)
                       .size
-                      .width * 0.7, // تقليل حجم الشعار للويب
+                      .width * 0.7,
                   child: Image.asset('assets/logo.jpg'),
                 ),
                 const SizedBox(height: 30),
@@ -192,7 +192,7 @@ class _LoginPageState extends State<LoginPage> {
                   key: _formkey,
                   child: Column(
                     children: [
-                      // حقل البريد الإلكتروني
+
                       Container(
                         padding: const EdgeInsets.symmetric(
                             vertical: 2.0, horizontal: 30.0),
@@ -221,7 +221,7 @@ class _LoginPageState extends State<LoginPage> {
                         ),
                       ),
                       const SizedBox(height: 20.0),
-                      // حقل كلمة المرور
+
                       Container(
                         padding: const EdgeInsets.symmetric(
                             vertical: 2.0, horizontal: 30.0),
@@ -251,7 +251,7 @@ class _LoginPageState extends State<LoginPage> {
                         ),
                       ),
                       const SizedBox(height: 20),
-                      // زر تسجيل الدخول
+
                       GestureDetector(
                         onTap: userLogin,
                         child: Container(
@@ -275,7 +275,7 @@ class _LoginPageState extends State<LoginPage> {
                         ),
                       ),
                       const SizedBox(height: 20.0),
-                      // رابط "نسيت كلمة المرور"
+
                       GestureDetector(
                         onTap: () {
                           Navigator.push(
