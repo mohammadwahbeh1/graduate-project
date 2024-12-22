@@ -58,6 +58,8 @@ dependencies:
   shared_preferences: ^2.2.0
 
   syncfusion_flutter_charts: ^20.3.55  # or the latest version
+  syncfusion_flutter_gauges: ^20.3.55
+
 
   google_maps_flutter: ^2.2.2
 

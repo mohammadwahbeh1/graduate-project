@@ -2,13 +2,14 @@ import 'dart:convert';
 
 import 'package:flutter/material.dart';
 import 'package:untitled/Pages/DriversAndLinesPage.dart';
+import 'package:untitled/Pages/DriversRatingPage.dart';
 import 'package:untitled/Pages/profilePage.dart';
 import 'DriverCall.dart';
 import 'package:http/http.dart' as http;
 
 import 'ViewDriversOnMapPage.dart';
 import 'loginPage.dart';
-const String ip = "192.168.1.5";
+const String ip = "192.168.1.3";
 
 
 class LineManagerPage extends StatefulWidget {
@@ -149,9 +150,23 @@ class _LineManagerPageState extends State<LineManagerPage> {
             },
           ),
 
-
-
           SizedBox(height: 20),
+          ListTile(
+            leading:  const Icon(Icons.star, size: 28),
+            title: const Text('Drivers Rating', style: TextStyle(fontSize: 16)),
+            onTap: () {
+              Navigator.pop(context);
+              Navigator.push(
+                context,
+                 MaterialPageRoute(builder: (context) => DriversRatingPage()),
+              );
+            },
+          ),
+
+
+
+
+          const SizedBox(height: 20),
           ListTile(
             leading: const Icon(Icons.call, size: 28),
             title: const Text('Call Driver', style: TextStyle(fontSize: 16)),
@@ -159,11 +174,11 @@ class _LineManagerPageState extends State<LineManagerPage> {
               Navigator.pop(context);
               Navigator.push(
                 context,
-                MaterialPageRoute(builder: (context) => CallDriverPage()),
+                MaterialPageRoute(builder: (context) => const CallDriverPage()),
               );
             },
           ),
-          SizedBox(height: 20),
+          const SizedBox(height: 20),
           ListTile(
             leading: const Icon(Icons.logout,size: 28,),
             title: const Text('Log out'),
@@ -171,7 +186,7 @@ class _LineManagerPageState extends State<LineManagerPage> {
               Navigator.pop(context);
               Navigator.pushReplacement(
                 context,
-                MaterialPageRoute(builder: (context) => LoginPage()),
+                MaterialPageRoute(builder: (context) => const LoginPage()),
               );
             },
           ),
