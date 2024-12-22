@@ -1,3 +1,5 @@
+import 'dart:io';
+
 import 'package:flutter/material.dart';
 import 'package:geolocator/geolocator.dart';
 import 'package:http/http.dart' as http;
@@ -6,7 +8,9 @@ import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:untitled/Pages/profilePage.dart';
 import 'dart:math' as math;
 
-const String ip = "192.168.1.5";
+import 'mapServiceDirectionTime.dart';
+
+const String ip = "192.168.1.8";
 final storage = FlutterSecureStorage();
 
 class Recommendationspage extends StatefulWidget {
@@ -147,6 +151,9 @@ class _RecommendationspageState extends State<Recommendationspage> {
 
     _fetchPendingReservations();
     fetchUserProfile();
+
+
+
   }
 
 
@@ -406,148 +413,179 @@ class _RecommendationspageState extends State<Recommendationspage> {
       shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.circular(15),
       ),
-      child: Padding(
-        padding: const EdgeInsets.all(16.0),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+      child: FutureBuilder<Duration?>(
+        future: MapsService.getEstimatedTravelTime(
+          reservation['start_destination'],
+          reservation['end_destination'],
+        ),
+        builder: (context, snapshot) {
+          String travelTimeText;
+          if (snapshot.connectionState == ConnectionState.waiting) {
+            travelTimeText = 'Calculating...';
+          } else if (snapshot.hasData && snapshot.data != null) {
+            final minutes = snapshot.data!.inMinutes;
+            travelTimeText = '$minutes minutes';
+          } else {
+            travelTimeText = 'Location not found in database';
+            print('Start: ${reservation['start_destination']}');
+            print('End: ${reservation['end_destination']}');
+          }
+          return Padding(
+            padding: const EdgeInsets.all(16.0),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text(
-                  "Ride #${reservation['reservation_id']}",
-                  style: const TextStyle(
-                    fontWeight: FontWeight.bold,
-                    fontSize: 18,
-                  ),
-                ),
-              ],
-            ),
-            const SizedBox(height: 8),
-            Text(
-              "Created At: ${reservation['created_at']}",
-              style: const TextStyle(color: Colors.grey),
-            ),
-            const Divider(height: 20, color: Colors.grey),
-            Row(
-              children: [
-                Container(
-                  padding: const EdgeInsets.all(8),
-                  decoration: BoxDecoration(
-                    color: const Color(0xFFF5CF24),
-                    shape: BoxShape.circle,
-                    border: Border.all(
-                      color: const Color(0xFFFCF3C2),
-                      width: 2,
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    Text(
+                      "Ride #${reservation['reservation_id']}",
+                      style: const TextStyle(
+                        fontWeight: FontWeight.bold,
+                        fontSize: 18,
+                      ),
                     ),
-                  ),
-                  child: const Icon(
-                    Icons.my_location_outlined,
-                    color: Colors.black,
-                    size: 30,
-                  ),
+                  ],
                 ),
-                const SizedBox(width: 8),
-                Expanded(
-                  child: Text(
-                    "Pick Up: ${reservation['start_destination']}",
-                    style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w500),
-                  ),
-                ),
-              ],
-            ),
-            const SizedBox(height: 8),
-            Row(
-              children: [
-                Container(
-                  padding: const EdgeInsets.all(8),
-                  decoration: BoxDecoration(
-                    color: const Color(0xFFF5CF24),
-                    shape: BoxShape.circle,
-                    border: Border.all(
-                      color: const Color(0xFFFCF3C2),
-                      width: 2,
-                    ),
-                  ),
-                  child: const Icon(
-                    Icons.location_on_outlined,
-                    color: Colors.black,
-                    size: 30,
-                  ),
-                ),
-                const SizedBox(width: 8),
-                Expanded(
-                  child: Text(
-                    "Drop Off: ${reservation['end_destination']}",
-                    style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w500),
-                  ),
-                ),
-                Expanded(
-                  child: Text(
-                    "Start_date: ${reservation['scheduled_date']}",
-                    style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w500),
-                  ),
-                ),
-                Expanded(
-                  child: Text(
-                    "at: ${reservation['scheduled_time']}",
-                    style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w500),
-                  ),
-                ),
-              ],
-            ),
-            const SizedBox(height: 8),
-            Text(
-              "Description: ${reservation['description'] ?? 'No description provided.'}",
-              style: const TextStyle(fontSize: 14, color: Colors.black),
-            ),
-            const SizedBox(height: 8),
-            if (reservation['is_recurring'] == true) ...[
-              const Text(
-                "Recurring: Yes",
-                style: TextStyle(fontSize: 14, color: Colors.black),
-              ),
-              Text(
-                "Pattern: ${reservation['recurrence_pattern'] ?? 'N/A'}",
-                style: const TextStyle(fontSize: 14, color: Colors.black),
-              ),
-              Text(
-                "Interval: ${reservation['recurrence_interval'] ?? 'N/A'}",
-                style: const TextStyle(fontSize: 14, color: Colors.black),
-              ),
-              Text(
-                "End Date: ${reservation['recurrence_end_date'] ?? 'N/A'}",
-                style: const TextStyle(fontSize: 14, color: Colors.black),
-              ),
-              if (reservation['recurring_days'] != null)
+                const SizedBox(height: 8),
                 Text(
-                  "Days: ${reservation['recurring_days']}",
+                  "Created At: ${reservation['created_at']}",
+                  style: const TextStyle(color: Colors.grey),
+                ),
+                const Divider(height: 20, color: Colors.grey),
+                Row(
+                  children: [
+                    Container(
+                      padding: const EdgeInsets.all(8),
+                      decoration: BoxDecoration(
+                        color: const Color(0xFFF5CF24),
+                        shape: BoxShape.circle,
+                        border: Border.all(
+                          color: const Color(0xFFFCF3C2),
+                          width: 2,
+                        ),
+                      ),
+                      child: const Icon(
+                        Icons.my_location_outlined,
+                        color: Colors.black,
+                        size: 30,
+                      ),
+                    ),
+                    const SizedBox(width: 8),
+                    Expanded(
+                      child: Text(
+                        "Pick Up: ${reservation['start_destination']}",
+                        style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w500),
+                      ),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 8),
+                Row(
+                  children: [
+                    Container(
+                      padding: const EdgeInsets.all(8),
+                      decoration: BoxDecoration(
+                        color: const Color(0xFFF5CF24),
+                        shape: BoxShape.circle,
+                        border: Border.all(
+                          color: const Color(0xFFFCF3C2),
+                          width: 2,
+                        ),
+                      ),
+                      child: const Icon(
+                        Icons.location_on_outlined,
+                        color: Colors.black,
+                        size: 30,
+                      ),
+                    ),
+                    const SizedBox(width: 8),
+                    Expanded(
+                      child: Text(
+                        "Drop Off: ${reservation['end_destination']}",
+                        style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w500),
+                      ),
+                    ),
+                    Expanded(
+                      child: Text(
+                        "Start_date: ${reservation['scheduled_date']}",
+                        style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w500),
+                      ),
+                    ),
+                    Expanded(
+                      child: Text(
+                        "at: ${reservation['scheduled_time']}",
+                        style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w500),
+                      ),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 8),
+                Text(
+                  "Description: ${reservation['description'] ?? 'No description provided.'}",
                   style: const TextStyle(fontSize: 14, color: Colors.black),
                 ),
-              const SizedBox(height: 8),
-            ],
-            const SizedBox(height: 16),
-            ElevatedButton(
-              onPressed: onAction,
-              style: ElevatedButton.styleFrom(
-                backgroundColor:
-                isPending ? const Color(0xFFF5CF24) : const Color(0xFFF2643A),
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(8.0),
+                const SizedBox(height: 8),
+
+                   Text(
+                    "Estimated Travel Time: $travelTimeText",
+                    style: const TextStyle(
+                      fontSize: 14,
+                      fontWeight: FontWeight.w500,
+                    ),
+
                 ),
-                minimumSize: const Size(double.infinity, 48),
-              ),
-              child: Text(
-                isPending ? 'Accept' : 'Reject',
-                style: const TextStyle(
-                    fontWeight: FontWeight.bold, color: Colors.black, fontSize: 16),
-              ),
+                const SizedBox(height: 8),
+                if (reservation['is_recurring'] == true) ...[
+                  const Text(
+                    "Recurring: Yes",
+                    style: TextStyle(fontSize: 14, color: Colors.black),
+                  ),
+                  Text(
+                    "Pattern: ${reservation['recurrence_pattern'] ?? 'N/A'}",
+                    style: const TextStyle(fontSize: 14, color: Colors.black),
+                  ),
+                  Text(
+                    "Interval: ${reservation['recurrence_interval'] ?? 'N/A'}",
+                    style: const TextStyle(fontSize: 14, color: Colors.black),
+                  ),
+                  Text(
+                    "End Date: ${reservation['recurrence_end_date'] ?? 'N/A'}",
+                    style: const TextStyle(fontSize: 14, color: Colors.black),
+                  ),
+                  if (reservation['recurring_days'] != null)Text(
+                    "Days: ${reservation['recurring_days']}",
+                    style: const TextStyle(fontSize: 14, color: Colors.black),
+                  ),
+                  const SizedBox(height: 8),
+
+                ],
+                const SizedBox(height: 16),
+                ElevatedButton(
+                  onPressed: onAction,
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor:
+                    isPending ? const Color(0xFFF5CF24) : const Color(0xFFF2643A),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(8.0),
+                    ),
+                    minimumSize: const Size(double.infinity, 48),
+                  ),
+                  child: Text(
+                    isPending ? 'Accept' : 'Reject',
+                    style: const TextStyle(
+                        fontWeight: FontWeight.bold, color: Colors.black, fontSize: 16),
+                  ),
+                ),
+
+              ],
             ),
-          ],
-        ),
+          );
+        },
       ),
     );
   }
+
 
   void _showSuccessDialog(String message) {
     showDialog(

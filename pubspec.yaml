@@ -59,7 +59,7 @@ dependencies:
 
   syncfusion_flutter_charts: ^20.3.55  # or the latest version
 
-  google_maps_flutter: ^2.2.2
+  google_maps_flutter: ^2.5.0
 
   geocoding: ^2.0.0
 
@@ -68,6 +68,8 @@ dependencies:
   flutter_slidable: ^3.1.1
   table_calendar: ^3.0.8
   percent_indicator: ^4.0.0
+  maps_toolkit: ^2.0.1
+  dio: ^5.4.0
 
 
 
