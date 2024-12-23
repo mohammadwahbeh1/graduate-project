@@ -5,7 +5,7 @@ import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:intl/intl.dart';
 import 'package:flutter_rating_bar/flutter_rating_bar.dart';
 
-const String ip = "192.168.1.5";
+const String ip = "192.168.1.3";
 final storage = FlutterSecureStorage();
 
 class ReservationsPage extends StatefulWidget {
