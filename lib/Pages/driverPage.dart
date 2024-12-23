@@ -211,6 +211,14 @@ class _DriverPageState extends State<DriverPage> {
               MaterialPageRoute(builder: (context) => const AcceptedReservationsPage()),
             );
           }
+
+         else if(index == 2){
+            Navigator.push(
+              context,
+                MaterialPageRoute(builder: (context) => const Recommendationspage()),
+            );
+
+          }
         },
         items: const [
           BottomNavigationBarItem(
@@ -220,6 +228,10 @@ class _DriverPageState extends State<DriverPage> {
           BottomNavigationBarItem(
             icon: Icon(Icons.check),
             label: 'Accepted Reservations',
+          ),
+          BottomNavigationBarItem(
+            icon: Icon(Icons.check),
+            label: 'Recomindation',
           ),
         ],
       ),
