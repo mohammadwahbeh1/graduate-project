@@ -4,7 +4,7 @@ import 'package:http/http.dart' as http;
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:syncfusion_flutter_charts/charts.dart';
 
-const String ip = "192.168.1.3";
+const String ip = "192.168.1.7";
 final storage = FlutterSecureStorage();
 
 class StatisticsPage extends StatefulWidget {

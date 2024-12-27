@@ -1,6 +1,7 @@
 // accepted_reservations_page.dart
 import 'package:flutter/material.dart';
 import 'package:table_calendar/table_calendar.dart'; // Import the calendar package
+import 'Recommendationspage.dart';
 import 'driverPage.dart';
 import 'loginPage.dart';
 import 'LineMangerCall.dart';
@@ -12,7 +13,7 @@ import 'package:web_socket_channel/web_socket_channel.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:intl/intl.dart'; // For date formatting
 
-const String ip = "192.168.1.3";
+const String ip = "192.168.1.7";
 final storage = FlutterSecureStorage();
 
 class AcceptedReservationsPage extends StatefulWidget {
@@ -348,7 +349,17 @@ class _AcceptedReservationsPageState extends State<AcceptedReservationsPage> {
               MaterialPageRoute(builder: (context) => const DriverPage()),
             );
           }
-        },
+          else if(index == 2){
+            Navigator.push(
+              context,
+              MaterialPageRoute(builder: (context) => const Recommendationspage()),
+            );
+
+          }
+
+        }
+        ,
+
         items: const [
           BottomNavigationBarItem(
             icon: Icon(Icons.access_time),
@@ -358,6 +369,11 @@ class _AcceptedReservationsPageState extends State<AcceptedReservationsPage> {
             icon: Icon(Icons.check),
             label: 'Accepted Reservations',
           ),
+          BottomNavigationBarItem(
+            icon: Icon(Icons.check),
+            label: 'Recomindation',
+          ),
+
         ],
       ),
     );
@@ -889,11 +905,9 @@ class _AcceptedReservationsPageState extends State<AcceptedReservationsPage> {
     List<DateTime> dates = [];
 
     if (recurringDays.isEmpty) {
-      // إذا لم يتم تحديد أيام، نستخدم يوم البداية
       recurringDays = [DateFormat.E().format(startDate)];
     }
 
-    // تحويل أسماء الأيام إلى أرقام (1 = الاثنين، ..., 7 = الأحد)
     List<int> weekdays = recurringDays.map((day) {
       switch (day.toLowerCase()) {
         case 'monday':
@@ -918,9 +932,9 @@ class _AcceptedReservationsPageState extends State<AcceptedReservationsPage> {
         case 'sun':
           return DateTime.sunday;
         default:
-          return DateTime.monday; // الافتراضي إلى الاثنين إذا لم يتم التعرف
+          return DateTime.monday;
       }
-    }).toSet().toList(); // إزالة التكرارات
+    }).toSet().toList();
 
     for (var weekday in weekdays) {
       DateTime occurrence = _nextInstanceOfWeekday(startDate, weekday);

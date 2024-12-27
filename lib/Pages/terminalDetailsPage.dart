@@ -6,7 +6,7 @@ import 'dart:async';
 import 'Splash_screen.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 
-const String ip = "192.168.1.3";
+const String ip = "192.168.1.7";
 
 const storage = FlutterSecureStorage();
 

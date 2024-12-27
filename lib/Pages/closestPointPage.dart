@@ -8,7 +8,7 @@ import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:geocoding/geocoding.dart';
 import 'dart:math' as math;
 
-const ip = '192.168.1.3';
+const ip = '192.168.1.7';
 class SearchResult {
   final String lineName;
   final String description;

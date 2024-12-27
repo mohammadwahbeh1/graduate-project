@@ -1,303 +1,287 @@
+// web_rtc_signaling.dart
 import 'package:flutter_webrtc/flutter_webrtc.dart';
 import 'dart:convert';
 import 'package:web_socket_channel/web_socket_channel.dart';
 
 class WebRTCSignaling {
-  late RTCPeerConnection _peerConnection;
-  final WebSocketChannel channel;
-  String targetId;
-  late MediaStream? remoteStream;
-  bool isInitiator = false;
-  bool isCallStarted = false;
-  bool isRemoteAudioMuted = false;
-  bool isAvailable = true;
+late RTCPeerConnection _peerConnection;
+final WebSocketChannel channel;
+String targetId;
+late MediaStream? remoteStream;
+bool isInitiator = false;
+bool isCallStarted = false;
+bool isRemoteAudioMuted = false;
+bool isAvailable = true;
+Function(bool isActive)? onRemoteAudioStateChange;
 
-  WebRTCSignaling(this.channel, this.targetId) {
-    channel.stream.listen((message) {
-      handleMessage(jsonDecode(message));
-    });
-  }
+WebRTCSignaling(this.channel, this.targetId) {
+channel.stream.listen((message) {
+handleMessage(jsonDecode(message));
+});
+}
 
-  void updateTargetId(String newTargetId) {
-    targetId = newTargetId;
-  }
+void updateTargetId(String newTargetId) {
+targetId = newTargetId;
+}
 
-  void setAvailability(bool available) {
-    isAvailable = available;
-    channel.sink.add(jsonEncode({
-      'type': 'status',
-      'status': available ? 'available' : 'unavailable'
-    }));
-  }
+void setAvailability(bool available) {
+isAvailable = available;
+channel.sink.add(jsonEncode({
+'type': 'status',
+'status': available ? 'available' : 'unavailable'
+}));
+}
 
-  Future<void> initialize() async {
-    await Helper.selectAudioOutput('speaker');
+Future<void> initialize({Function(bool isActive)? onRemoteAudioStateChange}) async {
+this.onRemoteAudioStateChange = onRemoteAudioStateChange;
+await Helper.selectAudioOutput('speaker');
 
-    Map<String, dynamic> configuration = {
-      'iceServers': [
-        {'urls': 'stun:stun.l.google.com:19302'},
-      ],
-      'sdpSemantics': 'unified-plan',
-      'iceCandidatePoolSize': 10,
-    };
+Map<String, dynamic> configuration = {
+'iceServers': [
+{'urls': 'stun:stun.l.google.com:19302'},
+],
+'sdpSemantics': 'unified-plan',
+'iceCandidatePoolSize': 10,
+};
 
-    _peerConnection = await createPeerConnection(configuration, {
-      'mandatory': {
-        'OfferToReceiveAudio': true,
-        'OfferToReceiveVideo': false
-      },
-      'optional': [
-        {'DtlsSrtpKeyAgreement': true},
-      ],
-    });
+_peerConnection = await createPeerConnection(configuration, {
+'mandatory': {
+'OfferToReceiveAudio': true,
+'OfferToReceiveVideo': false
+},
+'optional': [
+{'DtlsSrtpKeyAgreement': true},
+],
+});
 
-    _setupPeerConnectionListeners();
+_setupPeerConnectionListeners();
+setAvailability(true);
+}
 
-    // Set initial availability
-    setAvailability(true);
-  }
+void _setupPeerConnectionListeners() {
+_peerConnection.onConnectionState = (state) {
+switch (state) {
+case RTCPeerConnectionState.RTCPeerConnectionStateConnected:
+break;
+case RTCPeerConnectionState.RTCPeerConnectionStateFailed:
+_handleConnectionFailure();
+break;
+case RTCPeerConnectionState.RTCPeerConnectionStateDisconnected:
+break;
+default:
+break;
+}
+};
 
-  void _setupPeerConnectionListeners() {
-    _peerConnection.onConnectionState = (state) {
-      print('Connection state changed to: ${state.toString()}');
-      switch (state) {
-        case RTCPeerConnectionState.RTCPeerConnectionStateConnected:
-          print('The peer connection is now connected!');
-          break;
-        case RTCPeerConnectionState.RTCPeerConnectionStateFailed:
-          _handleConnectionFailure();
-          break;
-        case RTCPeerConnectionState.RTCPeerConnectionStateDisconnected:
-          print('The peer connection is disconnected.');
-          break;
-        default:
-          print('Connection state: $state');
-      }
-    };
+_peerConnection.onIceConnectionState = (RTCIceConnectionState state) {
+};
 
-    _peerConnection.onIceConnectionState = (RTCIceConnectionState state) {
-      print('ICE connection state: $state');
-    };
+_peerConnection.onIceGatheringState = (state) {
+};
 
-    _peerConnection.onIceGatheringState = (state) {
-      print('ICE Gathering State: ${state.toString()}');
-    };
+_peerConnection.onIceCandidate = (RTCIceCandidate candidate) {
+_sendSignalingMessage('candidate', {
+'candidate': candidate.candidate,
+'sdpMid': candidate.sdpMid,
+'sdpMLineIndex': candidate.sdpMLineIndex,
+}, targetId);
+};
 
-    _peerConnection.onIceCandidate = (RTCIceCandidate candidate) {
-      _sendSignalingMessage('candidate', {
-        'candidate': candidate.candidate,
-        'sdpMid': candidate.sdpMid,
-        'sdpMLineIndex': candidate.sdpMLineIndex,
-      }, targetId);
-    };
+_peerConnection.onTrack = (RTCTrackEvent event) {
+if (event.track.kind == 'audio') {
+remoteStream = event.streams[0];
+_enableAudioPlayback(event.track, remoteStream!);
+event.track.onMute = () {
+if (onRemoteAudioStateChange != null) {
+onRemoteAudioStateChange!(false);
+}
+};
+event.track.onUnMute = () {
+if (onRemoteAudioStateChange != null) {
+onRemoteAudioStateChange!(true);
+}
+};
+}
+};
+}
 
-    _peerConnection.onTrack = (RTCTrackEvent event) {
-      if (event.track.kind == 'audio') {
-        remoteStream = event.streams[0];
-        _enableAudioPlayback(event.track, remoteStream!);
-      }
-    };
-  }
+void _enableAudioPlayback(MediaStreamTrack track, MediaStream stream) {
+track.enabled = true;
+stream.getAudioTracks().forEach((audioTrack) {
+audioTrack.enabled = true;
+});
+_playRemoteAudio(stream);
+}
 
-  void _enableAudioPlayback(MediaStreamTrack track, MediaStream stream) {
-    track.enabled = true;
-    stream.getAudioTracks().forEach((audioTrack) {
-      audioTrack.enabled = true;
-    });
-    _playRemoteAudio(stream);
-  }
+Future<void> startCall(MediaStream localStream, String callTargetId) async {
+if (!isAvailable) {
+return;
+}
 
-  Future<void> startCall(MediaStream localStream, String callTargetId) async {
-    if (!isAvailable) {
-      print('Cannot start call while unavailable');
-      return;
-    }
+if (isCallStarted) return;
+isCallStarted = true;
 
-    if (isCallStarted) return;
-    isCallStarted = true;
+updateTargetId(callTargetId);
 
-    updateTargetId(callTargetId);
+localStream.getAudioTracks().forEach((track) {
+track.enabled = true;
+});
 
-    localStream.getAudioTracks().forEach((track) {
-      track.enabled = true;
-    });
+await _peerConnection.addTransceiver(
+track: localStream.getAudioTracks().first,
+kind: RTCRtpMediaType.RTCRtpMediaTypeAudio,
+init: RTCRtpTransceiverInit(
+direction: TransceiverDirection.SendRecv,
+streams: [localStream]
+)
+);
 
-    await _peerConnection.addTransceiver(
-        track: localStream.getAudioTracks().first,
-        kind: RTCRtpMediaType.RTCRtpMediaTypeAudio,
-        init: RTCRtpTransceiverInit(
-            direction: TransceiverDirection.SendRecv,
-            streams: [localStream]
-        )
-    );
+try {
+RTCSessionDescription offer = await _peerConnection.createOffer({
+'offerToReceiveAudio': true,
+'offerToReceiveVideo': false
+});
+await _peerConnection.setLocalDescription(offer);
+_sendSignalingMessage('offer', offer.toMap(), targetId);
+} catch (e) {
+isCallStarted = false;
+}
+}
 
-    try {
-      RTCSessionDescription offer = await _peerConnection.createOffer({
-        'offerToReceiveAudio': true,
-        'offerToReceiveVideo': false
-      });
+Future<void> handleMessage(Map<String, dynamic> message) async {
+if (message['type'] != 'webrtc') return;
 
-      await _peerConnection.setLocalDescription(offer);
-      _sendSignalingMessage('offer', offer.toMap(), targetId);
-    } catch (e) {
-      print('Error creating offer: $e');
-      isCallStarted = false;
-    }
-  }
+if (!isAvailable && message['subtype'] == 'offer') {
+_sendSignalingMessage('reject', {
+'reason': 'unavailable'
+}, message['fromUserId']);
+return;
+}
 
-  Future<void> handleMessage(Map<String, dynamic> message) async {
-    if (message['type'] != 'webrtc') return;
+final subtype = message['subtype'];
+final data = message['data'];
 
-    if (!isAvailable && message['subtype'] == 'offer') {
-      _sendSignalingMessage('reject', {
-        'reason': 'unavailable'
-      }, message['fromUserId']);
-      return;
-    }
+try {
+switch (subtype) {
+case 'offer':
+await _handleOffer(data, message['fromUserId']);
+break;
+case 'answer':
+await _handleAnswer(data);
+break;
+case 'candidate':
+await _handleCandidate(data);
+break;
+case 'reject':
+_handleReject(data);
+break;
+}
+} catch (e) {
+}
+}
 
-    final subtype = message['subtype'];
-    final data = message['data'];
+void _handleReject(Map<String, dynamic> data) {
+stopCall();
+}
 
-    try {
-      switch (subtype) {
-        case 'offer':
-          await _handleOffer(data, message['fromUserId']);
-          break;
+Future<void> _handleOffer(Map<String, dynamic> data, String fromUserId) async {
+await _peerConnection.setRemoteDescription(
+RTCSessionDescription(data['sdp'], data['type'])
+);
+RTCSessionDescription answer = await _peerConnection.createAnswer();
+await _peerConnection.setLocalDescription(answer);
+_sendSignalingMessage('answer', answer.toMap(), fromUserId);
+}
 
-        case 'answer':
-          await _handleAnswer(data);
-          break;
+Future<void> _handleAnswer(Map<String, dynamic> data) async {
+if (_peerConnection.signalingState != RTCSignalingState.RTCSignalingStateStable) {
+await _peerConnection.setRemoteDescription(
+RTCSessionDescription(data['sdp'], data['type'])
+);
+}
+}
 
-        case 'candidate':
-          await _handleCandidate(data);
-          break;
+Future<void> _handleCandidate(Map<String, dynamic> data) async {
+if (data['candidate'] != null) {
+await _peerConnection.addCandidate(
+RTCIceCandidate(
+data['candidate'],
+data['sdpMid'],
+data['sdpMLineIndex']
+)
+);
+}
+}
 
-        case 'reject':
-          _handleReject(data);
-          break;
-      }
-    } catch (e) {
-      print('Error during signaling: $e');
-    }
-  }
+void _handleConnectionFailure() {
+isCallStarted = false;
+}
 
-  void _handleReject(Map<String, dynamic> data) {
-    print('Call rejected: ${data['reason']}');
-    stopCall();
-  }
+void _sendSignalingMessage(String type, dynamic data, String targetId) {
+final message = {
+'type': 'webrtc',
+'subtype': type,
+'targetId': targetId,
+'data': data,
+};
+channel.sink.add(jsonEncode(message));
+}
 
-  Future<void> _handleOffer(Map<String, dynamic> data, String fromUserId) async {
-    print('Processing offer');
-    await _peerConnection.setRemoteDescription(
-        RTCSessionDescription(data['sdp'], data['type'])
-    );
+void _playRemoteAudio(MediaStream stream) {
+stream.getAudioTracks().forEach((track) {
+track.enabled = true;
+});
+}
 
-    RTCSessionDescription answer = await _peerConnection.createAnswer();
-    await _peerConnection.setLocalDescription(answer);
-    _sendSignalingMessage('answer', answer.toMap(), fromUserId);
-  }
+Future<void> stopCall() async {
+isCallStarted = false;
 
-  Future<void> _handleAnswer(Map<String, dynamic> data) async {
-    print('Processing answer');
-    if (_peerConnection.signalingState != RTCSignalingState.RTCSignalingStateStable) {
-      await _peerConnection.setRemoteDescription(
-          RTCSessionDescription(data['sdp'], data['type'])
-      );
-    }
-  }
+try {
+await _peerConnection.close();
 
-  Future<void> _handleCandidate(Map<String, dynamic> data) async {
-    print('Processing ICE candidate');
-    if (data['candidate'] != null) {
-      await _peerConnection.addCandidate(
-          RTCIceCandidate(
-              data['candidate'],
-              data['sdpMid'],
-              data['sdpMLineIndex']
-          )
-      );
-    }
-  }
+Map<String, dynamic> configuration = {
+'iceServers': [
+{'urls': 'stun:stun.l.google.com:19302'},
+],
+'sdpSemantics': 'unified-plan',
+'iceCandidatePoolSize': 10,
+};
 
-  void _handleConnectionFailure() {
-    print('Connection failed - attempting reconnection');
-    isCallStarted = false;
-    // Implement reconnection logic here if needed
-  }
+_peerConnection = await createPeerConnection(configuration, {
+'mandatory': {
+'OfferToReceiveAudio': true,
+'OfferToReceiveVideo': false
+},
+'optional': [
+{'DtlsSrtpKeyAgreement': true},
+],
+});
 
-  void _sendSignalingMessage(String type, dynamic data, String targetId) {
-    final message = {
-      'type': 'webrtc',
-      'subtype': type,
-      'targetId': targetId,
-      'data': data,
-    };
-    print('Sending WebRTC message: $message');
-    channel.sink.add(jsonEncode(message));
-  }
+_setupPeerConnectionListeners();
 
-  void _playRemoteAudio(MediaStream stream) {
-    stream.getAudioTracks().forEach((track) {
-      print('Playing audio from remote track');
-      track.enabled = true;
-    });
-  }
+if (remoteStream != null) {
+remoteStream!.getTracks().forEach((track) => track.stop());
+}
+} catch (e) {
+}
+}
 
-  Future<void> stopCall() async {
-    isCallStarted = false;
+void toggleRemoteAudio() {
+if (remoteStream != null) {
+isRemoteAudioMuted = !isRemoteAudioMuted;
+remoteStream!.getAudioTracks().forEach((track) {
+track.enabled = !isRemoteAudioMuted;
+});
+}
+}
 
-    try {
-      if (_peerConnection != null) {
-        await _peerConnection.close();
-
-        Map<String, dynamic> configuration = {
-          'iceServers': [
-            {'urls': 'stun:stun.l.google.com:19302'},
-          ],
-          'sdpSemantics': 'unified-plan',
-          'iceCandidatePoolSize': 10,
-        };
-
-        _peerConnection = await createPeerConnection(configuration, {
-          'mandatory': {
-            'OfferToReceiveAudio': true,
-            'OfferToReceiveVideo': false
-          },
-          'optional': [
-            {'DtlsSrtpKeyAgreement': true},
-          ],
-        });
-
-        _setupPeerConnectionListeners();
-      }
-
-      // Safely handle remoteStream
-      if (remoteStream != null) {
-        remoteStream!.getTracks().forEach((track) => track.stop());
-      }
-
-      print('Call stopped and connection reset');
-    } catch (e) {
-      print('Error during stopCall: $e');
-    }
-  }
-
-  void toggleRemoteAudio() {
-    if (remoteStream != null) {
-      isRemoteAudioMuted = !isRemoteAudioMuted;
-      remoteStream!.getAudioTracks().forEach((track) {
-        track.enabled = !isRemoteAudioMuted;
-      });
-    }
-  }
-
-  Future<void> dispose() async {
-    isCallStarted = false;
-    isAvailable = false;
-    await _peerConnection.close();
-    channel.sink.close();
-    if (remoteStream != null) {
-      remoteStream!.dispose();
-    }
-  }
+Future<void> dispose() async {
+isCallStarted = false;
+isAvailable = false;
+await _peerConnection.close();
+channel.sink.close();
+if (remoteStream != null) {
+remoteStream!.dispose();
+}
+}
 }

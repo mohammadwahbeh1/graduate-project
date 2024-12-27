@@ -6,7 +6,7 @@ import 'dart:convert';
 
 import 'Splash_screen.dart';
 
-const String ip = "192.168.1.3";
+const String ip = "192.168.1.7";
 
 class BookTaxiPage extends StatefulWidget {
   const BookTaxiPage({Key? key}) : super(key: key);

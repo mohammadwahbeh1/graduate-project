@@ -5,7 +5,6 @@ import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:syncfusion_flutter_charts/charts.dart';
 import 'package:syncfusion_flutter_gauges/gauges.dart';
 
-
 class DriverRating {
   final int driverId;
   final String driverName;
@@ -40,10 +39,11 @@ class _DriversRatingPageState extends State<DriversRatingPage>
   bool _isLoading = true;
   String? _errorMessage;
   double averageRating = 0.0;
+  int totalDrivers = 0;
 
-  final String ip = "192.168.1.3";
+  // عدّل الـ IP أو اجلبه من إعداداتك
+  final String ip = "192.168.1.7";
 
-  // Animation Controller
   late AnimationController _animationController;
 
   @override
@@ -92,6 +92,7 @@ class _DriversRatingPageState extends State<DriversRatingPage>
             _drivers =
                 data.map((item) => DriverRating.fromJson(item)).toList();
             averageRating = calculateAverageRating();
+            totalDrivers = _drivers.length;
             _isLoading = false;
           });
         } else {
@@ -115,7 +116,6 @@ class _DriversRatingPageState extends State<DriversRatingPage>
   }
 
   double calculateAverageRating() {
-    // Calculate average only for drivers who have been rated (avgRating > 0)
     List<DriverRating> ratedDrivers =
     _drivers.where((driver) => driver.avgRating > 0).toList();
 
@@ -126,156 +126,23 @@ class _DriversRatingPageState extends State<DriversRatingPage>
     return total / ratedDrivers.length;
   }
 
-  Widget buildHistogramChart() {
+  Widget buildDonutChart(double width) {
     if (_drivers.isEmpty) {
       return const Center(
-          child: Text(
-            "No data available to display.",
-            style: TextStyle(color: Colors.white),
-          ));
+        child: Text(
+          "No data to display.",
+          style: TextStyle(color: Colors.black87),
+        ),
+      );
     }
 
-    return Padding(
-      padding: const EdgeInsets.all(16.0),
-      child: SfCartesianChart(
-        primaryXAxis: CategoryAxis(
-          labelRotation: 45,
-          majorGridLines: const MajorGridLines(width: 0),
-          labelStyle: const TextStyle(color: Colors.white),
-        ),
-        primaryYAxis: NumericAxis(
-          minimum: 0,
-          maximum: 5,
-          interval: 1,
-          majorGridLines:
-          const MajorGridLines(width: 0.5, color: Colors.white30),
-          labelStyle: const TextStyle(color: Colors.white),
-        ),
-        backgroundColor: Colors.transparent,
-        plotAreaBackgroundColor: Colors.transparent,
-        title: ChartTitle(
-          text: 'Driver Rating Distribution',
-          textStyle: const TextStyle(
-            color: Colors.white,
-            fontSize: 18,
-            fontWeight: FontWeight.bold,
-          ),
-        ),
-        tooltipBehavior: TooltipBehavior(enable: true),
-        legend: Legend(isVisible: false),
-        series: <ChartSeries>[
-          ColumnSeries<DriverRating, String>(
-            dataSource: _drivers,
-            xValueMapper: (DriverRating driver, _) => driver.driverName,
-            yValueMapper: (DriverRating driver, _) => driver.avgRating,
-            name: 'Ratings',
-            color: Colors.orangeAccent,
-            dataLabelSettings: const DataLabelSettings(
-              isVisible: true,
-              textStyle: TextStyle(
-                fontSize: 10,
-                color: Colors.white,
-              ),
-            ),
-            borderRadius: BorderRadius.circular(5),
-          )
-        ],
-      ),
-    );
-  }
-
-  Widget buildAverageRatingGauge() {
-    return Padding(
-      padding: const EdgeInsets.all(16.0),
-      child: SfRadialGauge(
-        title: const GaugeTitle(
-          text: 'Average Rating',
-          textStyle: TextStyle(
-            fontSize: 16,
-            fontWeight: FontWeight.bold,
-            color: Colors.white,
-          ),
-        ),
-        axes: <RadialAxis>[
-          RadialAxis(
-            minimum: 0,
-            maximum: 5,
-            interval: 1,
-            axisLineStyle: const AxisLineStyle(
-              thickness: 0.2,
-              color: Colors.white30,
-              thicknessUnit: GaugeSizeUnit.factor,
-            ),
-            ranges: <GaugeRange>[
-              GaugeRange(
-                startValue: 0,
-                endValue: averageRating,
-                color: Colors.greenAccent,
-                startWidth: 0.2,
-                endWidth: 0.2,
-              ),
-              GaugeRange(
-                startValue: averageRating,
-                endValue: 5,
-                color: Colors.white10,
-                startWidth: 0.2,
-                endWidth: 0.2,
-              ),
-            ],
-            pointers: <GaugePointer>[
-              NeedlePointer(
-                value: averageRating,
-                needleColor: Colors.redAccent,
-                knobStyle: const KnobStyle(color: Colors.red),
-                needleLength: 0.7,
-              )
-            ],
-            annotations: <GaugeAnnotation>[
-              GaugeAnnotation(
-                widget: averageRating > 0
-                    ? Text(
-                  averageRating.toStringAsFixed(1),
-                  style: const TextStyle(
-                    fontSize: 20,
-                    fontWeight: FontWeight.bold,
-                    color: Colors.white,
-                  ),
-                )
-                    : const Text(
-                  "No Ratings",
-                  style: TextStyle(
-                    fontSize: 20,
-                    fontWeight: FontWeight.bold,
-                    color: Colors.white,
-                  ),
-                ),
-                angle: 90,
-                positionFactor: 0.5,
-              )
-            ],
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget buildPieChart() {
-    if (_drivers.isEmpty) {
-      return const Center(
-          child: Text(
-            "No data available to display.",
-            style: TextStyle(color: Colors.white),
-          ));
-    }
-
-    // Categorize data including "Not Rated"
     Map<String, int> ratingDistribution = {
       '1 Star': 0,
       '2 Stars': 0,
       '3 Stars': 0,
       '4 Stars': 0,
       '5 Stars': 0,
-      'Not Rated': 0,
+      'Uncategorized': 0,
     };
 
     for (var driver in _drivers) {
@@ -290,141 +157,334 @@ class _DriversRatingPageState extends State<DriversRatingPage>
       } else if (driver.avgRating > 0) {
         ratingDistribution['1 Star'] = ratingDistribution['1 Star']! + 1;
       } else {
-        ratingDistribution['Not Rated'] = ratingDistribution['Not Rated']! + 1;
+        ratingDistribution['Uncategorized'] =
+            ratingDistribution['Uncategorized']! + 1;
       }
     }
 
-    // Remove categories with zero count
+    // أزل التصنيفات التي قيمتها 0 لتجنب ظهورها في المخطط
     ratingDistribution.removeWhere((key, value) => value == 0);
 
     List<_PieData> pieData = ratingDistribution.entries
         .map((e) => _PieData(e.key, e.value))
         .toList();
 
-    return Padding(
-      padding: const EdgeInsets.all(16.0),
-      child: SfCircularChart(
-        title: ChartTitle(
-          text: 'Ratings Distribution',
-          textStyle: const TextStyle(
-            color: Colors.white,
-            fontSize: 18,
-            fontWeight: FontWeight.bold,
-          ),
+    return SfCircularChart(
+      title: ChartTitle(
+        text: 'Rating Distribution',
+        textStyle: const TextStyle(
+          color: Colors.black87,
+          fontSize: 18,
+          fontWeight: FontWeight.bold,
         ),
-        legend: Legend(
-          isVisible: true,
-          overflowMode: LegendItemOverflowMode.wrap,
-          textStyle: const TextStyle(color: Colors.white),
-        ),
-        series: <PieSeries<_PieData, String>>[
-          PieSeries<_PieData, String>(
-            dataSource: pieData,
-            xValueMapper: (_PieData data, _) => data.rating,
-            yValueMapper: (_PieData data, _) => data.count,
-            dataLabelMapper: (_PieData data, _) =>
-            '${data.rating}: ${data.count}',
-            dataLabelSettings: const DataLabelSettings(
-              isVisible: true,
-              labelPosition: ChartDataLabelPosition.outside,
-              connectorLineSettings: ConnectorLineSettings(
-                type: ConnectorType.curve,
-                length: '10%',
-                color: Colors.white,
-              ),
-              textStyle:
-              TextStyle(color: Colors.white, fontSize: 12),
+      ),
+      legend: Legend(
+        isVisible: true,
+        overflowMode: LegendItemOverflowMode.wrap,
+        textStyle: const TextStyle(color: Colors.black87),
+      ),
+      tooltipBehavior: TooltipBehavior(enable: true),
+      series: <CircularSeries>[
+        DoughnutSeries<_PieData, String>(
+          dataSource: pieData,
+          xValueMapper: (_PieData data, _) => data.rating,
+          yValueMapper: (_PieData data, _) => data.count,
+          dataLabelMapper: (_PieData data, _) => '${data.rating}: ${data.count}',
+          dataLabelSettings: const DataLabelSettings(
+            isVisible: true,
+            labelPosition: ChartDataLabelPosition.outside,
+            connectorLineSettings: ConnectorLineSettings(
+              type: ConnectorType.curve,
+              length: '15%',
+              color: Colors.black87,
             ),
-            enableTooltip: true,
-            explode: true,
-            explodeIndex: 0,
-            explodeAll: false,
-            // Use pointColorMapper to assign different colors
-            pointColorMapper: (_PieData data, _) {
-              switch (data.rating) {
-                case '1 Star':
-                  return Colors.redAccent;
-                case '2 Stars':
-                  return Colors.orangeAccent;
-                case '3 Stars':
-                  return Colors.yellowAccent;
-                case '4 Stars':
-                  return Colors.greenAccent;
-                case '5 Stars':
-                  return Colors.blueAccent;
-                case 'Not Rated':
-                  return Colors.grey;
-                default:
-                  return Colors.grey;
-              }
-            },
-          )
-        ],
+            textStyle: TextStyle(color: Colors.black87, fontSize: 12),
+          ),
+          enableTooltip: true,
+          explode: true,
+          explodeIndex: 0,
+          explodeAll: false,
+          pointColorMapper: (_PieData data, _) {
+            switch (data.rating) {
+              case '1 Star':
+                return Colors.redAccent;
+              case '2 Stars':
+                return Colors.orangeAccent;
+              case '3 Stars':
+                return Colors.amber;
+              case '4 Stars':
+                return Colors.lightGreen;
+              case '5 Stars':
+                return Colors.green;
+              case 'Uncategorized':
+                return Colors.grey;
+              default:
+                return Colors.grey;
+            }
+          },
+        ),
+      ],
+      backgroundColor: Colors.white,
+    );
+  }
+
+  Widget buildBarChart(double width) {
+    if (_drivers.isEmpty) {
+      return const Center(
+        child: Text(
+          "No data to display.",
+          style: TextStyle(color: Colors.black87),
+        ),
+      );
+    }
+
+    return SfCartesianChart(
+      title: ChartTitle(
+        text: 'Drivers Ratings',
+        textStyle: const TextStyle(
+          color: Colors.black87,
+          fontSize: 18,
+          fontWeight: FontWeight.bold,
+        ),
+      ),
+      tooltipBehavior: TooltipBehavior(enable: true),
+      primaryXAxis: CategoryAxis(
+        labelRotation: 45,
+        majorGridLines: const MajorGridLines(width: 0),
+        labelStyle: const TextStyle(color: Colors.black87, fontSize: 10),
+        axisLine: const AxisLine(color: Colors.grey),
+      ),
+      primaryYAxis: NumericAxis(
+        minimum: 0,
+        maximum: 5,
+        interval: 1,
+        majorGridLines:
+        const MajorGridLines(width: 0.5, color: Colors.grey),
+        labelStyle: const TextStyle(color: Colors.black87, fontSize: 10),
+        axisLine: const AxisLine(color: Colors.grey),
+      ),
+      backgroundColor: Colors.white,
+      plotAreaBorderWidth: 0,
+      series: <ChartSeries>[
+        ColumnSeries<DriverRating, String>(
+          dataSource: _drivers,
+          xValueMapper: (DriverRating driver, _) => driver.driverName,
+          yValueMapper: (DriverRating driver, _) => driver.avgRating,
+          name: 'Ratings',
+          color: Colors.teal,
+          dataLabelSettings: const DataLabelSettings(
+            isVisible: true,
+            textStyle: TextStyle(
+              fontSize: 10,
+              color: Colors.white,
+            ),
+          ),
+          borderRadius: BorderRadius.circular(4),
+        ),
+      ],
+    );
+  }
+
+  Widget buildSummarySection(double width) {
+    return Card(
+      elevation: 4,
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(20),
+      ),
+      color: Colors.white,
+      child: Padding(
+        padding:
+        const EdgeInsets.symmetric(horizontal: 16.0, vertical: 24.0),
+        child: LayoutBuilder(
+          builder: (context, constraints) {
+            // تحديد عدد الأعمدة بناءً على عرض الشاشة
+            int crossAxisCount = constraints.maxWidth < 600 ? 2 : 4;
+
+            return GridView.count(
+              crossAxisCount: crossAxisCount,
+              crossAxisSpacing: 20,
+              mainAxisSpacing: 20,
+              shrinkWrap: true,
+              physics: const NeverScrollableScrollPhysics(),
+              children: [
+                _buildSummaryItem(
+                  icon: Icons.star,
+                  title: 'Average Rating',
+                  value: averageRating.toStringAsFixed(1),
+                ),
+                _buildSummaryItem(
+                  icon: Icons.people,
+                  title: 'Total Drivers',
+                  value: totalDrivers.toString(),
+                ),
+                _buildSummaryItem(
+                  icon: Icons.thumb_up,
+                  title: 'Highest Rating',
+                  value: _getHighestRatedDriver(),
+                ),
+                _buildSummaryItem(
+                  icon: Icons.thumb_down,
+                  title: 'Lowest Rating',
+                  value: _getLowestRatedDriver(),
+                ),
+              ],
+            );
+          },
+        ),
       ),
     );
   }
 
-  Widget buildContent() {
-    if (_isLoading) {
-      return Center(
-        child: FadeTransition(
-          opacity: _animationController,
-          child: const CircularProgressIndicator(
-            valueColor:
-            AlwaysStoppedAnimation<Color>(Colors.orangeAccent),
+  Widget _buildSummaryItem({
+    required IconData icon,
+    required String title,
+    required String value,
+  }) {
+    return Column(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        Icon(icon, color: Colors.teal, size: 30),
+        const SizedBox(height: 8),
+        Text(
+          value,
+          textAlign: TextAlign.center,
+          style: const TextStyle(
+            fontSize: 20,
+            fontWeight: FontWeight.bold,
+            color: Colors.black87,
           ),
         ),
-      );
+        const SizedBox(height: 4),
+        Text(
+          title,
+          textAlign: TextAlign.center,
+          style: const TextStyle(
+            color: Colors.black54,
+          ),
+        ),
+      ],
+    );
+  }
+
+  String _getHighestRatedDriver() {
+    if (_drivers.isEmpty) return "N/A";
+    // لا تقم بتعديل قائمة السائقين مباشرةً لأن ذلك سيؤثر على ترتيب البيانات الأصلية
+    List<DriverRating> sortedDrivers = List.from(_drivers);
+    sortedDrivers.sort((a, b) => b.avgRating.compareTo(a.avgRating));
+    return "${sortedDrivers.first.driverName} (${sortedDrivers.first.avgRating})";
+  }
+
+  String _getLowestRatedDriver() {
+    if (_drivers.isEmpty) return "N/A";
+    // لا تقم بتعديل قائمة السائقين مباشرةً لأن ذلك سيؤثر على ترتيب البيانات الأصلية
+    List<DriverRating> sortedDrivers = List.from(_drivers);
+    sortedDrivers.sort((a, b) => a.avgRating.compareTo(b.avgRating));
+    return "${sortedDrivers.first.driverName} (${sortedDrivers.first.avgRating})";
+  }
+
+  Widget buildLoading() {
+    return Center(
+      child: FadeTransition(
+        opacity: _animationController,
+        child: const CircularProgressIndicator(
+          valueColor: AlwaysStoppedAnimation<Color>(Colors.teal),
+        ),
+      ),
+    );
+  }
+
+  Widget buildError() {
+    return Center(
+      child: Text(
+        _errorMessage!,
+        style: const TextStyle(color: Colors.red, fontSize: 16),
+      ),
+    );
+  }
+
+  Widget buildContent(BuildContext context) {
+    if (_isLoading) {
+      return buildLoading();
     }
 
     if (_errorMessage != null) {
-      return Center(
-        child: Text(
-          _errorMessage!,
-          style: const TextStyle(color: Colors.red, fontSize: 16),
-        ),
-      );
+      return buildError();
     }
 
+    // الحصول على حجم الشاشة
+    final width = MediaQuery.of(context).size.width;
+
     return SingleChildScrollView(
-      child: Column(
-        children: [
-          const SizedBox(height: 20),
-          // Gradient Background with Average Rating Gauge
-          Container(
-            width: double.infinity,
-            padding: const EdgeInsets.all(16),
-            decoration: BoxDecoration(
-              gradient: LinearGradient(
-                colors: [Colors.lightBlue.shade200, Colors.blue.shade400],
-                begin: Alignment.topLeft,
-                end: Alignment.bottomRight,
+      child: Padding(
+        padding:
+        const EdgeInsets.symmetric(horizontal: 16.0, vertical: 16.0),
+        child: Column(
+          children: [
+            buildSummarySection(width),
+            const SizedBox(height: 30),
+            Card(
+              elevation: 4,
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(20),
               ),
-              borderRadius: BorderRadius.circular(20),
+              color: Colors.white,
+              child: Padding(
+                padding: const EdgeInsets.all(16.0),
+                child: buildDonutChart(width),
+              ),
             ),
-            child: Column(
-              children: [
-                const Text(
-                  'Driver Ratings',
-                  style: TextStyle(
-                    fontSize: 24,
-                    fontWeight: FontWeight.bold,
-                    color: Colors.white,
-                  ),
-                ),
-                const SizedBox(height: 20),
-                buildAverageRatingGauge(),
-              ],
+            const SizedBox(height: 30),
+            Card(
+              elevation: 4,
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(20),
+              ),
+              color: Colors.white,
+              child: Padding(
+                padding: const EdgeInsets.all(16.0),
+                child: buildBarChart(width),
+              ),
             ),
+            // إزالة بطاقة الـ Average Rating Gauge
+            // const SizedBox(height: 30),
+            // Card(
+            //   elevation: 4,
+            //   shape: RoundedRectangleBorder(
+            //     borderRadius: BorderRadius.circular(20),
+            //   ),
+            //   color: Colors.white,
+            //   child: Padding(
+            //     padding: const EdgeInsets.all(16.0),
+            //     child: buildAverageRatingGauge(width),
+            //   ),
+            // ),
+            // const SizedBox(height: 30),
+          ],
+        ),
+      ),
+    );
+  }
+
+  PreferredSizeWidget buildAppBar() {
+    return AppBar(
+      backgroundColor: Colors.teal.shade400,
+      elevation: 0,
+      title: const Text(
+        'Drivers Ratings',
+        style: TextStyle(
+          fontSize: 24,
+          fontWeight: FontWeight.bold,
+        ),
+      ),
+      centerTitle: true,
+      flexibleSpace: Container(
+        decoration: BoxDecoration(
+          gradient: LinearGradient(
+            colors: [Colors.teal.shade100, Colors.teal.shade400],
+            begin: Alignment.topLeft,
+            end: Alignment.bottomRight,
           ),
-          const SizedBox(height: 30),
-          const Divider(color: Colors.white54, thickness: 1.5),
-          const SizedBox(height: 10),
-          buildPieChart(),
-          const SizedBox(height: 30),
-          buildHistogramChart(),
-          const SizedBox(height: 30),
-        ],
+        ),
       ),
     );
   }
@@ -432,67 +492,15 @@ class _DriversRatingPageState extends State<DriversRatingPage>
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      // Soft Gradient Background for the Page
-      body: Container(
-        decoration: BoxDecoration(
-          gradient: LinearGradient(
-            colors: [Colors.blue.shade100, Colors.blue.shade300],
-            begin: Alignment.topCenter,
-            end: Alignment.bottomCenter,
-          ),
-        ),
-        child: SafeArea(
-          child: Column(
-            children: [
-              // Custom Title Bar
-              Container(
-                width: double.infinity,
-                padding:
-                const EdgeInsets.symmetric(horizontal: 16, vertical: 20),
-                decoration: const BoxDecoration(
-                  color: Colors.transparent,
-                ),
-                child: const Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      'Driver Ratings',
-                      style: TextStyle(
-                        color: Colors.white,
-                        fontSize: 28,
-                        fontWeight: FontWeight.bold,
-                        shadows: [
-                          Shadow(
-                            blurRadius: 10.0,
-                            color: Colors.black26,
-                            offset: Offset(2.0, 2.0),
-                          ),
-                        ],
-                      ),
-                    ),
-                    SizedBox(height: 10),
-                    Text(
-                      'Overview of Driver Ratings',
-                      style: TextStyle(
-                        color: Colors.white70,
-                        fontSize: 16,
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-              Expanded(
-                child: buildContent(),
-              ),
-            ],
-          ),
-        ),
+      backgroundColor: Colors.grey.shade100,
+      appBar: buildAppBar(),
+      body: SafeArea(
+        child: buildContent(context),
       ),
     );
   }
 }
 
-// Data Model for Pie Chart
 class _PieData {
   final String rating;
   final int count;

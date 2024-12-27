@@ -1,13 +1,15 @@
+// line_manager_call.dart
+
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 import 'package:permission_handler/permission_handler.dart';
 import 'dart:convert';
-import 'Splash_screen.dart';
+import 'splash_screen.dart';
 import 'package:flutter_webrtc/flutter_webrtc.dart';
 import 'package:web_socket_channel/web_socket_channel.dart';
 import 'WebRTC.dart';
 
-const String ip = "192.168.1.3";
+const String ip = "192.168.1.7";
 String targetId = "";
 
 class LineManagerCall extends StatefulWidget {
@@ -21,6 +23,7 @@ class _LineManagerCallState extends State<LineManagerCall> {
   Map<String, dynamic>? lineManager;
   bool isLoading = true;
   bool isMicActive = false;
+  bool isSpeakerActive = false;
   List<bool> isRecordingList = [];
   List<bool> isSpeakingList = [];
   bool isConnected = true;
@@ -33,12 +36,10 @@ class _LineManagerCallState extends State<LineManagerCall> {
     super.initState();
     _fetchLineManager();
     _requestPermissions();
-    _initializeWebRTC();
   }
 
   Future<void> _requestPermissions() async {
     PermissionStatus status = await Permission.microphone.request();
-    print("Microphone permission status: $status");
     if (status.isGranted) {
       await _initializeWebRTC();
     } else if (status.isDenied || status.isPermanentlyDenied) {
@@ -66,11 +67,15 @@ class _LineManagerCallState extends State<LineManagerCall> {
         'video': false,
       });
 
-      await signaling.initialize();
+      await signaling.initialize(
+        onRemoteAudioStateChange: (bool isActive) {
+          setState(() {
+            isSpeakerActive = isActive;
+          });
+        },
+      );
 
-      // Set initial availability status
       signaling.setAvailability(true);
-
     } catch (e) {
       _showErrorDialog('Failed to initialize WebRTC: $e');
     }
@@ -146,7 +151,6 @@ class _LineManagerCallState extends State<LineManagerCall> {
 
     if (isMicActive) {
       targetId = lineManager?['id']?.toString() ?? "";
-      print("Target line manager ID: $targetId");
       await signaling.startCall(localStream, targetId);
       localStream.getAudioTracks().forEach((track) {
         track.enabled = true;
@@ -172,7 +176,6 @@ class _LineManagerCallState extends State<LineManagerCall> {
     });
 
     if (!isConnected) {
-      // Stop ongoing calls
       if (isMicActive) {
         await signaling.stopCall();
         localStream.getAudioTracks().forEach((track) {
@@ -180,13 +183,12 @@ class _LineManagerCallState extends State<LineManagerCall> {
         });
       }
 
-      // Reset states
       setState(() {
         isRecordingList = List.filled(1, false);
         isMicActive = false;
+        isSpeakerActive = false;
       });
 
-      // Update availability status
       signaling.setAvailability(false);
 
       ScaffoldMessenger.of(context).showSnackBar(
@@ -194,14 +196,18 @@ class _LineManagerCallState extends State<LineManagerCall> {
       );
     } else {
       await _initializeWebRTC();
-
-      // Update availability status
       signaling.setAvailability(true);
 
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text('Calls enabled - Ready to make and receive calls')),
       );
     }
+  }
+
+  @override
+  void dispose() {
+    signaling.dispose();
+    super.dispose();
   }
 
   @override
@@ -261,22 +267,42 @@ class _LineManagerCallState extends State<LineManagerCall> {
               style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 18),
             ),
             subtitle: Text('Phone: ${lineManager!['phone']}'),
-            trailing: InkWell(
-              onTap: () => _toggleMic(0),
-              child: AnimatedContainer(
-                duration: const Duration(milliseconds: 200),
-                width: isRecordingList[0] ? 60 : 50,
-                height: isRecordingList[0] ? 60 : 50,
-                decoration: BoxDecoration(
-                  color: isRecordingList[0] ? Colors.red : Colors.green,
-                  borderRadius: BorderRadius.circular(50),
+            trailing: Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                InkWell(
+                  onTap: () => _toggleMic(0),
+                  child: AnimatedContainer(
+                    duration: const Duration(milliseconds: 200),
+                    width: isRecordingList[0] ? 60 : 50,
+                    height: isRecordingList[0] ? 60 : 50,
+                    decoration: BoxDecoration(
+                      color: isRecordingList[0] ? Colors.red : Colors.green,
+                      borderRadius: BorderRadius.circular(50),
+                    ),
+                    child: const Icon(
+                      Icons.mic,
+                      color: Colors.white,
+                      size: 30,
+                    ),
+                  ),
                 ),
-                child: const Icon(
-                  Icons.mic,
-                  color: Colors.white,
-                  size: 30,
+                const SizedBox(width: 10),
+                AnimatedContainer(
+                  duration: const Duration(milliseconds: 200),
+                  width: isSpeakerActive ? 60 : 50,
+                  height: isSpeakerActive ? 60 : 50,
+                  decoration: BoxDecoration(
+                    color: isSpeakerActive ? Colors.green : Colors.grey,
+                    borderRadius: BorderRadius.circular(50),
+                  ),
+                  child: const Icon(
+                    Icons.volume_up,
+                    color: Colors.white,
+                    size: 30,
+                  ),
                 ),
-              ),
+              ],
             ),
           ),
         ),
