@@ -14,13 +14,15 @@ import 'profilePage.dart';
 import 'package:web_socket_channel/web_socket_channel.dart';
 import 'package:web_socket_channel/status.dart' as status;
 
-const String ip ="192.168.1.5";
+const String ip ="192.168.1.7";
 
 
 
 
 
 class homePage extends StatefulWidget {
+  const homePage({super.key});
+
   @override
   _homePageState createState() => _homePageState();
 }
@@ -29,7 +31,7 @@ class _homePageState extends State<homePage> {
   List<Map<String, String>> terminals = [];
   bool _isHovered = false;
   bool isLoading = true;
-  final storage = FlutterSecureStorage();
+  final storage = const FlutterSecureStorage();
   List<Map<String, dynamic>> notifications = [];
   int notificationCount = 0;
   WebSocketChannel? _channel;
@@ -38,7 +40,7 @@ class _homePageState extends State<homePage> {
   final List<Widget> _pages = [
     Container(),  // Replace with your Home Page class
     ClosestPointPage(), // Replace with your Closest Point Page class
-    BookTaxiPage(), // Replace with your Book Taxi Page class
+    const BookTaxiPage(), // Replace with your Book Taxi Page class
     ReservationsPage(), // Replace with your Reservations Page class
   ];
 
@@ -362,7 +364,7 @@ class _homePageState extends State<homePage> {
     }
   }
   void _reconnectWebSocket() {
-    Future.delayed(Duration(seconds: 5), () {
+    Future.delayed(const Duration(seconds: 5), () {
       print("Reconnecting WebSocket...");
       _initializeWebSocket();
     });
@@ -426,15 +428,15 @@ class _homePageState extends State<homePage> {
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
                 // Profile Picture
-                CircleAvatar(
+                const CircleAvatar(
                   radius: 50,
                   backgroundImage: AssetImage('assets/profile.jpg'), // Replace with your image path
                 ),
-                SizedBox(height: 23),
+                const SizedBox(height: 23),
                 // User Information
                 Text(
                   username,
-                  style: TextStyle(
+                  style: const TextStyle(
                     color: Colors.black,
                     fontSize: 20,
                     fontWeight: FontWeight.bold,
@@ -448,7 +450,7 @@ class _homePageState extends State<homePage> {
               ],
             ),
           ),
-          SizedBox(height: 20),
+          const SizedBox(height: 20),
           // Drawer List Items (your existing logic)
           ListTile(
             leading: const Icon(Icons.location_on),
@@ -461,7 +463,7 @@ class _homePageState extends State<homePage> {
               );
             },
           ),
-          SizedBox(height: 20),
+          const SizedBox(height: 20),
           ListTile(
             leading: const Icon(Icons.contact_phone),
             title: const Text('Contact with Us'),
@@ -469,7 +471,7 @@ class _homePageState extends State<homePage> {
               Navigator.pop(context);
             },
           ),
-          SizedBox(height: 20),
+          const SizedBox(height: 20),
           ListTile(
             leading: const Icon(Icons.book_online),
             title: const Text('Reservation'),
@@ -481,7 +483,7 @@ class _homePageState extends State<homePage> {
               );
             },
           ),
-          SizedBox(height: 20),
+          const SizedBox(height: 20),
           ListTile(
             leading: const Icon(Icons.event_available),
             title: const Text('Book A Taxi'),
@@ -489,11 +491,11 @@ class _homePageState extends State<homePage> {
               Navigator.pop(context);
               Navigator.push(
                 context,
-                MaterialPageRoute(builder: (context) => BookTaxiPage()),
+                MaterialPageRoute(builder: (context) => const BookTaxiPage()),
               );
             },
           ),
-          SizedBox(height: 20),
+          const SizedBox(height: 20),
           ListTile(
             leading: const Icon(Icons.logout),
             title: const Text('Log out'),
@@ -501,7 +503,7 @@ class _homePageState extends State<homePage> {
               Navigator.pop(context);
               Navigator.pushReplacement(
                 context,
-                MaterialPageRoute(builder: (context) => LoginPage()),
+                MaterialPageRoute(builder: (context) => const LoginPage()),
               );
             },
           ),
@@ -588,11 +590,11 @@ class _homePageState extends State<homePage> {
                               },
                               style: ElevatedButton.styleFrom(
                                 backgroundColor: Colors.transparent,  // Transparent background
-                                side: BorderSide(color: Colors.white, width: 2),  // White border
+                                side: const BorderSide(color: Colors.white, width: 2),  // White border
                                 shape: RoundedRectangleBorder(
                                   borderRadius: BorderRadius.circular(20),  // Rounded corners for the button
                                 ),
-                                padding: EdgeInsets.symmetric(horizontal: 25, vertical: 10),  // Button padding
+                                padding: const EdgeInsets.symmetric(horizontal: 25, vertical: 10),  // Button padding
                               ),
                               child: const Text(
                                 "View Reviews",
@@ -621,13 +623,13 @@ class _homePageState extends State<homePage> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: _currentIndex != 2 ? PreferredSize(
-        preferredSize: Size.fromHeight(50.0),
+        preferredSize: const Size.fromHeight(50.0),
         child: AppBar(
           title: Text(
             _getAppBarTitle(),
-            style: TextStyle(fontWeight: FontWeight.w500),
+            style: const TextStyle(fontWeight: FontWeight.w500),
           ),
-          backgroundColor: Color(0xFFFED300),
+          backgroundColor: const Color(0xFFFED300),
           centerTitle: true,
           actions: [
             Stack(
@@ -754,8 +756,8 @@ class _homePageState extends State<homePage> {
             Container(
               height: 45,
               width: 45,
-              decoration: BoxDecoration(
-                color: const Color(0xFFF6D533), // Yellow highlight color
+              decoration: const BoxDecoration(
+                color: Color(0xFFF6D533), // Yellow highlight color
                 shape: BoxShape.circle,
               ),
             ),

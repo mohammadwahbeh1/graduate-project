@@ -5,8 +5,8 @@ import 'package:http/http.dart' as http;
 import 'package:google_maps_flutter/google_maps_flutter.dart';
 
 
-const String baseUrl = 'http://192.168.1.4:3000/api/v1/line';
-const String managerUrl = 'http://192.168.1.4:3000/api/v1/admin/line-managers';
+const String baseUrl = 'http://192.168.1.7:3000/api/v1/line';
+const String managerUrl = 'http://192.168.1.7:3000/api/v1/admin/line-managers';
 
 class LinePage extends StatefulWidget {
   const LinePage({Key? key}) : super(key: key);

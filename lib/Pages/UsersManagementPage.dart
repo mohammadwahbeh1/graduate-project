@@ -4,7 +4,7 @@ import 'dart:convert';
 
 import 'Splash_screen.dart';
 
-const String ip = "192.168.1.5";
+const String ip = "192.168.1.7";
 
 class UsersManagementPage extends StatefulWidget {
   const UsersManagementPage({super.key});
@@ -158,7 +158,6 @@ class _UsersManagementPageState extends State<UsersManagementPage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      // استخدام AppBar بتصميم محدث
       appBar: AppBar(
         title: const Text('Manage Users'),
         flexibleSpace: Container(
@@ -324,8 +323,7 @@ class _UsersManagementPageState extends State<UsersManagementPage> {
         padding: const EdgeInsets.all(20),
         child: Row(
           children: [
-            // أيقونة المستخدم
-            CircleAvatar(
+            const CircleAvatar(
               radius: 30,
               backgroundColor: Color(0xFF00B4DB),
               child: Icon(
@@ -335,7 +333,6 @@ class _UsersManagementPageState extends State<UsersManagementPage> {
               ),
             ),
             const SizedBox(width: 20),
-            // معلومات المستخدم
             Expanded(
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
@@ -367,7 +364,6 @@ class _UsersManagementPageState extends State<UsersManagementPage> {
                 ],
               ),
             ),
-            // قائمة منسدلة لتغيير الدور
             DropdownButton<String>(
               value: currentRole,
               icon: const Icon(Icons.arrow_drop_down, color: Color(0xFF0083B0)),

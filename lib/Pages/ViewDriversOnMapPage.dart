@@ -6,10 +6,12 @@ import 'package:google_maps_flutter/google_maps_flutter.dart';
 import 'package:http/http.dart' as http;
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'dart:convert';
-const String ip = "192.168.1.5";
+const String ip = "192.168.1.7";
 
 
 class ViewDriversOnMapPage extends StatefulWidget {
+  const ViewDriversOnMapPage({super.key});
+
   @override
   _ViewDriversPageState createState() => _ViewDriversPageState();
 }
@@ -20,7 +22,7 @@ class _ViewDriversPageState extends State<ViewDriversOnMapPage> {
   bool _isLoading = true;
   String? _errorMessage;
   final _secureStorage = const FlutterSecureStorage();
-  TextEditingController _searchController = TextEditingController();
+  final TextEditingController _searchController = TextEditingController();
   Marker? _selectedMarker;
 
   @override
@@ -35,11 +37,11 @@ class _ViewDriversPageState extends State<ViewDriversOnMapPage> {
     final ui.Image image = await decodeImageFromList(bytes);
 
     final PictureRecorder recorder = PictureRecorder();
-    final Canvas canvas = Canvas(recorder, Rect.fromPoints(Offset(0, 0), Offset(100, 100)));
+    final Canvas canvas = Canvas(recorder, Rect.fromPoints(const Offset(0, 0), const Offset(100, 100)));
     canvas.drawImageRect(
         image,
         Rect.fromLTWH(0, 0, image.width.toDouble(), image.height.toDouble()),
-        Rect.fromLTWH(0, 0, 100, 100),
+        const Rect.fromLTWH(0, 0, 100, 100),
         Paint()
     );
 
@@ -65,7 +67,6 @@ class _ViewDriversPageState extends State<ViewDriversOnMapPage> {
         final data = jsonDecode(response.body)['data'];
         for (var vehicle in data) {
           final driver = vehicle['driver'];
-          print(driver);
           final customIcon = await _loadCustomIcon();
           _markers.add(
             Marker(
@@ -153,7 +154,7 @@ class _ViewDriversPageState extends State<ViewDriversOnMapPage> {
     return Scaffold(
       appBar: AppBar(
         title: const Text('Drivers on Map'),
-        backgroundColor: Color(0xFFF5CF24),
+        backgroundColor: const Color(0xFFF5CF24),
       ),
       body: Stack(
         children: [
@@ -408,7 +409,7 @@ class _ViewDriversPageState extends State<ViewDriversOnMapPage> {
                   BoxShadow(
                     color: Colors.black.withOpacity(0.1),
                     blurRadius: 5,
-                    offset: Offset(0, 3),
+                    offset: const Offset(0, 3),
                   ),
                 ],
               ),
@@ -435,7 +436,7 @@ class _ViewDriversPageState extends State<ViewDriversOnMapPage> {
                   ),
                   filled: true,
                   fillColor: Colors.white,
-                  contentPadding: EdgeInsets.symmetric(vertical: 10.0,),
+                  contentPadding: const EdgeInsets.symmetric(vertical: 10.0,),
                 ),
                 onChanged: _searchDriver,
               ),

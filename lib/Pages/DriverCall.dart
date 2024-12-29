@@ -1,13 +1,15 @@
+// call_driver_page.dart
+
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 import 'package:permission_handler/permission_handler.dart';
 import 'dart:convert';
-import 'Splash_screen.dart';
+import 'splash_screen.dart';
 import 'package:flutter_webrtc/flutter_webrtc.dart';
 import 'package:web_socket_channel/web_socket_channel.dart';
 import 'WebRTC.dart';
 
-const String ip = "192.168.1.5";
+const String ip = "192.168.1.7";
 
 class CallDriverPage extends StatefulWidget {
   const CallDriverPage({super.key});
@@ -20,11 +22,11 @@ class _CallDriverPageState extends State<CallDriverPage> {
   List<Map<String, dynamic>>? drivers;
   List<Map<String, dynamic>>? filteredDrivers;
   List<bool> isRecordingList = [];
-  List<bool> isSpeakingList = [];
   bool isLoading = true;
   TextEditingController searchController = TextEditingController();
   String targetId = "";
   bool isMicActive = false;
+  bool isSpeakerActive = false;
   late WebRTCSignaling signaling;
   late MediaStream localStream;
   bool isConnected = true;
@@ -35,12 +37,10 @@ class _CallDriverPageState extends State<CallDriverPage> {
     super.initState();
     _fetchDrivers();
     _requestPermissions();
-    _initializeWebRTC();
   }
 
   Future<void> _requestPermissions() async {
     PermissionStatus status = await Permission.microphone.request();
-    print("Microphone permission status: $status");
     if (status.isGranted) {
       await _initializeWebRTC();
     } else if (status.isDenied || status.isPermanentlyDenied) {
@@ -56,7 +56,6 @@ class _CallDriverPageState extends State<CallDriverPage> {
         _showErrorDialog('User ID is missing.');
         return;
       }
-
       signaling = WebRTCSignaling(
           WebSocketChannel.connect(
               Uri.parse('ws://$ip:3000/ws/notifications?userId=$userId')
@@ -69,13 +68,15 @@ class _CallDriverPageState extends State<CallDriverPage> {
         'video': false,
       });
 
-      await signaling.initialize();
-      signaling.setAvailability(true);
+      await signaling.initialize(
+        onRemoteAudioStateChange: (bool isActive) {
+          setState(() {
+            isSpeakerActive = isActive && targetId.isNotEmpty;
+          });
+        },
+      );
 
-      signaling.channel.sink.add(jsonEncode({
-        'type': 'status',
-        'status': 'available'
-      }));
+      signaling.setAvailability(true);
     } catch (e) {
       _showErrorDialog('Failed to initialize WebRTC: $e');
     }
@@ -100,8 +101,7 @@ class _CallDriverPageState extends State<CallDriverPage> {
         setState(() {
           drivers = List<Map<String, dynamic>>.from(data['drivers']);
           filteredDrivers = List<Map<String, dynamic>>.from(drivers!);
-          isRecordingList = List.filled(drivers!.length, false);
-          isSpeakingList = List.filled(drivers!.length, false);
+          isRecordingList = List<bool>.filled(drivers!.length, false);
           isLoading = false;
         });
       } else {
@@ -170,7 +170,6 @@ class _CallDriverPageState extends State<CallDriverPage> {
     targetId = driver['user_id'].toString();
 
     if (isMicActive) {
-      print("Target driver ID: $targetId");
       await signaling.startCall(localStream, targetId);
       localStream.getAudioTracks().forEach((track) {
         track.enabled = true;
@@ -188,6 +187,7 @@ class _CallDriverPageState extends State<CallDriverPage> {
       );
     }
   }
+
   void _toggleAvailability() async {
     setState(() {
       isConnected = !isConnected;
@@ -195,7 +195,6 @@ class _CallDriverPageState extends State<CallDriverPage> {
     });
 
     if (!isConnected) {
-      // Stop any ongoing calls
       if (isMicActive) {
         await signaling.stopCall();
         localStream.getAudioTracks().forEach((track) {
@@ -203,22 +202,18 @@ class _CallDriverPageState extends State<CallDriverPage> {
         });
       }
 
-      // Reset all states
       setState(() {
-        isRecordingList = List.filled(drivers?.length ?? 0, false);
+        isRecordingList = List<bool>.filled(drivers?.length ?? 0, false);
         isMicActive = false;
+        isSpeakerActive = false;
       });
       signaling.setAvailability(false);
-
-
 
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text('All calls disabled - Cannot make or receive calls')),
       );
     } else {
-      // Reinitialize WebRTC
       await _initializeWebRTC();
-
       signaling.setAvailability(true);
 
       ScaffoldMessenger.of(context).showSnackBar(
@@ -227,6 +222,11 @@ class _CallDriverPageState extends State<CallDriverPage> {
     }
   }
 
+  @override
+  void dispose() {
+    signaling.dispose();
+    super.dispose();
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -238,7 +238,7 @@ class _CallDriverPageState extends State<CallDriverPage> {
           Padding(
             padding: const EdgeInsets.only(right: 16.0),
             child: InkWell(
-              onTap:_toggleAvailability,
+              onTap: _toggleAvailability,
               child: Container(
                 padding: const EdgeInsets.all(8.0),
                 decoration: BoxDecoration(
@@ -308,24 +308,62 @@ class _CallDriverPageState extends State<CallDriverPage> {
                       ),
                       subtitle:
                       Text('Phone: ${driver['phone_number']}'),
-                      trailing: InkWell(
-                        onTap: () => _toggleMic(index),
-                        child: AnimatedContainer(
-                          duration: const Duration(milliseconds: 200),
-                          width: isRecordingList[index] ? 60 : 50,
-                          height: isRecordingList[index] ? 60 : 50,
-                          decoration: BoxDecoration(
-                            color: isRecordingList[index]
-                                ? Colors.red
-                                : Colors.green,
-                            borderRadius: BorderRadius.circular(50),
+                      trailing: Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          InkWell(
+                            onTap: () => _toggleMic(index),
+                            child: AnimatedContainer(
+                              duration:
+                              const Duration(milliseconds: 200),
+                              width:
+                              isRecordingList[index] ? 60 : 50,
+                              height:
+                              isRecordingList[index] ? 60 : 50,
+                              decoration: BoxDecoration(
+                                color: isRecordingList[index]
+                                    ? Colors.red
+                                    : Colors.green,
+                                borderRadius:
+                                BorderRadius.circular(50),
+                              ),
+                              child: const Icon(
+                                Icons.mic,
+                                color: Colors.white,
+                                size: 30,
+                              ),
+                            ),
                           ),
-                          child: const Icon(
-                            Icons.mic,
-                            color: Colors.white,
-                            size: 30,
+                          const SizedBox(width: 10),
+                          AnimatedContainer(
+                            duration:
+                            const Duration(milliseconds: 200),
+                            width: isSpeakerActive &&
+                                targetId ==
+                                    driver['user_id'].toString()
+                                ? 60
+                                : 50,
+                            height: isSpeakerActive &&
+                                targetId ==
+                                    driver['user_id'].toString()
+                                ? 60
+                                : 50,
+                            decoration: BoxDecoration(
+                              color: isSpeakerActive &&
+                                  targetId ==
+                                      driver['user_id'].toString()
+                                  ? Colors.green
+                                  : Colors.grey,
+                              borderRadius:
+                              BorderRadius.circular(50),
+                            ),
+                            child: const Icon(
+                              Icons.volume_up,
+                              color: Colors.white,
+                              size: 30,
+                            ),
                           ),
-                        ),
+                        ],
                       ),
                     ),
                   ),

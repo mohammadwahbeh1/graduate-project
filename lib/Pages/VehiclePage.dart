@@ -3,7 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:http/http.dart' as http;
 import 'package:google_maps_flutter/google_maps_flutter.dart';
-const String ip = "192.168.1.5";
+const String ip = "192.168.1.7";
 
 
 class VehiclePage extends StatefulWidget {
@@ -504,8 +504,6 @@ class _VehiclePageState extends State<VehiclePage> {
                     }
                     Navigator.of(context).pop();
                   },
-                  child: Text(isEdit ? 'Update' : 'Create',
-                      style: const TextStyle(color: Colors.white)),
                   style: ElevatedButton.styleFrom(
                     backgroundColor: secondaryColor,
                     padding: const EdgeInsets.symmetric(
@@ -514,6 +512,8 @@ class _VehiclePageState extends State<VehiclePage> {
                       borderRadius: BorderRadius.circular(30),
                     ),
                   ),
+                  child: Text(isEdit ? 'Update' : 'Create',
+                      style: const TextStyle(color: Colors.white)),
                 ),
               ],
             );

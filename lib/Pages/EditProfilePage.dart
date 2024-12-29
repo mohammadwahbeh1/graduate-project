@@ -2,7 +2,7 @@ import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:http/http.dart' as http;
-const String ip = "192.168.1.5";
+const String ip = "192.168.1.7";
 
 class EditProfilePage extends StatefulWidget {
   final Map<String, String> userData; // Pass user data to this page
