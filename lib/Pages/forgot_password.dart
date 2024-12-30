@@ -176,24 +176,36 @@ class _ForgotPasswordState extends State<ForgotPassword> {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
+                IconButton(
+                  icon: Icon(Icons.arrow_back_ios, color: textColor),
+                  onPressed: () => Navigator.pop(context),
+                ),
                 SizedBox(height: 80.0),
-                Text(
-                  "Reset Password",
-                  style: TextStyle(
-                    color: textColor,
-                    fontSize: 32.0,
-                    fontWeight: FontWeight.bold,
-                    letterSpacing: 1.2,
-                  ),
+
+
+                Center(
+                  child: Text(
+                        "Reset Password",
+                        style: TextStyle(
+                          color: textColor,
+                          fontSize: 32.0,
+                          fontWeight: FontWeight.bold,
+                          letterSpacing: 1.2,
+                        ),
+                                         ),
                 ),
-                SizedBox(height: 12.0),
-                Text(
-                  "We'll help you recover your password",
-                  style: TextStyle(
-                    color: Colors.grey[400],
-                    fontSize: 16.0,
-                  ),
-                ),
+
+
+                 Center(
+                   child: Text(
+                      "We'll help you recover your password",
+                      style: TextStyle(
+                        color: Colors.grey[400],
+                        fontSize: 16.0,
+                      ),
+                    ),
+                 ),
+
                 SizedBox(height: 40.0),
 
                 if (!codeSent) ...[

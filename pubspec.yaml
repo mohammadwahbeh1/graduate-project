@@ -38,6 +38,7 @@ dependencies:
 
 
   flutter:
+
     sdk: flutter
 
 
@@ -122,7 +123,16 @@ flutter:
 
 
   assets:
-      - assets/
+
+fonts:
+  - family: Poppins
+    fonts:
+      - asset: assets/fonts/Poppins-Regular.ttf
+      - asset: assets/fonts/Poppins-Medium.ttf
+        weight: 500
+      - asset: assets/fonts/Poppins-SemiBold.ttf
+        weight: 600
+
 
   #   - images/a_dot_ham.jpeg
 
