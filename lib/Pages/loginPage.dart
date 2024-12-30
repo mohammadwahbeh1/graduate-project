@@ -13,7 +13,12 @@ import 'package:untitled/Pages/Location Service.dart';
 import 'package:flutter/foundation.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 
-const String ip = "192.168.1.7";
+
+const String ip = "192.168.1.8";
+
+
+// Create a secure storage instance
+
 const storage = FlutterSecureStorage();
 
 class LoginPage extends StatefulWidget {

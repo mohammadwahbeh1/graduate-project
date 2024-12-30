@@ -10,7 +10,7 @@ import 'dart:math' as math;
 
 import 'mapServiceDirectionTime.dart';
 
-const String ip = "192.168.1.7";
+const String ip = "192.168.1.8";
 final storage = FlutterSecureStorage();
 
 class Recommendationspage extends StatefulWidget {
@@ -200,22 +200,37 @@ class _RecommendationspageState extends State<Recommendationspage> {
   void _calculateTheDes() {
     if (_currentPosition != null) {
       setState(() {
+        DateTime now = DateTime.now();
+
         List<dynamic> nearbyReservations = pendingReservations.where((reservation) {
-          String startDest = reservation['start_destination'].toString().trim();  // Add trim() here
-          if (nablusCoordinates.containsKey(startDest)) {
-            double reservationLat = nablusCoordinates[startDest]!['latitude']!;
-            double reservationLon = nablusCoordinates[startDest]!['longitude']!;
-
-            double distance = calculateDistance(
-                _currentPosition!.latitude,
-                _currentPosition!.longitude,
-                reservationLat,
-                reservationLon
-            );
-
-            return distance <= _maxDistance;
+          // Location check
+          String startDest = reservation['start_destination'].toString().trim();
+          if (!nablusCoordinates.containsKey(startDest)) {
+            print("\nLocation not found in coordinates: '$startDest'");
+            return false;
           }
-          return false;
+
+          double reservationLat = nablusCoordinates[startDest]!['latitude']!;
+          double reservationLon = nablusCoordinates[startDest]!['longitude']!;
+
+          double distance = calculateDistance(
+              _currentPosition!.latitude,
+              _currentPosition!.longitude,
+              reservationLat,
+              reservationLon
+          );
+
+          // Time check
+          String scheduledDate = reservation['scheduled_date'];
+          String scheduledTime = reservation['scheduled_time'];
+          DateTime reservationDateTime = DateTime.parse('$scheduledDate $scheduledTime');
+          Duration timeUntilReservation = reservationDateTime.difference(now);
+
+          print("\nThe distance is $distance km for reservation: $startDest");
+          print("Time until reservation: ${timeUntilReservation.inHours} hours");
+
+          // Return true only if both distance and time conditions are met
+          return distance <= _maxDistance && timeUntilReservation.inHours >= 1;
         }).toList();
 
         pendingReservations = nearbyReservations;
@@ -225,6 +240,7 @@ class _RecommendationspageState extends State<Recommendationspage> {
       });
     }
   }
+
 
 
 

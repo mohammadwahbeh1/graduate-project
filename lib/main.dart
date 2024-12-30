@@ -5,8 +5,10 @@ import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:provider/provider.dart';
 import 'package:geolocator/geolocator.dart';
 
+import 'Pages/Forgot_password.dart';
 import 'Pages/Location Service.dart';
 import 'Pages/location_provider.dart';
+import 'Pages/loginPage.dart';
 
 
 void main() {
@@ -39,6 +41,11 @@ class _MyAppState extends State<MyApp> {
               primaryColor: Colors.blue,
             ),
             home: const SplashScreen(), // Splash screen as the entry point
+            routes: {
+              '/login': (context) => LoginPage(),
+              '/forgot-password': (context) => ForgotPassword(),
+              // Add more routes as needed
+            },
           ),
         );
       },
