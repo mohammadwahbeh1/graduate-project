@@ -383,9 +383,7 @@ class _ReservationsPageState extends State<ReservationsPage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(
-        title: const Text('Your Reservations'),
-      ),
+
       body: _isLoading
           ? const Center(child: CircularProgressIndicator())
           : RefreshIndicator(
@@ -437,7 +435,7 @@ class _ReservationsPageState extends State<ReservationsPage> {
   Widget _buildReservationCard(Map<String, dynamic> reservation) {
     final String statusLower = reservation['status'].toString().toLowerCase();
 
-    // تحديد اللون والأيقونة بناءً على حالة الحجز
+
     Color statusColor;
     IconData statusIcon;
     switch (statusLower) {
@@ -472,9 +470,9 @@ class _ReservationsPageState extends State<ReservationsPage> {
       child: Padding(
         padding: const EdgeInsets.all(12.0),
         child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,  // النصوص بمحاذاة اليسار
+          crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            // سطر الحالة (الأيقونة + النص)
+
             Row(
               children: [
                 Icon(statusIcon, color: statusColor, size: 30),
@@ -494,7 +492,7 @@ class _ReservationsPageState extends State<ReservationsPage> {
 
             const SizedBox(height: 8),
 
-            // سطر الأزرار (في أقصى اليمين)
+
             if (statusLower == 'confirmed' ||
                 statusLower == 'pending' ||
                 statusLower == 'pause' ||
@@ -509,7 +507,7 @@ class _ReservationsPageState extends State<ReservationsPage> {
                 ),
               ),
 
-            // تحذير إن كانت Cancelled
+
             if (showWarning) ...[
               const SizedBox(height: 8),
               Container(
@@ -541,7 +539,7 @@ class _ReservationsPageState extends State<ReservationsPage> {
             const SizedBox(height: 8),
             const Divider(),
 
-            // بقية التفاصيل: المسار، التاريخ، الوصف، إلخ
+
             Padding(
               padding: const EdgeInsets.symmetric(vertical: 8.0),
               child: Column(
