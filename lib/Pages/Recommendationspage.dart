@@ -213,10 +213,8 @@ class _RecommendationspageState extends State<Recommendationspage> {
                 reservationLon
             );
 
-            print("\nThe distance is $distance km for reservation: $startDest");
             return distance <= _maxDistance;
           }
-          print("\nLocation not found in coordinates: '$startDest'");
           return false;
         }).toList();
 

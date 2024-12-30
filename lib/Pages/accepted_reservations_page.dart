@@ -844,14 +844,10 @@ class _AcceptedReservationsPageState extends State<AcceptedReservationsPage> {
       if (dateStr != null) {
         DateTime startDate;
         try {
-          // التحقق من تنسيق التاريخ باستخدام DateFormat
-          // إذا كان التنسيق مختلفًا، قم بتعديله هنا
-          // على سبيل المثال، إذا كان التنسيق 'dd-MM-yyyy':
-          // startDate = DateFormat('dd-MM-yyyy').parse(dateStr);
           startDate = DateTime.parse(dateStr);
         } catch (e) {
           print("Invalid date format for reservation ID ${reservation['reservation_id']}: $dateStr");
-          continue; // Skip reservations with invalid date format
+          continue;
         }
 
         DateTime key = DateTime(startDate.year, startDate.month, startDate.day);
@@ -894,9 +890,7 @@ class _AcceptedReservationsPageState extends State<AcceptedReservationsPage> {
     }
 
     // Debug: Print reservations by date to verify correctness
-    _reservationsByDate.forEach((date, reservations) {
-      print('Date: $date, Reservations Count: ${reservations.length}');
-    });
+
   }
 
   // Generate weekly occurrences without using interval
