@@ -5,6 +5,7 @@ import 'package:http/http.dart' as http;
 import 'dart:convert';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:untitled/Pages/reviewPage.dart';
+import 'package:untitled/Pages/serviceChatPage.dart';
 import './loginPage.dart';
 import './terminalDetailsPage.dart';
 import 'package:untitled/Pages/reservationPage.dart';
@@ -495,6 +496,19 @@ class _homePageState extends State<homePage> {
               );
             },
           ),
+          const SizedBox(height: 20),
+          ListTile(
+            leading: const Icon(Icons.support_agent),
+            title: const Text('Customer Service'),
+            onTap: () {
+              Navigator.pop(context);
+              Navigator.push(
+                context,
+                MaterialPageRoute(builder: (context) => ServiceChatPage(receiverId: '13',)),
+              );
+            },
+          ),
+
           const SizedBox(height: 20),
           ListTile(
             leading: const Icon(Icons.logout),

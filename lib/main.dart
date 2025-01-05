@@ -9,6 +9,7 @@ import 'Pages/Forgot_password.dart';
 import 'Pages/Location Service.dart';
 import 'Pages/location_provider.dart';
 import 'Pages/loginPage.dart';
+import 'Pages/serviceDashboardPage.dart';
 
 
 void main() {
@@ -28,6 +29,7 @@ class _MyAppState extends State<MyApp> {
     super.initState();
   }
 
+
   @override
   Widget build(BuildContext context) {
     return Sizer(
@@ -44,6 +46,7 @@ class _MyAppState extends State<MyApp> {
             routes: {
               '/login': (context) => LoginPage(),
               '/forgot-password': (context) => ForgotPassword(),
+              '/service-dashboard': (context) => ServiceDashboardPage(),
               // Add more routes as needed
             },
           ),

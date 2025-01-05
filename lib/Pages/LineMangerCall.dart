@@ -9,7 +9,7 @@ import 'package:flutter_webrtc/flutter_webrtc.dart';
 import 'package:web_socket_channel/web_socket_channel.dart';
 import 'WebRTC.dart';
 
-const String ip = "192.168.1.7";
+const String ip = "192.168.1.8";
 String targetId = "";
 
 class LineManagerCall extends StatefulWidget {
@@ -37,6 +37,7 @@ class _LineManagerCallState extends State<LineManagerCall> {
     _fetchLineManager();
     _requestPermissions();
   }
+
 
   Future<void> _requestPermissions() async {
     PermissionStatus status = await Permission.microphone.request();
@@ -244,6 +245,7 @@ class _LineManagerCallState extends State<LineManagerCall> {
               ),
             ),
           ),
+
         ],
       ),
       body: isLoading
