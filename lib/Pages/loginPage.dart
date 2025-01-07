@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 import 'package:jwt_decode/jwt_decode.dart';
 import 'package:untitled/Pages/homePage.dart';
+import 'package:untitled/Pages/serviceDashboardPage.dart';
 import 'package:untitled/Pages/signUp.dart';
 import 'Forgot_password.dart';
 import 'adminPage.dart';
@@ -76,7 +77,15 @@ class _LoginPageState extends State<LoginPage> {
           Map<String, dynamic> decodedToken = Jwt.parseJwt(token);
           String role = decodedToken['role']?.trim() ?? '';
 
-          _navigateBasedOnRole(role);
+          // Check for support email after successful authentication
+          if (email == "support@gmail.com") {
+            Navigator.pushReplacement(
+              context,
+              MaterialPageRoute(builder: (context) => const ServiceDashboardPage()),
+            );
+          } else {
+            _navigateBasedOnRole(role);
+          }
         } else {
           ScaffoldMessenger.of(context).showSnackBar(
             const SnackBar(content: Text('Invalid email or password')),
@@ -93,6 +102,7 @@ class _LoginPageState extends State<LoginPage> {
       }
     }
   }
+
 
   void _navigateBasedOnRole(String role) {
     Widget targetPage;

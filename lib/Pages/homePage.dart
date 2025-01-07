@@ -26,38 +26,53 @@ class HomePage extends StatefulWidget {
   _HomePageState createState() => _HomePageState();
 }
 
-class _HomePageState extends State<HomePage> {
-  List<Map<String, dynamic>> terminals = [];
+class _homePageState extends State<homePage> {
+  List<Map<String, String>> terminals = [];
+  bool _isHovered = false;
   bool isLoading = true;
   final storage = const FlutterSecureStorage();
   List<Map<String, dynamic>> notifications = [];
   int notificationCount = 0;
   WebSocketChannel? _channel;
   int _currentIndex = 0;
-  String username = "";
+  String username="";
   final List<Widget> _pages = [
-    Container(), // Home Page content is handled separately
-    ClosestPointPage(),
-    const BookTaxiPage(),
-    ReservationsPage(),
+    Container(),  // Replace with your Home Page class
+    ClosestPointPage(), // Replace with your Closest Point Page class
+    const BookTaxiPage(), // Replace with your Book Taxi Page class
+    const ReservationsPage(), // Replace with your Reservations Page class
   ];
-
-  // Theme state variable
+// Theme state variable
   bool isDarkMode = false;
+
+  void addNotification(Map<String, dynamic> notification) {
+    setState(() {
+      notifications.add(notification);
+      notificationCount++;
+    });
+  }
+
 
   @override
   void initState() {
     super.initState();
     // Load data in parallel
     Future.wait([
-      fetchNotifications(),
+    fetchNotifications(),
       fetchTerminals(),
       fetchUserProfile(),
+
     ]);
     _initializeWebSocket();
   }
 
-  // Fetch terminals with average_rating
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    fetchNotifications();
+  }
+
+  // Fetch terminals
   Future<void> fetchTerminals() async {
     try {
       String? token = await storage.read(key: 'jwt_token');
@@ -107,7 +122,7 @@ class _HomePageState extends State<HomePage> {
     }
   }
 
-  // Fetch notifications
+  // Function to fetch unread notifications
   Future<void> fetchNotifications() async {
     try {
       String? token = await storage.read(key: 'jwt_token');
@@ -145,7 +160,6 @@ class _HomePageState extends State<HomePage> {
     }
   }
 
-  // Mark notification as read
   Future<void> markNotificationAsRead(int notificationId) async {
     try {
       String? token = await storage.read(key: 'jwt_token');
@@ -157,11 +171,13 @@ class _HomePageState extends State<HomePage> {
             'Content-Type': 'application/json',
           },
         );
-
+        print('notiiii ');
         if (response.statusCode == 200) {
+          print('notiiii senddddd');
+
           setState(() {
-            notifications.removeWhere((notif) => notif['id'] == notificationId);
-            notificationCount--;
+            notifications.removeWhere((notif) => notif == notificationId); // Remove notification from the list
+            notificationCount--; // Update the notification count
           });
         } else {
           print('Failed to mark notification as read: ${response.statusCode}');
@@ -173,18 +189,26 @@ class _HomePageState extends State<HomePage> {
       print('Error marking notification as read: $e');
     }
   }
-
   Future<void> _handleMarkAsRead(int notificationId) async {
     try {
-      await markNotificationAsRead(notificationId);
+      // Call the API to mark the notification as read
+      await markNotificationAsRead(notificationId); // Replace with actual API implementation
       setState(() {
-        notifications.removeWhere((notif) => notif['id'] == notificationId);
-        notificationCount = notifications.length;
+        notifications.removeWhere((notif) => notif['id'] == notificationId); // Remove globally
+        notificationCount = notifications.length; // Update global count
       });
     } catch (e) {
       print('Error marking notification as read: $e');
     }
   }
+
+  void _removeNotification(int notificationId) {
+    setState(() {
+      notifications.removeWhere((notification) => notification['id'] == notificationId);
+      notificationCount = notifications.length; // Update the count
+    });
+  }
+
 
   void _showNotifications(BuildContext context) {
     showDialog(
@@ -306,7 +330,7 @@ class _HomePageState extends State<HomePage> {
                         ),
                       ),
                     );
-                  },
+                  }
                 ),
               ),
               actions: [
@@ -368,7 +392,6 @@ class _HomePageState extends State<HomePage> {
                     );
                   },
                 ),
-                // Add more profile options here if needed
               ],
             ),
           ),
@@ -376,20 +399,20 @@ class _HomePageState extends State<HomePage> {
       },
     );
   }
-
   void _initializeWebSocket() async {
-    String? token = await storage.read(key: 'jwt_token');
+    String? token = await storage.read(key: 'jwt_token'); // Retrieve JWT token
     String? userId = await storage.read(key: 'user_id');
 
-    if (token != null && userId != null) {
+    if (token != null) {
       _channel = WebSocketChannel.connect(
-        Uri.parse(
-            'ws://$ip:3000/ws/notifications?token=$token&userId=$userId'),
+        Uri.parse('ws://$ip:3000/ws/notifications?token=$token&userId=$userId'), // Add your WebSocket server URL
       );
+
 
       _channel!.stream.listen(
             (message) {
           final notification = jsonDecode(message);
+          print('Received notification: $notification');
           setState(() {
             notifications.add({
               'id': notification['id'],
@@ -402,30 +425,27 @@ class _HomePageState extends State<HomePage> {
         },
         onError: (error) {
           print("WebSocket error: $error");
-          _reconnectWebSocket();
+          _reconnectWebSocket(); // Reconnect if there is an error
         },
         onDone: () {
           print("WebSocket connection closed.");
-          _reconnectWebSocket();
+          _reconnectWebSocket(); // Reconnect when connection is closed
         },
       );
     }
   }
-
   void _reconnectWebSocket() {
     Future.delayed(const Duration(seconds: 5), () {
       print("Reconnecting WebSocket...");
       _initializeWebSocket();
     });
   }
-
   @override
   void dispose() {
-    _channel?.sink.close();
+    _channel?.sink.close();  // Gracefully close the WebSocket connection
     super.dispose();
   }
 
-  // Fetch user profile
   Future<void> fetchUserProfile() async {
     String? token = await storage.read(key: 'jwt_token');
 
@@ -461,7 +481,8 @@ class _HomePageState extends State<HomePage> {
     }
   }
 
-  // Build Drawer
+
+
   Widget buildDrawer(BuildContext context) {
     return Drawer(
       backgroundColor: isDarkMode ? Colors.grey[900] : Colors.white,
@@ -877,8 +898,6 @@ class _HomePageState extends State<HomePage> {
       ),
     );
   }
-
-  // Build Custom Bottom Navigation Bar
   Widget _buildCustomBottomNavigationBar() {
     return Container(
       decoration: BoxDecoration(
@@ -954,15 +973,15 @@ class _HomePageState extends State<HomePage> {
   String _getAppBarTitle() {
     switch (_currentIndex) {
       case 0:
-        return "Terminals";
+        return "Terminals"; // Title for Home tab
       case 1:
-        return "Closest Point";
+        return "Closest Point"; // Title for Closest Point tab
       case 2:
-        return "Book Taxi";
+        return "Book Taxi"; // Title for Book Taxi tab
       case 3:
-        return "Reservations";
+        return "Reservations"; // Title for Reservations tab
       default:
-        return "Terminals";
+        return "Terminals"; // Default title
     }
   }
 
