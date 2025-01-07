@@ -5,6 +5,8 @@ import 'package:web_socket_channel/web_socket_channel.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:untitled/Pages/serviceChatPage.dart';
 
+
+
 class Conversation {
   final int userId;
   final String username;
@@ -35,7 +37,9 @@ class _ServiceDashboardPageState extends State<ServiceDashboardPage> {
     super.initState();
     _conversationsFuture = fetchMessages();
     _initializeWebSocket();
+
   }
+
 
   void _initializeWebSocket() async {
     final supporterId = await storage.read(key: 'user_id');
