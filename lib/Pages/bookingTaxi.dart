@@ -6,7 +6,7 @@ import 'dart:convert';
 
 import 'Splash_screen.dart';
 
-const String ip = "192.168.1.8";
+const String ip = "192.168.1.12";
 
 class BookTaxiPage extends StatefulWidget {
   const BookTaxiPage({Key? key}) : super(key: key);
@@ -168,10 +168,6 @@ class _BookTaxiPageState extends State<BookTaxiPage> {
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: Colors.white,
-      appBar: AppBar(
-        backgroundColor: Colors.white,
-        elevation: 0,
-      ),
       body: SingleChildScrollView(
         padding: const EdgeInsets.all(20.0),
         child: Form(

@@ -5,7 +5,7 @@ import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:intl/intl.dart';
 import 'package:flutter_rating_bar/flutter_rating_bar.dart';
 
-const String ip = "192.168.1.7";
+const String ip = "192.168.1.12";
 
 const storage = FlutterSecureStorage();
 
@@ -383,9 +383,7 @@ class _ReservationsPageState extends State<ReservationsPage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(
-        title: const Text('Your Reservations'),
-      ),
+
       body: _isLoading
           ? const Center(child: CircularProgressIndicator())
           : RefreshIndicator(

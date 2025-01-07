@@ -17,7 +17,7 @@ class LocationService {
   Position? _lastPosition;
   bool _isInRange = false;
   final String googleRoadsApiKey = "AIzaSyBUyuByMAu02NKWp76MsQ1xRWHKb2FsWEg";
-  final String ip = "http://192.168.1.7:3000";
+  final String ip = "http://192.168.1.12:3000";
 
   Future<void> startTracking(BuildContext context) async {
     bool isDriver = await _isDriver();

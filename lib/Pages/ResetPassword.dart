@@ -18,12 +18,12 @@ class _ResetPasswordState extends State<ResetPassword> {
   final _passwordController = TextEditingController();
   final _confirmPasswordController = TextEditingController();
   bool isLoading = false;
-  static const String ip = "192.168.1.8";
+  static const String ip = "192.168.1.12";
 
   Future<void> resetPassword() async {
     if (_passwordController.text != _confirmPasswordController.text) {
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Passwords do not match')),
+        const SnackBar(content: Text('Passwords do not match')),
       );
       return;
     }
@@ -44,7 +44,7 @@ class _ResetPasswordState extends State<ResetPassword> {
 
       if (response.statusCode == 200) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
+          const SnackBar(
             content: Text('Password successfully reset'),
             backgroundColor: Colors.green,
           ),
@@ -52,7 +52,7 @@ class _ResetPasswordState extends State<ResetPassword> {
         Navigator.pushReplacementNamed(context, '/login');
       } else {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
+          const SnackBar(
             content: Text('Failed to reset password. Please try again.'),
             backgroundColor: Colors.red,
           ),
@@ -60,7 +60,7 @@ class _ResetPasswordState extends State<ResetPassword> {
       }
     } catch (e) {
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
+        const SnackBar(
           content: Text('An error occurred. Please try again later.'),
           backgroundColor: Colors.red,
         ),
@@ -79,10 +79,10 @@ class _ResetPasswordState extends State<ResetPassword> {
       body: Container(
         child: Column(
           children: [
-            SizedBox(height: 70.0),
+            const SizedBox(height: 70.0),
             Container(
               alignment: Alignment.topCenter,
-              child: Text(
+              child: const Text(
                 "Reset Password",
                 style: TextStyle(
                     color: Colors.black,
@@ -91,8 +91,8 @@ class _ResetPasswordState extends State<ResetPassword> {
                 ),
               ),
             ),
-            SizedBox(height: 10.0),
-            Text(
+            const SizedBox(height: 10.0),
+            const Text(
               "Enter your new password",
               style: TextStyle(
                   color: Colors.black,
@@ -104,13 +104,13 @@ class _ResetPasswordState extends State<ResetPassword> {
                 child: Form(
                     key: _formKey,
                     child: Padding(
-                      padding: EdgeInsets.symmetric(horizontal: 20.0),
+                      padding: const EdgeInsets.symmetric(horizontal: 20.0),
                       child: ListView(
                         children: [
                           Container(
-                            padding: EdgeInsets.symmetric(horizontal: 20.0),
+                            padding: const EdgeInsets.symmetric(horizontal: 20.0),
                             decoration: BoxDecoration(
-                              border: Border.all(color: Color(0xFFb2b7bf), width: 2.0),
+                              border: Border.all(color: const Color(0xFFb2b7bf), width: 2.0),
                               borderRadius: BorderRadius.circular(30),
                             ),
                             child: TextFormField(
@@ -125,8 +125,8 @@ class _ResetPasswordState extends State<ResetPassword> {
                                 }
                                 return null;
                               },
-                              style: TextStyle(color: Colors.black),
-                              decoration: InputDecoration(
+                              style: const TextStyle(color: Colors.black),
+                              decoration: const InputDecoration(
                                   hintText: "New Password",
                                   hintStyle: TextStyle(fontSize: 18.0, color: Colors.black),
                                   prefixIcon: Icon(
@@ -157,8 +157,8 @@ class _ResetPasswordState extends State<ResetPassword> {
                                 }
                                 return null;
                               },
-                              style: TextStyle(color: Colors.black),
-                              decoration: InputDecoration(
+                              style: const TextStyle(color: Colors.black),
+                              decoration: const InputDecoration(
                                   hintText: "Confirm Password",
                                   hintStyle: TextStyle(fontSize: 18.0, color: Colors.black),
                                   prefixIcon: Icon(
@@ -170,7 +170,7 @@ class _ResetPasswordState extends State<ResetPassword> {
                               ),
                             ),
                           ),
-                          SizedBox(height: 40.0),
+                          const SizedBox(height: 40.0),
                           GestureDetector(
                             onTap: () {
                               if (_formKey.currentState!.validate()) {
@@ -179,15 +179,15 @@ class _ResetPasswordState extends State<ResetPassword> {
                             },
                             child: Container(
                               width: 140,
-                              padding: EdgeInsets.all(10),
+                              padding: const EdgeInsets.all(10),
                               decoration: BoxDecoration(
-                                  color: Color(0xFFFFD700),
+                                  color: const Color(0xFFFFD700),
                                   borderRadius: BorderRadius.circular(10)
                               ),
                               child: Center(
                                 child: isLoading
-                                    ? CircularProgressIndicator(color: Colors.black)
-                                    : Text(
+                                    ? const CircularProgressIndicator(color: Colors.black)
+                                    : const Text(
                                   "Reset Password",
                                   style: TextStyle(
                                       color: Colors.black,

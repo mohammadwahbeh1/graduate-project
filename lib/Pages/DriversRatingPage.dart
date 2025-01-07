@@ -41,8 +41,7 @@ class _DriversRatingPageState extends State<DriversRatingPage>
   double averageRating = 0.0;
   int totalDrivers = 0;
 
-  // عدّل الـ IP أو اجلبه من إعداداتك
-  final String ip = "192.168.1.7";
+  final String ip = "192.168.1.12";
 
   late AnimationController _animationController;
 

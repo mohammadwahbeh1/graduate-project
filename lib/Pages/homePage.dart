@@ -13,65 +13,51 @@ import 'closestPointPage.dart';
 import 'profilePage.dart';
 import 'package:web_socket_channel/web_socket_channel.dart';
 import 'package:web_socket_channel/status.dart' as status;
+import 'package:flutter_rating_bar/flutter_rating_bar.dart'; // Import the rating bar package
+import 'package:google_fonts/google_fonts.dart'; // Import Google Fonts
+import 'package:flutter_staggered_animations/flutter_staggered_animations.dart'; // Import animations
 
-const String ip ="192.168.1.8";
+const String ip = "192.168.1.12";
 
-
-
-
-
-class homePage extends StatefulWidget {
-  const homePage({super.key});
+class HomePage extends StatefulWidget {
+  const HomePage({super.key});
 
   @override
-  _homePageState createState() => _homePageState();
+  _HomePageState createState() => _HomePageState();
 }
 
-class _homePageState extends State<homePage> {
-  List<Map<String, String>> terminals = [];
-  bool _isHovered = false;
+class _HomePageState extends State<HomePage> {
+  List<Map<String, dynamic>> terminals = [];
   bool isLoading = true;
   final storage = const FlutterSecureStorage();
   List<Map<String, dynamic>> notifications = [];
   int notificationCount = 0;
   WebSocketChannel? _channel;
   int _currentIndex = 0;
-  String username="";
+  String username = "";
   final List<Widget> _pages = [
-    Container(),  // Replace with your Home Page class
-    ClosestPointPage(), // Replace with your Closest Point Page class
-    const BookTaxiPage(), // Replace with your Book Taxi Page class
-    ReservationsPage(), // Replace with your Reservations Page class
+    Container(), // Home Page content is handled separately
+    ClosestPointPage(),
+    const BookTaxiPage(),
+    ReservationsPage(),
   ];
 
-  void addNotification(Map<String, dynamic> notification) {
-    setState(() {
-      notifications.add(notification);
-      notificationCount++;
-    });
-  }
-
+  // Theme state variable
+  bool isDarkMode = false;
 
   @override
   void initState() {
     super.initState();
     // Load data in parallel
     Future.wait([
-    fetchNotifications(),
+      fetchNotifications(),
       fetchTerminals(),
       fetchUserProfile(),
-
     ]);
     _initializeWebSocket();
   }
 
-  @override
-  void didChangeDependencies() {
-    super.didChangeDependencies();
-    fetchNotifications();
-  }
-
-  // Fetch terminals
+  // Fetch terminals with average_rating
   Future<void> fetchTerminals() async {
     try {
       String? token = await storage.read(key: 'jwt_token');
@@ -83,18 +69,25 @@ class _homePageState extends State<homePage> {
             'Authorization': 'Bearer $token',
           },
         );
-        print("Token: $token");
-        print(response);
+
         if (response.statusCode == 200) {
           final List<dynamic> data = jsonDecode(response.body)['data'];
 
           setState(() {
-            terminals = data
-                .map((terminal) => {
-              'terminal_id': terminal['terminal_id'].toString(),
-              'terminal_name': terminal['terminal_name'].toString(),
-            })
-                .toList();
+            terminals = data.map((terminal) {
+              return {
+                'terminal_id': terminal['terminal_id'].toString(),
+                'terminal_name': terminal['terminal_name'].toString(),
+                'average_rating': terminal['average_rating'] != null
+                    ? double.parse(terminal['average_rating'].toString())
+                    : 0.0,
+                'total_vehicles': terminal['total_vehicles'].toString(),
+                'latitude': terminal['latitude'],
+                'longitude': terminal['longitude'],
+                'user_id': terminal['user_id'].toString(),
+                'image_path': terminal['image_path'] ?? 'assets/terminal.jpg', // Ensure image_path exists
+              };
+            }).toList();
             isLoading = false;
           });
         } else {
@@ -114,7 +107,7 @@ class _homePageState extends State<homePage> {
     }
   }
 
-  // Function to fetch unread notifications
+  // Fetch notifications
   Future<void> fetchNotifications() async {
     try {
       String? token = await storage.read(key: 'jwt_token');
@@ -152,6 +145,7 @@ class _homePageState extends State<homePage> {
     }
   }
 
+  // Mark notification as read
   Future<void> markNotificationAsRead(int notificationId) async {
     try {
       String? token = await storage.read(key: 'jwt_token');
@@ -163,13 +157,11 @@ class _homePageState extends State<homePage> {
             'Content-Type': 'application/json',
           },
         );
-        print('notiiii ');
-        if (response.statusCode == 200) {
-          print('notiiii senddddd');
 
+        if (response.statusCode == 200) {
           setState(() {
-            notifications.removeWhere((notif) => notif == notificationId); // Remove notification from the list
-            notificationCount--; // Update the notification count
+            notifications.removeWhere((notif) => notif['id'] == notificationId);
+            notificationCount--;
           });
         } else {
           print('Failed to mark notification as read: ${response.statusCode}');
@@ -181,26 +173,18 @@ class _homePageState extends State<homePage> {
       print('Error marking notification as read: $e');
     }
   }
+
   Future<void> _handleMarkAsRead(int notificationId) async {
     try {
-      // Call the API to mark the notification as read
-      await markNotificationAsRead(notificationId); // Replace with actual API implementation
+      await markNotificationAsRead(notificationId);
       setState(() {
-        notifications.removeWhere((notif) => notif['id'] == notificationId); // Remove globally
-        notificationCount = notifications.length; // Update global count
+        notifications.removeWhere((notif) => notif['id'] == notificationId);
+        notificationCount = notifications.length;
       });
     } catch (e) {
       print('Error marking notification as read: $e');
     }
   }
-
-  void _removeNotification(int notificationId) {
-    setState(() {
-      notifications.removeWhere((notification) => notification['id'] == notificationId);
-      notificationCount = notifications.length; // Update the count
-    });
-  }
-
 
   void _showNotifications(BuildContext context) {
     showDialog(
@@ -209,76 +193,120 @@ class _homePageState extends State<homePage> {
         return StatefulBuilder(
           builder: (BuildContext context, StateSetter setDialogState) {
             return AlertDialog(
-              title: const Text('Notifications'),
+              title: const Text(
+                'Notifications',
+                style: TextStyle(
+                  fontSize: 20,
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
               content: notifications.isEmpty
                   ? const Text('No new notifications.')
                   : SizedBox(
-                width: double.maxFinite, // Ensure ListView takes up the full width
-                child: ListView(
-                  shrinkWrap: true, // Makes ListView only take the space it needs
-                  children: notifications.map((notification) {
-                    return ListTile(
-                      leading: const Icon(Icons.notification_important),
-                      title: Text(notification['message']), // Access and display the message
-                      trailing: Row(
-                        mainAxisSize: MainAxisSize.min,
-                        children: [
-                          MouseRegion(
-                            onEnter: (_) {
-                              setState(() {
-                                _isHovered = true;
-                              });
+                width: double.maxFinite,
+                child: ListView.builder(
+                  shrinkWrap: true,
+                  itemCount: notifications.length,
+                  itemBuilder: (context, index) {
+                    final notification = notifications[index];
+                    return AnimationConfiguration.staggeredList(
+                      position: index,
+                      duration: const Duration(milliseconds: 375),
+                      child: SlideAnimation(
+                        verticalOffset: 50.0,
+                        child: FadeInAnimation(
+                          child: GestureDetector(
+                            onTap: () {
+                              // Optionally handle tap on notification
                             },
-                            onExit: (_) {
-                              setState(() {
-                                _isHovered = false;
-                              });
-                            },
-                            child: Column(
-                              mainAxisSize: MainAxisSize.min,
-                              children: [
-                                MouseRegion(
-                                  onEnter: (_) {
-                                    setState(() {
-                                      _isHovered = true;
-                                    });
-                                  },
-                                  onExit: (_) {
-                                    setState(() {
-                                      _isHovered = false;
-                                    });
-                                  },
-                                  child: IconButton(
-                                    icon: const Icon(Icons.check, color: Colors.grey),
-                                    onPressed: () async {
-                                      int notificationId = notification['id']; // Get notification ID
-
-                                      try {
-
-                                        await _handleMarkAsRead(notificationId);
-
-
-                                        setDialogState(() {
-                                          notifications.removeWhere((notif) => notif['id'] == notificationId);
-                                        });
-                                      } catch (e) {
-                                        print('Error handling notification: $e');
-                                      }
-                                    },
+                            child: Container(
+                              margin: const EdgeInsets.symmetric(vertical: 6),
+                              padding: const EdgeInsets.all(12),
+                              decoration: BoxDecoration(
+                                color: notification['isRead']
+                                    ? Colors.grey[100]
+                                    : Colors.white,
+                                borderRadius: BorderRadius.circular(12),
+                                boxShadow: [
+                                  BoxShadow(
+                                    color: Colors.grey.withOpacity(0.1),
+                                    spreadRadius: 2,
+                                    blurRadius: 8,
                                   ),
-                                ),
-                                if (_isHovered)
-                                  const Text(
-                                    'Mark as Read',
-                                    style: TextStyle(fontSize: 12, color: Colors.grey),
+                                ],
+                              ),
+                              child: Row(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Icon(
+                                    Icons.notifications,
+                                    color: notification['isRead']
+                                        ? Colors.grey
+                                        : Colors.blue,
+                                    size: 28,
                                   ),
-                              ],
+                                  const SizedBox(width: 12),
+                                  Expanded(
+                                    child: Column(
+                                      crossAxisAlignment: CrossAxisAlignment.start,
+                                      children: [
+                                        Text(
+                                          notification['message'],
+                                          style: TextStyle(
+                                            fontSize: 16,
+                                            fontWeight: notification['isRead']
+                                                ? FontWeight.normal
+                                                : FontWeight.w600,
+                                            color: Colors.black87,
+                                          ),
+                                        ),
+                                        const SizedBox(height: 6),
+                                        Row(
+                                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                          children: [
+                                            Text(
+                                              _formatTimestamp(notification['createdAt']),
+                                              style: const TextStyle(
+                                                fontSize: 12,
+                                                color: Colors.grey,
+                                              ),
+                                            ),
+                                            TextButton(
+                                              onPressed: () async {
+                                                int notificationId = notification['id'];
+                                                try {
+                                                  await _handleMarkAsRead(notificationId);
+                                                  setDialogState(() {});
+                                                } catch (e) {
+                                                  print('Error handling notification: $e');
+                                                }
+                                              },
+                                              style: TextButton.styleFrom(
+                                                padding: EdgeInsets.zero,
+                                                minimumSize: const Size(50, 30),
+                                                tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                                              ),
+                                              child: Text(
+                                                'Mark as Read',
+                                                style: TextStyle(
+                                                  color: Colors.green[700],
+                                                  fontWeight: FontWeight.w500,
+                                                ),
+                                              ),
+                                            ),
+                                          ],
+                                        ),
+                                      ],
+                                    ),
+                                  ),
+                                ],
+                              ),
                             ),
                           ),
-                        ],
+                        ),
                       ),
                     );
-                  }).toList(),
+                  },
                 ),
               ),
               actions: [
@@ -286,7 +314,13 @@ class _homePageState extends State<homePage> {
                   onPressed: () {
                     Navigator.of(context).pop();
                   },
-                  child: const Text('Close'),
+                  child: const Text(
+                    'Close',
+                    style: TextStyle(
+                      color: Colors.blue,
+                      fontWeight: FontWeight.w600,
+                    ),
+                  ),
                 ),
               ],
             );
@@ -296,9 +330,21 @@ class _homePageState extends State<homePage> {
     );
   }
 
+  String _formatTimestamp(String timestamp) {
+    // Assuming timestamp is in ISO 8601 format
+    DateTime dateTime = DateTime.parse(timestamp);
+    Duration difference = DateTime.now().difference(dateTime);
 
-
-
+    if (difference.inSeconds < 60) {
+      return '${difference.inSeconds} seconds ago';
+    } else if (difference.inMinutes < 60) {
+      return '${difference.inMinutes} minutes ago';
+    } else if (difference.inHours < 24) {
+      return '${difference.inHours} hours ago';
+    } else {
+      return '${difference.inDays} days ago';
+    }
+  }
 
   // Show profile options in a dialog
   void _showProfileOptions(BuildContext context) {
@@ -317,10 +363,12 @@ class _homePageState extends State<homePage> {
                     Navigator.pop(context);
                     Navigator.push(
                       context,
-                      MaterialPageRoute(builder: (context) => const ProfilePage()),
+                      MaterialPageRoute(
+                          builder: (context) => const ProfilePage()),
                     );
                   },
                 ),
+                // Add more profile options here if needed
               ],
             ),
           ),
@@ -328,20 +376,20 @@ class _homePageState extends State<homePage> {
       },
     );
   }
+
   void _initializeWebSocket() async {
-    String? token = await storage.read(key: 'jwt_token'); // Retrieve JWT token
+    String? token = await storage.read(key: 'jwt_token');
     String? userId = await storage.read(key: 'user_id');
 
-    if (token != null) {
+    if (token != null && userId != null) {
       _channel = WebSocketChannel.connect(
-        Uri.parse('ws://$ip:3000/ws/notifications?token=$token&userId=$userId'), // Add your WebSocket server URL
+        Uri.parse(
+            'ws://$ip:3000/ws/notifications?token=$token&userId=$userId'),
       );
-
 
       _channel!.stream.listen(
             (message) {
           final notification = jsonDecode(message);
-          print('Received notification: $notification');
           setState(() {
             notifications.add({
               'id': notification['id'],
@@ -354,27 +402,30 @@ class _homePageState extends State<homePage> {
         },
         onError: (error) {
           print("WebSocket error: $error");
-          _reconnectWebSocket(); // Reconnect if there is an error
+          _reconnectWebSocket();
         },
         onDone: () {
           print("WebSocket connection closed.");
-          _reconnectWebSocket(); // Reconnect when connection is closed
+          _reconnectWebSocket();
         },
       );
     }
   }
+
   void _reconnectWebSocket() {
     Future.delayed(const Duration(seconds: 5), () {
       print("Reconnecting WebSocket...");
       _initializeWebSocket();
     });
   }
+
   @override
   void dispose() {
-    _channel?.sink.close();  // Gracefully close the WebSocket connection
+    _channel?.sink.close();
     super.dispose();
   }
 
+  // Fetch user profile
   Future<void> fetchUserProfile() async {
     String? token = await storage.read(key: 'jwt_token');
 
@@ -410,308 +461,428 @@ class _homePageState extends State<homePage> {
     }
   }
 
-
-
+  // Build Drawer
   Widget buildDrawer(BuildContext context) {
     return Drawer(
-      backgroundColor: Colors.white,
+      backgroundColor: isDarkMode ? Colors.grey[900] : Colors.white,
       child: ListView(
         padding: EdgeInsets.zero,
         children: <Widget>[
           // Header Section with Profile Info
           Container(
             height: MediaQuery.of(context).size.height * 0.30,
-            decoration: const BoxDecoration(
-              color: Color(0xFFF6D533),
+            decoration: BoxDecoration(
+              color: isDarkMode ? Colors.grey[850] : const Color(0xFFF6D533),
             ),
-            child:  Column(
+            child: Column(
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
                 // Profile Picture
                 const CircleAvatar(
                   radius: 50,
-                  backgroundImage: AssetImage('assets/profile.jpg'), // Replace with your image path
+                  backgroundImage:
+                  AssetImage('assets/profile.jpg'), // Replace with your image path
                 ),
                 const SizedBox(height: 23),
                 // User Information
                 Text(
                   username,
-                  style: const TextStyle(
-                    color: Colors.black,
-                    fontSize: 20,
-                    fontWeight: FontWeight.bold,
-
+                  style: GoogleFonts.lato(
+                    textStyle: TextStyle(
+                      color: isDarkMode ? Colors.white : Colors.black,
+                      fontSize: 20,
+                      fontWeight: FontWeight.bold,
+                    ),
                   ),
                 ),
-
-
-                // Stats Row
-
+                // Additional Information or Stats can be added here
               ],
             ),
           ),
           const SizedBox(height: 20),
-          // Drawer List Items (your existing logic)
-          ListTile(
-            leading: const Icon(Icons.location_on),
-            title: const Text('The Closest Point'),
-            onTap: () {
-              Navigator.pop(context);
-              Navigator.push(
-                context,
-                MaterialPageRoute(builder: (context) => ClosestPointPage()),
-              );
-            },
-          ),
-          const SizedBox(height: 20),
-          ListTile(
-            leading: const Icon(Icons.contact_phone),
-            title: const Text('Contact with Us'),
-            onTap: () {
-              Navigator.pop(context);
-            },
-          ),
-          const SizedBox(height: 20),
-          ListTile(
-            leading: const Icon(Icons.book_online),
-            title: const Text('Reservation'),
-            onTap: () {
-              Navigator.pop(context);
-              Navigator.push(
-                context,
-                MaterialPageRoute(builder: (context) => ReservationsPage()),
-              );
-            },
-          ),
-          const SizedBox(height: 20),
-          ListTile(
-            leading: const Icon(Icons.event_available),
-            title: const Text('Book A Taxi'),
-            onTap: () {
-              Navigator.pop(context);
-              Navigator.push(
-                context,
-                MaterialPageRoute(builder: (context) => const BookTaxiPage()),
-              );
-            },
-          ),
-          const SizedBox(height: 20),
-          ListTile(
-            leading: const Icon(Icons.logout),
-            title: const Text('Log out'),
-            onTap: () {
-              Navigator.pop(context);
-              Navigator.pushReplacement(
-                context,
-                MaterialPageRoute(builder: (context) => const LoginPage()),
-              );
-            },
+          // Drawer List Items
+          AnimationLimiter(
+            child: Column(
+              children: List.generate(7, (index) { // Increased to 7 to include Dark Mode
+                return AnimationConfiguration.staggeredList(
+                  position: index,
+                  duration: const Duration(milliseconds: 375),
+                  child: SlideAnimation(
+                    verticalOffset: 50.0,
+                    child: FadeInAnimation(
+                      child: Column(
+                        children: [
+                          // Dark Mode Toggle
+                          if (index == 6)
+                            SwitchListTile(
+                              secondary: Icon(
+                                isDarkMode ? Icons.dark_mode : Icons.light_mode,
+                                color: isDarkMode ? Colors.yellow : Colors.blue,
+                              ),
+                              title: Text(
+                                'Dark Mode',
+                                style: GoogleFonts.lato(
+                                  textStyle: TextStyle(
+                                    color: isDarkMode ? Colors.white : Colors.black,
+                                    fontSize: 16,
+                                  ),
+                                ),
+                              ),
+                              value: isDarkMode,
+                              onChanged: (bool value) {
+                                setState(() {
+                                  isDarkMode = value;
+                                });
+                              },
+                            )
+                          else
+                            ListTile(
+                              leading: _getDrawerIcon(index),
+                              title: Text(
+                                _getDrawerTitle(index),
+                                style: TextStyle(
+                                  color: isDarkMode ? Colors.white : Colors.black,
+                                ),
+                              ),
+                              onTap: () {
+                                Navigator.pop(context);
+                                _handleDrawerTap(index);
+                              },
+                            ),
+                          if (index < 6) const Divider(),
+                        ],
+                      ),
+                    ),
+                  ),
+                );
+              }),
+            ),
           ),
         ],
       ),
     );
   }
 
+  Icon _getDrawerIcon(int index) {
+    switch (index) {
+      case 0:
+        return const Icon(Icons.home, color: Colors.blue);
+      case 1:
+        return const Icon(Icons.location_on, color: Colors.blue);
+      case 2:
+        return const Icon(Icons.contact_phone, color: Colors.blue);
+      case 3:
+        return const Icon(Icons.book_online, color: Colors.blue);
+      case 4:
+        return const Icon(Icons.event_available, color: Colors.blue);
+      case 5:
+        return const Icon(Icons.logout, color: Colors.blue);
+      default:
+        return const Icon(Icons.help, color: Colors.blue);
+    }
+  }
 
-  // Build terminal card UI
-  Widget buildCard(BuildContext context, String terminalName, String imagePath, String terminalId) {
+  String _getDrawerTitle(int index) {
+    switch (index) {
+      case 0:
+        return 'Home';
+      case 1:
+        return 'Closest Point';
+      case 2:
+        return 'Contact Us';
+      case 3:
+        return 'Reservation';
+      case 4:
+        return 'Book A Taxi';
+      case 5:
+        return 'Log out';
+      case 6:
+        return 'Dark Mode';
+      default:
+        return 'Unknown';
+    }
+  }
+
+  void _handleDrawerTap(int index) {
+    switch (index) {
+      case 0:
+        setState(() {
+          _currentIndex = 0;
+        });
+        break;
+      case 1:
+        setState(() {
+          _currentIndex = 1;
+        });
+        break;
+      case 2:
+      // Implement contact functionality
+        _showContactUsDialog();
+        break;
+      case 3:
+        setState(() {
+          _currentIndex = 3;
+        });
+        break;
+      case 4:
+        setState(() {
+          _currentIndex = 2;
+        });
+        break;
+      case 5:
+        Navigator.pushReplacement(
+          context,
+          MaterialPageRoute(builder: (context) => const LoginPage()),
+        );
+        break;
+      case 6:
+      // Handled by the SwitchListTile
+        break;
+      default:
+        setState(() {
+          _currentIndex = 0;
+        });
+    }
+  }
+
+  void _showContactUsDialog() {
+    showDialog(
+      context: context,
+      builder: (BuildContext context) {
+        return AlertDialog(
+          title: const Text('Contact Us'),
+          content: const Text(
+              'For any inquiries, please email us at support@example.com or call us at (123) 456-7890.'),
+          actions: [
+            TextButton(
+              onPressed: () {
+                Navigator.of(context).pop();
+              },
+              child: const Text('Close'),
+            ),
+          ],
+        );
+      },
+    );
+  }
+
+  // Build Terminal Card with improved design and accurate rating
+  Widget buildCard(
+      BuildContext context,
+      String terminalName,
+      String imagePath, // This should be the asset path, e.g., 'assets/terminal.jpg'
+      String terminalId,
+      double averageRating,
+      String totalVehicles) {
     return GestureDetector(
       onTap: () {
         Navigator.push(
           context,
           MaterialPageRoute(
-            builder: (context) => TerminalDetailsPage(terminalId: terminalId, terminalName: terminalName),
+            builder: (context) => TerminalDetailsPage(
+              terminalId: terminalId,
+              terminalName: terminalName,
+            ),
           ),
         );
       },
-      child: Padding(
-        padding: const EdgeInsets.only(top: 20, right: 5, left: 5),
-        child: Card(
-          margin: const EdgeInsets.symmetric(horizontal: 20),
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(15.0),
-            side: const BorderSide(
-              color: Colors.grey,
-              width: 1,
-            ),
-          ),
-          clipBehavior: Clip.antiAlias,
-          elevation: 5,
-          child: Stack(
-            alignment: Alignment.center,
-            children: [
-              Image.asset(
-                imagePath,
-                height: 200,
-                width: double.infinity,
-                fit: BoxFit.cover,
-                cacheWidth: 600,
-                cacheHeight: 400,
-              ),
-              Positioned(
-                bottom: 0,
-                left: 0,
-                right: 0,
-                child: ClipRRect(
-                  borderRadius: const BorderRadius.vertical(bottom: Radius.circular(15)),
-                  child: BackdropFilter(
-                    filter: ImageFilter.blur(sigmaX: 5.0, sigmaY: 5.0),  // Slightly reduced blur intensity
-                    child: Container(
-                      height: 70,  // Adjusted height for better balance
-                      alignment: Alignment.center,
-                      color: Colors.black.withOpacity(0.4),  // Slightly lighter opacity
-                      child: Row(
-                        mainAxisAlignment: MainAxisAlignment.spaceBetween,  // Spread the items across the row
-                        children: [
-                          // Terminal name on the left
-                          Padding(
-                            padding: const EdgeInsets.only(left: 15),  // Added padding to the left for better spacing
-                            child: Text(
-                              terminalName,
-                              style: const TextStyle(
-                                fontSize: 20,  // Slightly smaller and thinner font size
-                                fontWeight: FontWeight.w300,  // Lighter font weight for a refined look
-                                color: Colors.white,
-                                fontFamily: 'Roboto',  // Font set to 'Roboto', but can be replaced with any lightweight font
+      child: AnimationConfiguration.staggeredList(
+        position: terminals.indexWhere((t) => t['terminal_id'] == terminalId),
+        duration: const Duration(milliseconds: 375),
+        child: SlideAnimation(
+          verticalOffset: 50.0,
+          child: FadeInAnimation(
+            child: Padding(
+              padding: const EdgeInsets.symmetric(vertical: 10, horizontal: 15),
+              child: Card(
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(20.0),
+                  side: const BorderSide(
+                    color: Colors.grey,
+                    width: 1,
+                  ),
+                ),
+                elevation: 8,
+                clipBehavior: Clip.antiAlias,
+                color: isDarkMode ? Colors.grey[800] : Colors.white,
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    // Terminal Image
+                    Stack(
+                      children: [
+                        // Use Image.asset for local images
+                        Image.asset(
+                          imagePath,
+                          height: 200,
+                          width: double.infinity,
+                          fit: BoxFit.cover,
+                        ),
+                        // Overlay for Terminal Name and Review Button
+                        Positioned(
+                          bottom: 0,
+                          left: 0,
+                          right: 0,
+                          child: Container(
+                            decoration: const BoxDecoration(
+                              gradient: LinearGradient(
+                                colors: [Colors.transparent, Colors.black54],
+                                begin: Alignment.topCenter,
+                                end: Alignment.bottomCenter,
                               ),
+                            ),
+                            padding: const EdgeInsets.all(10),
+                            child: Row(
+                              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                              children: [
+                                // Terminal Name
+                                Expanded(
+                                  child: Text(
+                                    terminalName,
+                                    style: GoogleFonts.lato(
+                                      textStyle: const TextStyle(
+                                        color: Colors.white,
+                                        fontSize: 20,
+                                        fontWeight: FontWeight.bold,
+                                      ),
+                                    ),
+                                    overflow: TextOverflow.ellipsis,
+                                  ),
+                                ),
+                                const SizedBox(width: 10),
+                                // Review Button
+                                ElevatedButton(
+                                  onPressed: () {
+                                    Navigator.push(
+                                      context,
+                                      MaterialPageRoute(
+                                        builder: (context) => ReviewPage(
+                                          terminalId: terminalId,
+                                        ),
+                                      ),
+                                    );
+                                  },
+                                  style: ElevatedButton.styleFrom(
+                                    foregroundColor: Colors.white,
+                                    backgroundColor: Colors.transparent,
+                                    side: const BorderSide(color: Colors.white, width: 1),
+                                    shape: RoundedRectangleBorder(
+                                      borderRadius: BorderRadius.circular(20),
+                                    ),
+                                    padding: const EdgeInsets.symmetric(
+                                        horizontal: 15, vertical: 8),
+                                    elevation: 0,
+                                  ),
+                                  child: const Text(
+                                    "View Reviews",
+                                    style: TextStyle(
+                                      fontSize: 14,
+                                    ),
+                                  ),
+                                ),
+                              ],
                             ),
                           ),
-                          // Review button on the right with slight offset
-                          Padding(
-                            padding: const EdgeInsets.only(right: 20),  // Added some space from the right edge
-                            child: ElevatedButton(
-                              onPressed: () {
-                                Navigator.push(
-                                  context,
-                                  MaterialPageRoute(
-                                    builder: (context) => ReviewPage(terminalId: terminalId),
+                        ),
+                      ],
+                    ),
+                    // Terminal Details
+                    Padding(
+                      padding: const EdgeInsets.all(15.0),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          // Total Vehicles
+                          Row(
+                            children: [
+                              const Icon(Icons.directions_car, color: Colors.blue),
+                              const SizedBox(width: 5),
+                              Text(
+                                '$totalVehicles Vehicles',
+                                style: GoogleFonts.lato(
+                                  textStyle: TextStyle(
+                                    fontSize: 16,
+                                    color: isDarkMode ? Colors.white : Colors.black,
                                   ),
-                                );
-                              },
-                              style: ElevatedButton.styleFrom(
-                                backgroundColor: Colors.transparent,  // Transparent background
-                                side: const BorderSide(color: Colors.white, width: 2),  // White border
-                                shape: RoundedRectangleBorder(
-                                  borderRadius: BorderRadius.circular(20),  // Rounded corners for the button
-                                ),
-                                padding: const EdgeInsets.symmetric(horizontal: 25, vertical: 10),  // Button padding
-                              ),
-                              child: const Text(
-                                "View Reviews",
-                                style: TextStyle(
-                                  fontSize: 16,
-                                  color: Colors.white,  // White text color
-                                  fontFamily: 'Roboto',  // Consistent font
                                 ),
                               ),
-                            ),
+                            ],
+                          ),
+                          const SizedBox(height: 10),
+                          // Rating
+                          Row(
+                            children: [
+                              RatingBarIndicator(
+                                rating: averageRating,
+                                itemBuilder: (context, index) => const Icon(
+                                  Icons.star,
+                                  color: Colors.amber,
+                                ),
+                                itemCount: 5,
+                                itemSize: 24.0,
+                                unratedColor: Colors.amber.withAlpha(50),
+                                direction: Axis.horizontal,
+                              ),
+                              const SizedBox(width: 10),
+                              Text(
+                                averageRating > 0
+                                    ? averageRating.toStringAsFixed(1)
+                                    : 'No ratings yet',
+                                style: GoogleFonts.lato(
+                                  textStyle: TextStyle(
+                                    fontSize: 16,
+                                    color: isDarkMode ? Colors.white : Colors.black,
+                                  ),
+                                ),
+                              ),
+                            ],
                           ),
                         ],
                       ),
                     ),
-                  ),
+                  ],
                 ),
               ),
-            ],
+            ),
           ),
         ),
       ),
     );
   }
 
-  @override
-  Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: _currentIndex != 2 ? PreferredSize(
-        preferredSize: const Size.fromHeight(50.0),
-        child: AppBar(
-          title: Text(
-            _getAppBarTitle(),
-            style: const TextStyle(fontWeight: FontWeight.w500),
-          ),
-          backgroundColor: const Color(0xFFFED300),
-          centerTitle: true,
-          actions: [
-            Stack(
-              children: [
-                IconButton(
-                  icon: Image.asset(
-                    'assets/notification.png',
-                    width: 30,
-                    height: 30,
-                  ),
-                  onPressed: () {
-                    _showNotifications(context);
-                  },
-                ),
-                Positioned(
-                  right: 8,
-                  top: 8,
-                  child: Container(
-                    padding: const EdgeInsets.all(2),
-                    decoration: BoxDecoration(
-                      color: Colors.red,
-                      borderRadius: BorderRadius.circular(10),
-                    ),
-                    constraints: const BoxConstraints(
-                      minWidth: 16,
-                      minHeight: 16,
-                    ),
-                    child: Text(
-                      '$notificationCount',
-                      style: const TextStyle(
-                        color: Colors.white,
-                        fontSize: 12,
-                      ),
-                      textAlign: TextAlign.center,
-                    ),
-                  ),
-                ),
-              ],
-            ),
-            IconButton(
-              icon: const Icon(
-                Icons.person,
-                size: 30,
-                color: Colors.black,
-              ),
-              onPressed: () {
-                _showProfileOptions(context);
-              },
-            ),
-          ],
-        ),
-      ) : null, // Return null when Book Taxi tab is selected
-      drawer: buildDrawer(context),
-      body: _currentIndex == 0
-          ? _buildHomeContent()
-          : _pages[_currentIndex],
-      bottomNavigationBar: _buildCustomBottomNavigationBar(),
-    );
-
-  }
+  // Build Home Content with improved card
   Widget _buildHomeContent() {
     return isLoading
-        ? const Center(
-      child: CircularProgressIndicator(),
+        ? Center(
+      child: CircularProgressIndicator(
+        color: isDarkMode ? Colors.white : Colors.blue,
+      ),
     )
-        : ListView.builder(
-      itemCount: terminals.length,
-      itemBuilder: (context, index) {
-
-        return buildCard(
-          context,
-          terminals[index]['terminal_name']!,
-          'assets/terminal.jpg',
-          terminals[index]['terminal_id']!,
-        );
-      },
+        : RefreshIndicator(
+      onRefresh: fetchTerminals,
+      child: AnimationLimiter(
+        child: ListView.builder(
+          itemCount: terminals.length,
+          itemBuilder: (context, index) {
+            return buildCard(
+              context,
+              terminals[index]['terminal_name'],
+              terminals[index]['image_path'], // Ensure image_path is a valid asset path
+              terminals[index]['terminal_id'],
+              terminals[index]['average_rating'],
+              terminals[index]['total_vehicles'],
+            );
+          },
+        ),
+      ),
     );
   }
+
+  // Build Custom Bottom Navigation Bar
   Widget _buildCustomBottomNavigationBar() {
     return Container(
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: isDarkMode ? Colors.grey[850] : Colors.white,
         borderRadius: const BorderRadius.only(
           topLeft: Radius.circular(30),
           topRight: Radius.circular(30),
@@ -734,10 +905,12 @@ class _homePageState extends State<homePage> {
         },
         backgroundColor: Colors.transparent,
         elevation: 0,
-        selectedItemColor: Colors.black,
+        selectedItemColor: isDarkMode ? Colors.white : Colors.black,
         unselectedItemColor: Colors.grey,
         showSelectedLabels: true,
         showUnselectedLabels: true,
+        selectedLabelStyle: GoogleFonts.lato(fontSize: 12),
+        unselectedLabelStyle: GoogleFonts.lato(fontSize: 12),
         items: [
           _buildNavItem(Icons.home, 'Home', 0),
           _buildNavItem(Icons.location_on, 'Closest Point', 1),
@@ -747,38 +920,170 @@ class _homePageState extends State<homePage> {
       ),
     );
   }
-  BottomNavigationBarItem _buildNavItem(IconData icon, String label, int index) {
+
+  // Build individual Bottom Navigation Bar Item
+  BottomNavigationBarItem _buildNavItem(
+      IconData icon, String label, int index) {
     return BottomNavigationBarItem(
       icon: Stack(
         alignment: Alignment.center,
         children: [
           if (_currentIndex == index)
             Container(
-              height: 45,
-              width: 45,
-              decoration: const BoxDecoration(
-                color: Color(0xFFF6D533), // Yellow highlight color
+              height: 50,
+              width: 50,
+              decoration: BoxDecoration(
+                color: isDarkMode ? Colors.blueGrey : const Color(0xFFF6D533), // Adjust color based on theme
                 shape: BoxShape.circle,
               ),
             ),
-          Icon(icon, size: 28),
+          Icon(
+            icon,
+            size: 28,
+            color: _currentIndex == index
+                ? (isDarkMode ? Colors.white : Colors.black)
+                : Colors.grey,
+          ),
         ],
       ),
       label: label,
     );
   }
+
+  // Get AppBar Title based on current index
   String _getAppBarTitle() {
     switch (_currentIndex) {
       case 0:
-        return "Terminals"; // Title for Home tab
+        return "Terminals";
       case 1:
-        return "Closest Point"; // Title for Closest Point tab
+        return "Closest Point";
       case 2:
-        return "Book Taxi"; // Title for Book Taxi tab
+        return "Book Taxi";
       case 3:
-        return "Reservations"; // Title for Reservations tab
+        return "Reservations";
       default:
-        return "Terminals"; // Default title
+        return "Terminals";
     }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    // Define light and dark themes
+    ThemeData lightTheme = ThemeData(
+      brightness: Brightness.light,
+      primaryColor: const Color(0xFFFED300),
+      scaffoldBackgroundColor: Colors.white,
+      appBarTheme: const AppBarTheme(
+        color: Color(0xFFFED300),
+        elevation: 4,
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.vertical(
+            bottom: Radius.circular(20),
+          ),
+        ),
+        centerTitle: true,
+      ),
+    );
+
+    ThemeData darkTheme = ThemeData(
+      brightness: Brightness.dark,
+      primaryColor: Colors.grey[900],
+      scaffoldBackgroundColor: Colors.grey[850],
+      appBarTheme: AppBarTheme(
+        color: Colors.grey[900],
+        elevation: 4,
+        shape: const RoundedRectangleBorder(
+          borderRadius: BorderRadius.vertical(
+            bottom: Radius.circular(20),
+          ),
+        ),
+        centerTitle: true,
+      ),
+    );
+
+    return Theme(
+      data: isDarkMode ? darkTheme : lightTheme,
+      child: Scaffold(
+        appBar: _currentIndex != 2
+            ? PreferredSize(
+          preferredSize: const Size.fromHeight(60.0),
+          child: AppBar(
+            title: Text(
+              _getAppBarTitle(),
+              style: GoogleFonts.lato(
+                textStyle: const TextStyle(
+                  fontWeight: FontWeight.bold,
+                  fontSize: 22,
+                ),
+              ),
+            ),
+            backgroundColor: isDarkMode
+                ? darkTheme.appBarTheme.backgroundColor
+                : lightTheme.appBarTheme.backgroundColor,
+            actions: [
+              Padding(
+                padding: const EdgeInsets.only(right: 10),
+                child: Stack(
+                  children: [
+                    IconButton(
+                      icon: Image.asset(
+                        'assets/notification.png',
+                        width: 30,
+                        height: 30,
+                        color: isDarkMode ? Colors.white : Colors.black,
+                      ),
+                      onPressed: () {
+                        _showNotifications(context);
+                      },
+                    ),
+                    if (notificationCount > 0)
+                      Positioned(
+                        right: 6,
+                        top: 6,
+                        child: Container(
+                          padding: const EdgeInsets.all(2),
+                          decoration: BoxDecoration(
+                            color: Colors.red,
+                            borderRadius: BorderRadius.circular(10),
+                          ),
+                          constraints: const BoxConstraints(
+                            minWidth: 18,
+                            minHeight: 18,
+                          ),
+                          child: Center(
+                            child: Text(
+                              '$notificationCount',
+                              style: const TextStyle(
+                                color: Colors.white,
+                                fontSize: 10,
+                                fontWeight: FontWeight.bold,
+                              ),
+                              textAlign: TextAlign.center,
+                            ),
+                          ),
+                        ),
+                      ),
+                  ],
+                ),
+              ),
+              IconButton(
+                icon: Icon(
+                  Icons.person,
+                  size: 30,
+                  color: isDarkMode ? Colors.white : Colors.black,
+                ),
+                onPressed: () {
+                  _showProfileOptions(context);
+                },
+              ),
+            ],
+          ),
+        )
+            : null, // Hide AppBar on Book Taxi tab
+        drawer: buildDrawer(context),
+        body: _currentIndex == 0 ? _buildHomeContent() : _pages[_currentIndex],
+        bottomNavigationBar: _buildCustomBottomNavigationBar(),
+      ),
+    );
   }
 }

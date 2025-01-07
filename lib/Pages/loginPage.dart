@@ -14,7 +14,7 @@ import 'package:flutter/foundation.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 
 
-const String ip = "192.168.1.8";
+const String ip = "192.168.1.12";
 
 
 // Create a secure storage instance
@@ -99,7 +99,7 @@ class _LoginPageState extends State<LoginPage> {
 
     switch (role) {
       case 'user':
-        targetPage = const homePage();
+        targetPage = const HomePage();
         break;
       case 'driver':
         targetPage = const DriverPage();

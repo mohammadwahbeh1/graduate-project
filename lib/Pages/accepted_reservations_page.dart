@@ -13,7 +13,7 @@ import 'package:web_socket_channel/web_socket_channel.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:intl/intl.dart'; // For date formatting
 
-const String ip = "192.168.1.7";
+const String ip = "192.168.1.12";
 final storage = FlutterSecureStorage();
 
 class AcceptedReservationsPage extends StatefulWidget {

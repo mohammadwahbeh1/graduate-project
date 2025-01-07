@@ -21,7 +21,7 @@ class _TerminalPageState extends State<TerminalPage> {
 
   Future<void> _fetchIpAddress() async {
     final info = NetworkInfo();
-    String? wifiIP = await info.getWifiIP(); // الحصول على عنوان الـ IP الخاص بالواي فاي
+    String? wifiIP ="192.168.1.12";
     setState(() {
       ip = wifiIP ?? 'غير متصل بالشبكة';
     });
@@ -37,7 +37,7 @@ class _TerminalPageState extends State<TerminalPage> {
     fetchTerminals();
     fetchAdmins();
     searchController.addListener(_filterTerminals);
-    _fetchIpAddress(); // استدعاء الدالة للحصول على الـ IP عند بدء الصفحة
+    _fetchIpAddress();
   }
 
   @override

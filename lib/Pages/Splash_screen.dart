@@ -56,7 +56,7 @@ class _SplashScreenState extends State<SplashScreen> {
 
     switch (role) {
       case 'user':
-        targetPage = homePage();
+        targetPage = HomePage();
         break;
       case 'driver':
         targetPage = DriverPage();
