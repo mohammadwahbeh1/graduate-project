@@ -73,6 +73,7 @@ class _LoginPageState extends State<LoginPage> {
           await storage.write(key: 'user_id', value: userId.toString());
           await storage.write(
               key: 'token_expiration', value: expirationTime.toIso8601String());
+          await storage.write(key: 'user_email', value: email);
 
           Map<String, dynamic> decodedToken = Jwt.parseJwt(token);
           String role = decodedToken['role']?.trim() ?? '';

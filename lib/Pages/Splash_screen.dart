@@ -1,4 +1,3 @@
-//SplashScreen
 import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
@@ -8,6 +7,7 @@ import 'package:untitled/Pages/homePage.dart';
 import 'package:untitled/Pages/driverPage.dart';
 import 'package:untitled/Pages/lineManagerPage.dart';
 import 'package:untitled/Pages/adminPage.dart';
+import 'package:untitled/Pages/serviceDashboardPage.dart'; // For support dashboard
 
 final storage = FlutterSecureStorage();
 
@@ -22,31 +22,44 @@ class _SplashScreenState extends State<SplashScreen> {
   @override
   void initState() {
     super.initState();
-    _checkLoginStatus(); // التحقق من حالة تسجيل الدخول عند بدء الشاشة
+    _checkLoginStatus();
   }
 
   Future<void> _checkLoginStatus() async {
-    await Future.delayed(const Duration(seconds: 3));
+    await Future.delayed(const Duration(seconds: 3)); // Simulate splash delay
 
     try {
       final token = await storage.read(key: 'jwt_token');
       final expirationString = await storage.read(key: 'token_expiration');
+
+      print('Token: $token');
+      print('Expiration: $expirationString');
 
       if (token != null && expirationString != null) {
         DateTime expirationTime = DateTime.parse(expirationString);
 
         if (DateTime.now().isBefore(expirationTime)) {
           Map<String, dynamic> decodedToken = Jwt.parseJwt(token);
-
           String role = decodedToken['role']?.trim() ?? '';
-          _navigateBasedOnRole(role);
+          final email = await storage.read(key: 'user_email');
+
+
+          // Check if the user is support
+          if (email == "support@gmail.com") {
+            _navigateTo(const ServiceDashboardPage());
+          } else {
+            _navigateBasedOnRole(role);
+          }
         } else {
+          print('Token expired');
           _navigateToLogin();
         }
       } else {
+        print('Token is null or missing');
         _navigateToLogin();
       }
     } catch (e) {
+      print('Error checking login status: $e');
       _navigateToLogin();
     }
   }
@@ -56,34 +69,33 @@ class _SplashScreenState extends State<SplashScreen> {
 
     switch (role) {
       case 'user':
-        targetPage = homePage();
+        targetPage = const homePage();
         break;
       case 'driver':
-        targetPage = DriverPage();
+        targetPage = const DriverPage();
         break;
       case 'line_manager':
-        targetPage = LineManagerPage();
+        targetPage = const LineManagerPage();
         break;
       case 'admin':
-        targetPage = ManagerPage();
+        targetPage = const ManagerPage();
         break;
       default:
         targetPage = const LoginPage();
         break;
     }
 
-    Navigator.pushAndRemoveUntil(
-      context,
-      MaterialPageRoute(builder: (context) => targetPage),
-          (route) => false,
-    );
+    _navigateTo(targetPage);
   }
 
-
   void _navigateToLogin() {
+    _navigateTo(const LoginPage());
+  }
+
+  void _navigateTo(Widget page) {
     Navigator.pushAndRemoveUntil(
       context,
-      MaterialPageRoute(builder: (context) => const LoginPage()),
+      MaterialPageRoute(builder: (context) => page),
           (route) => false,
     );
   }
