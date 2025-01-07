@@ -31,7 +31,7 @@ class _ServiceChatPageState extends State<ServiceChatPage> {
     final token = await storage.read(key: 'jwt_token');
 
     final response = await http.get(
-      Uri.parse('http://192.168.1.8:3000/api/v1/messages/conversation/${widget.receiverId}'),
+      Uri.parse('http://192.168.1.12:3000/api/v1/messages/conversation/${widget.receiverId}'),
       headers: {
         'Authorization': 'Bearer $token',
         'Content-Type': 'application/json',
@@ -70,7 +70,7 @@ class _ServiceChatPageState extends State<ServiceChatPage> {
     final userId = await storage.read(key: 'user_id');
 
     _channel = WebSocketChannel.connect(
-      Uri.parse('ws://192.168.1.8:3000/ws/notifications?userId=$userId'),
+      Uri.parse('ws://192.168.1.12:3000/ws/notifications?userId=$userId'),
     );
 
     _channel.stream.listen((message) {

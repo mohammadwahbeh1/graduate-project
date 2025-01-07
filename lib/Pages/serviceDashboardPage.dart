@@ -42,7 +42,7 @@ class _ServiceDashboardPageState extends State<ServiceDashboardPage> {
     print('Support ID: $supporterId');
 
     _channel = WebSocketChannel.connect(
-      Uri.parse('ws://192.168.1.8:3000/ws/notifications?userId=$supporterId'),
+      Uri.parse('ws://192.168.1.12:3000/ws/notifications?userId=$supporterId'),
     );
 
     _channel.stream.listen(
@@ -63,7 +63,7 @@ class _ServiceDashboardPageState extends State<ServiceDashboardPage> {
     print("Fetching messages...");
     String? token = await storage.read(key: 'jwt_token');
     final response = await http.get(
-      Uri.parse('http://192.168.1.8:3000/api/v1/messages'),
+      Uri.parse('http://192.168.1.12:3000/api/v1/messages'),
       headers: {
         'Authorization': 'Bearer $token',
         'Content-Type': 'application/json',

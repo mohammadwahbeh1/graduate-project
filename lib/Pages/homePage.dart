@@ -5,6 +5,7 @@ import 'package:http/http.dart' as http;
 import 'dart:convert';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:untitled/Pages/reviewPage.dart';
+import 'package:untitled/Pages/serviceChatPage.dart';
 import './loginPage.dart';
 import './terminalDetailsPage.dart';
 import 'package:untitled/Pages/reservationPage.dart';
@@ -19,15 +20,15 @@ import 'package:flutter_staggered_animations/flutter_staggered_animations.dart';
 
 const String ip = "192.168.1.12";
 
-class HomePage extends StatefulWidget {
-  const HomePage({super.key});
+class homePage extends StatefulWidget {
+  const homePage({super.key});
 
   @override
-  _HomePageState createState() => _HomePageState();
+  _homePageState createState() => _homePageState();
 }
 
 class _homePageState extends State<homePage> {
-  List<Map<String, String>> terminals = [];
+  List<Map<String, dynamic>> terminals = [];
   bool _isHovered = false;
   bool isLoading = true;
   final storage = const FlutterSecureStorage();
@@ -94,13 +95,13 @@ class _homePageState extends State<homePage> {
                 'terminal_id': terminal['terminal_id'].toString(),
                 'terminal_name': terminal['terminal_name'].toString(),
                 'average_rating': terminal['average_rating'] != null
-                    ? double.parse(terminal['average_rating'].toString())
-                    : 0.0,
+                    ? terminal['average_rating'].toString()
+                    : '0.0',
                 'total_vehicles': terminal['total_vehicles'].toString(),
-                'latitude': terminal['latitude'],
-                'longitude': terminal['longitude'],
+                'latitude': terminal['latitude'].toString(),
+                'longitude': terminal['longitude'].toString(),
                 'user_id': terminal['user_id'].toString(),
-                'image_path': terminal['image_path'] ?? 'assets/terminal.jpg', // Ensure image_path exists
+                'image_path': terminal['image_path'] ?? 'assets/terminal.jpg',
               };
             }).toList();
             isLoading = false;
@@ -524,7 +525,7 @@ class _homePageState extends State<homePage> {
           // Drawer List Items
           AnimationLimiter(
             child: Column(
-              children: List.generate(7, (index) { // Increased to 7 to include Dark Mode
+              children: List.generate(8, (index) { // Increased to 7 to include Dark Mode
                 return AnimationConfiguration.staggeredList(
                   position: index,
                   duration: const Duration(milliseconds: 375),
@@ -570,7 +571,7 @@ class _homePageState extends State<homePage> {
                                 _handleDrawerTap(index);
                               },
                             ),
-                          if (index < 6) const Divider(),
+                          if (index < 8) const Divider(),
                         ],
                       ),
                     ),
@@ -598,6 +599,8 @@ class _homePageState extends State<homePage> {
         return const Icon(Icons.event_available, color: Colors.blue);
       case 5:
         return const Icon(Icons.logout, color: Colors.blue);
+      case 7:
+        return const Icon(Icons.support_agent, color: Colors.blue);
       default:
         return const Icon(Icons.help, color: Colors.blue);
     }
@@ -619,6 +622,8 @@ class _homePageState extends State<homePage> {
         return 'Log out';
       case 6:
         return 'Dark Mode';
+      case 7:
+        return 'Customer Service';
       default:
         return 'Unknown';
     }
@@ -637,8 +642,8 @@ class _homePageState extends State<homePage> {
         });
         break;
       case 2:
-      // Implement contact functionality
-        _showContactUsDialog();
+
+
         break;
       case 3:
         setState(() {
@@ -659,6 +664,14 @@ class _homePageState extends State<homePage> {
       case 6:
       // Handled by the SwitchListTile
         break;
+      case 7:
+        Navigator.push(
+          context,
+          MaterialPageRoute(
+            builder: (context) => const ServiceChatPage(receiverId: '13'),
+          ),
+        );
+        break;
       default:
         setState(() {
           _currentIndex = 0;
@@ -666,26 +679,7 @@ class _homePageState extends State<homePage> {
     }
   }
 
-  void _showContactUsDialog() {
-    showDialog(
-      context: context,
-      builder: (BuildContext context) {
-        return AlertDialog(
-          title: const Text('Contact Us'),
-          content: const Text(
-              'For any inquiries, please email us at support@example.com or call us at (123) 456-7890.'),
-          actions: [
-            TextButton(
-              onPressed: () {
-                Navigator.of(context).pop();
-              },
-              child: const Text('Close'),
-            ),
-          ],
-        );
-      },
-    );
-  }
+
 
   // Build Terminal Card with improved design and accurate rating
   Widget buildCard(
@@ -890,7 +884,7 @@ class _homePageState extends State<homePage> {
               terminals[index]['terminal_name'],
               terminals[index]['image_path'], // Ensure image_path is a valid asset path
               terminals[index]['terminal_id'],
-              terminals[index]['average_rating'],
+              double.tryParse(terminals[index]['average_rating']) ?? 0.0, // Convert to double
               terminals[index]['total_vehicles'],
             );
           },
