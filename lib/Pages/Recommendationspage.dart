@@ -1,4 +1,3 @@
-import 'dart:io';
 
 import 'package:flutter/material.dart';
 import 'package:geolocator/geolocator.dart';
@@ -11,7 +10,7 @@ import 'dart:math' as math;
 import 'mapServiceDirectionTime.dart';
 
 const String ip = "192.168.1.12";
-final storage = FlutterSecureStorage();
+const storage = FlutterSecureStorage();
 
 class Recommendationspage extends StatefulWidget {
   const Recommendationspage({super.key});
@@ -361,8 +360,8 @@ class _RecommendationspageState extends State<Recommendationspage> {
         final responseData = jsonDecode(response.body);
         if (responseData['data'] != null) {
           final driverInfo = responseData['data'];
-          String driverName = driverInfo['driver_id'].toString() ?? 'Unknown';
-          String driverPhone = driverInfo['phone_number'].toString() ?? 'N/A';
+          String driverName = driverInfo['driver_id'].toString() ;
+          String driverPhone = driverInfo['phone_number'].toString() ;
 
           _createNotification(
             userId,
@@ -416,9 +415,7 @@ class _RecommendationspageState extends State<Recommendationspage> {
     required bool isPending,
     required VoidCallback onAction,
   }) {
-    String username =
-    reservation['User'] != null ? reservation['User']['username'] ?? 'Unknown' : 'Unknown';
-    String phoneNumber = reservation['phone_number'] ?? 'N/A';
+
 
     return Card(
       color: Colors.white,

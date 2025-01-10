@@ -3,9 +3,10 @@ import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
-import 'package:network_info_plus/network_info_plus.dart';
 
 class TerminalPage extends StatefulWidget {
+  const TerminalPage({super.key});
+
   @override
   _TerminalPageState createState() => _TerminalPageState();
 }
@@ -15,17 +16,10 @@ class _TerminalPageState extends State<TerminalPage> {
   List<dynamic> terminals = [];
   List<dynamic> filteredTerminals = [];
   List<dynamic> admins = [];
-  String ip = "192.168.1.4";
+  String ip = "192.168.1.12";
   bool isLoading = false;
   final TextEditingController searchController = TextEditingController();
 
-  Future<void> _fetchIpAddress() async {
-    final info = NetworkInfo();
-    String? wifiIP ="192.168.1.12";
-    setState(() {
-      ip = wifiIP ?? 'غير متصل بالشبكة';
-    });
-  }
 
   // Primary and Secondary Colors for consistency
   final Color primaryColor = const Color(0xFF00B4DB);
@@ -37,7 +31,6 @@ class _TerminalPageState extends State<TerminalPage> {
     fetchTerminals();
     fetchAdmins();
     searchController.addListener(_filterTerminals);
-    _fetchIpAddress();
   }
 
   @override
@@ -310,11 +303,11 @@ class _TerminalPageState extends State<TerminalPage> {
               deleteTerminal(id);
               Navigator.of(context).pop();
             },
-            child: const Text('Delete'),
             style: ElevatedButton.styleFrom(
               backgroundColor: Colors.red,
               foregroundColor: Colors.white, // Ensure text is white
             ),
+            child: const Text('Delete'),
           ),
         ],
       ),
@@ -442,7 +435,6 @@ class _TerminalPageState extends State<TerminalPage> {
                 _showErrorSnackbar('Please fill in all required fields.');
               }
             },
-            child: const Text('Add', style: TextStyle(color: Colors.white)),
             style: ElevatedButton.styleFrom(
               backgroundColor: secondaryColor,
               padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
@@ -450,6 +442,7 @@ class _TerminalPageState extends State<TerminalPage> {
                 borderRadius: BorderRadius.circular(30),
               ),
             ),
+            child: const Text('Add', style: TextStyle(color: Colors.white)),
           ),
         ],
       ),
@@ -580,7 +573,6 @@ class _TerminalPageState extends State<TerminalPage> {
                 _showErrorSnackbar('Please fill in all required fields.');
               }
             },
-            child: const Text('Update', style: TextStyle(color: Colors.white)),
             style: ElevatedButton.styleFrom(
               backgroundColor: secondaryColor,
               padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
@@ -588,6 +580,7 @@ class _TerminalPageState extends State<TerminalPage> {
                 borderRadius: BorderRadius.circular(30),
               ),
             ),
+            child: const Text('Update', style: TextStyle(color: Colors.white)),
           ),
         ],
       ),
@@ -622,7 +615,7 @@ class _TerminalPageState extends State<TerminalPage> {
       shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.circular(20),
       ),
-      shadowColor: Colors.grey.withOpacity(0.2),
+      shadowColor: Colors.grey.withAlpha(2),
       child: Container(
         decoration: BoxDecoration(
           gradient: LinearGradient(
@@ -783,9 +776,9 @@ class _TerminalPageState extends State<TerminalPage> {
           bool isWeb = constraints.maxWidth > 800; // Determines if screen size is for web
 
           return isLoading
-              ? Center(
+              ? const Center(
             child: CircularProgressIndicator(
-              valueColor: const AlwaysStoppedAnimation<Color>(Color(0xFF00B4DB)),
+              valueColor: AlwaysStoppedAnimation<Color>(Color(0xFF00B4DB)),
             ),
           )
               : Padding(
@@ -909,10 +902,10 @@ class __MapSelectionDialogState extends State<_MapSelectionDialog> {
         ),
         ElevatedButton(
           onPressed: _onConfirm,
-          child: const Text('Confirm', style: TextStyle(color: Colors.white)),
           style: ElevatedButton.styleFrom(
             backgroundColor: Colors.green,
           ),
+          child: const Text('Confirm', style: TextStyle(color: Colors.white)),
         ),
       ],
     );

@@ -17,6 +17,8 @@ class SearchResult {
 }
 
 class ClosestPointPage extends StatefulWidget {
+  const ClosestPointPage({super.key});
+
   @override
   _ClosestPointPageState createState() => _ClosestPointPageState();
 }
@@ -26,10 +28,10 @@ class _ClosestPointPageState extends State<ClosestPointPage> {
   LatLng? _currentLocation;
   LatLng? _lineLocation;
   LatLng? _finalDestination;
-  Set<Marker> _markers = {};
-  Set<Polyline> _polylines = {};
+  final Set<Marker> _markers = {};
+  final Set<Polyline> _polylines = {};
   final TextEditingController _destinationController = TextEditingController();
-  final storage = FlutterSecureStorage();
+  final storage = const FlutterSecureStorage();
   String? _estimatedTime;
   List<SearchResult> _searchResults = [];
   bool _isSearching = false;
@@ -330,9 +332,9 @@ class _ClosestPointPageState extends State<ClosestPointPage> {
       setState(() {
         _currentLocation = LatLng(position.latitude, position.longitude);
         _markers.add(Marker(
-          markerId: MarkerId('current_location'),
+          markerId: const MarkerId('current_location'),
           position: _currentLocation!,
-          infoWindow: InfoWindow(title: 'Your Location'),
+          infoWindow: const InfoWindow(title: 'Your Location'),
         ));
       });
 
@@ -342,7 +344,7 @@ class _ClosestPointPageState extends State<ClosestPointPage> {
     } catch (e) {
       print("Error: $e");
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text("Error fetching location. Please check permissions.")),
+        const SnackBar(content: Text("Error fetching location. Please check permissions.")),
       );
     }
   }
@@ -362,7 +364,7 @@ class _ClosestPointPageState extends State<ClosestPointPage> {
         setState(() {
           _lineLocation = LatLng(data['latitude'], data['longitude']);
           _markers.add(Marker(
-            markerId: MarkerId('line_location'),
+            markerId: const MarkerId('line_location'),
             position: _lineLocation!,
             infoWindow: InfoWindow(title: 'Line Location: $lineName'),
           ));
@@ -372,7 +374,7 @@ class _ClosestPointPageState extends State<ClosestPointPage> {
       }
     } catch (e) {
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text("Failed to fetch line location.")),
+        const SnackBar(content: Text("Failed to fetch line location.")),
       );
     }
   }
@@ -407,7 +409,7 @@ class _ClosestPointPageState extends State<ClosestPointPage> {
 
               _polylines.clear();
               _polylines.add(Polyline(
-                polylineId: PolylineId('route'),
+                polylineId: const PolylineId('route'),
                 points: polylineCoordinates,
                 color: Colors.blue,
                 width: 5,
@@ -433,7 +435,7 @@ class _ClosestPointPageState extends State<ClosestPointPage> {
         }
       } catch (e) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text("Failed to fetch route.")),
+          const SnackBar(content: Text("Failed to fetch route.")),
         );
       }
     }
@@ -451,7 +453,7 @@ class _ClosestPointPageState extends State<ClosestPointPage> {
         setState(() {
           _finalDestination = LatLng(locations[0].latitude, locations[0].longitude);
           _markers.add(Marker(
-            markerId: MarkerId('final_destination'),
+            markerId: const MarkerId('final_destination'),
             position: _finalDestination!,
             infoWindow: InfoWindow(title: 'Destination: $destination'),
           ));
@@ -460,7 +462,7 @@ class _ClosestPointPageState extends State<ClosestPointPage> {
       }
     } catch (e) {
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text("Failed to find the destination.")),
+        const SnackBar(content: Text("Failed to find the destination.")),
       );
     }
   }
@@ -497,7 +499,7 @@ class _ClosestPointPageState extends State<ClosestPointPage> {
                     borderRadius: BorderRadius.circular(8),
                     boxShadow: [
                       BoxShadow(
-                        color: Colors.black.withOpacity(0.1),
+                        color: Colors.black.withValues(),
                         blurRadius: 8,
                         offset: const Offset(0, 2),
                       ),
@@ -567,7 +569,7 @@ class _ClosestPointPageState extends State<ClosestPointPage> {
                       borderRadius: BorderRadius.circular(8),
                       boxShadow: [
                         BoxShadow(
-                          color: Colors.black.withOpacity(0.1),
+                          color: Colors.black.withValues(),
                           blurRadius: 8,
                           offset: const Offset(0, 2),
                         ),

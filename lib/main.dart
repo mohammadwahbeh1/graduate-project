@@ -1,12 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:sizer/sizer.dart';
 import 'package:untitled/Pages/Splash_screen.dart';
-import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:provider/provider.dart';
-import 'package:geolocator/geolocator.dart';
 
 import 'Pages/Forgot_password.dart';
-import 'Pages/Location Service.dart';
 import 'Pages/location_provider.dart';
 import 'Pages/loginPage.dart';
 import 'Pages/serviceDashboardPage.dart';
@@ -44,9 +41,9 @@ class _MyAppState extends State<MyApp> {
             ),
             home: const SplashScreen(), // Splash screen as the entry point
             routes: {
-              '/login': (context) => LoginPage(),
-              '/forgot-password': (context) => ForgotPassword(),
-              '/service-dashboard': (context) => ServiceDashboardPage(),
+              '/login': (context) => const LoginPage(),
+              '/forgot-password': (context) => const ForgotPassword(),
+              '/service-dashboard': (context) => const ServiceDashboardPage(),
               // Add more routes as needed
             },
           ),

@@ -177,6 +177,7 @@ class WebRTCSignaling {
           break;
       }
     } catch (e) {
+      print(e);
     }
   }
 

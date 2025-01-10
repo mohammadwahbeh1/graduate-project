@@ -25,7 +25,7 @@ class ManagerPage extends StatelessWidget {
         flexibleSpace: Container(
           decoration: const BoxDecoration(
             gradient: LinearGradient(
-              colors: [Color(0xFF00B4DB), Color(0xFF0083B0)], // تدرج الأزرق
+              colors: [Color(0xFF00B4DB), Color(0xFF0083B0)],
               begin: Alignment.topLeft,
               end: Alignment.bottomRight,
             ),
@@ -55,9 +55,9 @@ class ManagerPage extends StatelessWidget {
               color: Colors.blueGrey[800],
               shadows: [
                 Shadow(
-                  offset: Offset(2, 2),
+                  offset: const Offset(2, 2),
                   blurRadius: 3,
-                  color: Colors.grey.withOpacity(0.5),
+                  color: Colors.grey.withValues(),
                 ),
               ],
             ),
@@ -75,7 +75,7 @@ class ManagerPage extends StatelessWidget {
             height: MediaQuery.of(context).size.height * 0.25,
             decoration: const BoxDecoration(
               gradient: LinearGradient(
-                colors: [Color(0xFF00B4DB), Color(0xFF0083B0)], // نفس تدرج AppBar
+                colors: [Color(0xFF00B4DB), Color(0xFF0083B0)], //
                 begin: Alignment.topLeft,
                 end: Alignment.bottomRight,
               ),
@@ -221,7 +221,7 @@ class ManagerPage extends StatelessWidget {
     return ListTile(
       leading: Icon(
         icon,
-        color: Colors.black, // لون الأيقونات أبيض ليتناسب مع خلفية الـ Drawer الزرقاء
+        color: Colors.black,
         size: 24,
       ),
       title: Text(
@@ -229,7 +229,7 @@ class ManagerPage extends StatelessWidget {
         style: const TextStyle(
           fontSize: 16,
           fontWeight: FontWeight.w500,
-          color: Colors.black, // لون النص أبيض ليتناسب مع الخلفية الزرقاء
+          color: Colors.black,
         ),
       ),
       contentPadding: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),

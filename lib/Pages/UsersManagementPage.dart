@@ -270,7 +270,7 @@ class _UsersManagementPageState extends State<UsersManagementPage> {
                   )
                       : isWeb
                       ? GridView.builder(
-                    gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+                    gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
                       crossAxisCount: 3,
                       crossAxisSpacing: 20,
                       mainAxisSpacing: 20,
@@ -307,7 +307,7 @@ class _UsersManagementPageState extends State<UsersManagementPage> {
       shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.circular(20),
       ),
-      shadowColor: Colors.grey.withOpacity(0.2),
+      shadowColor: Colors.grey.withAlpha(2),
       child: Container(
         decoration: BoxDecoration(
           gradient: LinearGradient(

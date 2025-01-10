@@ -233,7 +233,7 @@ class _CallDriverPageState extends State<CallDriverPage> {
     return Scaffold(
       appBar: AppBar(
         title: const Text('Call Driver'),
-        backgroundColor: Color(0xFFF5CF24),
+        backgroundColor: const Color(0xFFF5CF24),
         actions: [
           Padding(
             padding: const EdgeInsets.only(right: 16.0),
@@ -270,10 +270,10 @@ class _CallDriverPageState extends State<CallDriverPage> {
             padding: const EdgeInsets.all(8.0),
             child: TextField(
               controller: searchController,
-              decoration: InputDecoration(
+              decoration: const InputDecoration(
                 labelText: 'Search by username or phone',
                 border: OutlineInputBorder(),
-                prefixIcon: const Icon(Icons.search),
+                prefixIcon: Icon(Icons.search),
               ),
               onChanged: _filterDrivers,
             ),

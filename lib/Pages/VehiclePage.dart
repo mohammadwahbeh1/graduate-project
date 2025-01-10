@@ -498,7 +498,7 @@ class _VehiclePageState extends State<VehiclePage> {
                 ElevatedButton(
                   onPressed: () {
                     if (isEdit) {
-                      _updateVehicle(vehicle!['vehicle_id'].toString());
+                      _updateVehicle(vehicle['vehicle_id'].toString());
                     } else {
                       _createVehicle();
                     }
@@ -542,11 +542,11 @@ class _VehiclePageState extends State<VehiclePage> {
               _deleteVehicle(vehicleId);
               Navigator.of(context).pop();
             },
-            child: const Text('Delete',
-                style: TextStyle(color: Colors.white)),
             style: ElevatedButton.styleFrom(
               backgroundColor: Colors.redAccent,
             ),
+            child: const Text('Delete',
+                style: TextStyle(color: Colors.white)),
           ),
         ],
       ),
@@ -560,7 +560,7 @@ class _VehiclePageState extends State<VehiclePage> {
       shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.circular(20),
       ),
-      shadowColor: Colors.grey.withOpacity(0.2),
+      shadowColor: Colors.grey.withAlpha(2),
       child: Container(
         decoration: BoxDecoration(
           gradient: LinearGradient(
@@ -739,10 +739,10 @@ class _VehiclePageState extends State<VehiclePage> {
           bool isWeb = constraints.maxWidth > 800;
 
           return isLoading
-              ? Center(
+              ? const Center(
             child: CircularProgressIndicator(
               valueColor:
-              const AlwaysStoppedAnimation<Color>(secondaryColor),
+              AlwaysStoppedAnimation<Color>(secondaryColor),
             ),
           )
               : Padding(
@@ -761,7 +761,7 @@ class _VehiclePageState extends State<VehiclePage> {
                       hintText:
                       'Search by ID, Driver, Line, or Status',
                       prefixIcon:
-                      Icon(Icons.search, color: secondaryColor),
+                      const Icon(Icons.search, color: secondaryColor),
                       filled: true,
                       fillColor: Colors.white,
                       contentPadding: const EdgeInsets.symmetric(
@@ -773,7 +773,7 @@ class _VehiclePageState extends State<VehiclePage> {
                       focusedBorder: OutlineInputBorder(
                         borderRadius: BorderRadius.circular(30),
                         borderSide:
-                        BorderSide(color: secondaryColor),
+                        const BorderSide(color: secondaryColor),
                       ),
                     ),
                   ),
@@ -815,7 +815,7 @@ class __MapSelectionDialogState extends State<_MapSelectionDialog> {
   void initState() {
     super.initState();
     _selectedLocation = widget.initialLocation ??
-        const LatLng(37.7749, -122.4194); // Default to San Francisco
+        const LatLng(32.2185, 35.2677); // Default to San Francisco
   }
 
   void _onMapTapped(LatLng position) {
@@ -875,11 +875,11 @@ class __MapSelectionDialogState extends State<_MapSelectionDialog> {
         ),
         ElevatedButton(
           onPressed: _onConfirm,
-          child: const Text('Confirm',
-              style: TextStyle(color: Colors.white)),
           style: ElevatedButton.styleFrom(
             backgroundColor: Colors.green,
           ),
+          child: const Text('Confirm',
+              style: TextStyle(color: Colors.white)),
         ),
       ],
     );

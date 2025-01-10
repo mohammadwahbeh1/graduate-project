@@ -11,7 +11,7 @@ const String ip = "192.168.1.12";
 class ReviewPage extends StatefulWidget {
   final String terminalId;
 
-  ReviewPage({required this.terminalId});
+  const ReviewPage({super.key, required this.terminalId});
 
   @override
   _ReviewPageState createState() => _ReviewPageState();
@@ -444,7 +444,7 @@ class _ReviewPageState extends State<ReviewPage> {
                       ),
                       maxLines: 3,
                       style: const TextStyle(fontSize: 16),
-                      keyboardType: TextInputType.text, // دعم الإيموجي
+                      keyboardType: TextInputType.text,
                     ),
                     const SizedBox(height: 16),
                     RatingBar.builder(

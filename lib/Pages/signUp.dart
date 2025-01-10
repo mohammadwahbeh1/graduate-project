@@ -8,7 +8,7 @@ import 'package:flutter/foundation.dart';
 const String ip = "192.168.1.12";
 
 // Create a secure storage instance
-final storage = FlutterSecureStorage();
+const storage = FlutterSecureStorage();
 
 class SignUp extends StatefulWidget {
   const SignUp({super.key});
@@ -169,7 +169,7 @@ class _SignUpState extends State<SignUp> with SingleTickerProviderStateMixin {
       appBar: AppBar(
         
         backgroundColor: _isDarkMode ? const Color(0xFF000000) : const Color(0xFFFFD700),
-        title:  Center(
+        title:  const Center(
           child: Text(
               "Sign Up",
             style: TextStyle(
@@ -244,7 +244,7 @@ class _SignUpState extends State<SignUp> with SingleTickerProviderStateMixin {
 
               Container(
                 width: containerWidth.toDouble(),
-                margin: EdgeInsets.symmetric(horizontal: isWeb ? 0 : 20.0),
+                margin: const EdgeInsets.symmetric(horizontal: isWeb ? 0 : 20.0),
                 child: Card(
                   color: cardColor,
                   elevation: 8,
@@ -531,7 +531,7 @@ class _SignUpState extends State<SignUp> with SingleTickerProviderStateMixin {
                                   ),
                                   boxShadow: [
                                     BoxShadow(
-                                      color: const Color(0xFFFFD700).withOpacity(0.3),
+                                      color: const Color(0xFFFFD700).withAlpha(3),
                                       blurRadius: 8,
                                       offset: const Offset(0, 4),
                                     ),

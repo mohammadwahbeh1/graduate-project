@@ -5,9 +5,11 @@ import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:syncfusion_flutter_charts/charts.dart';
 
 const String ip = "192.168.1.12";
-final storage = FlutterSecureStorage();
+const storage = FlutterSecureStorage();
 
 class StatisticsPage extends StatefulWidget {
+  const StatisticsPage({super.key});
+
   @override
   _StatisticsPageState createState() => _StatisticsPageState();
 }
@@ -50,7 +52,7 @@ class _StatisticsPageState extends State<StatisticsPage> {
           setState(() {
             _isLoading = false;
           });
-          ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Failed to load statistics')));
+          ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Failed to load statistics')));
         }
       } catch (e) {
         setState(() {
@@ -70,14 +72,14 @@ class _StatisticsPageState extends State<StatisticsPage> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: Text('Statistics', style: TextStyle(fontWeight: FontWeight.bold)),
+        title: const Text('Statistics', style: TextStyle(fontWeight: FontWeight.bold)),
         backgroundColor: Colors.blueAccent,
       ),
       body: LayoutBuilder(
         builder: (context, constraints) {
           bool isWeb = constraints.maxWidth > 800; // Detects if on a larger screen
           return _isLoading
-              ? Center(child: CircularProgressIndicator())
+              ? const Center(child: CircularProgressIndicator())
               : Padding(
             padding: isWeb
                 ? const EdgeInsets.symmetric(horizontal: 32.0, vertical: 16.0)
@@ -95,13 +97,13 @@ class _StatisticsPageState extends State<StatisticsPage> {
                             children: [
                               _buildSectionTitle('User Statistics'),
                               _buildUserStats(),
-                              Divider(thickness: 2),
+                              const Divider(thickness: 2),
                               _buildSectionTitle('Vehicle Statistics'),
                               _buildVehicleStats(),
-                              Divider(thickness: 2),
+                              const Divider(thickness: 2),
                               _buildSectionTitle('Reservation Statistics'),
                               _buildReservationStats(),
-                              Divider(thickness: 2),
+                              const Divider(thickness: 2),
                               _buildSectionTitle('Review Statistics'),
                               _buildReviewStats(),
                             ],
@@ -111,7 +113,7 @@ class _StatisticsPageState extends State<StatisticsPage> {
                     ],
                   ),
                 ),
-                SizedBox(width: 20),
+                const SizedBox(width: 20),
                 // Additional widgets can be added here for web-only features
               ],
             )
@@ -121,13 +123,13 @@ class _StatisticsPageState extends State<StatisticsPage> {
                 children: [
                   _buildSectionTitle('User Statistics'),
                   _buildUserStats(),
-                  Divider(thickness: 2),
+                  const Divider(thickness: 2),
                   _buildSectionTitle('Vehicle Statistics'),
                   _buildVehicleStats(),
-                  Divider(thickness: 2),
+                  const Divider(thickness: 2),
                   _buildSectionTitle('Reservation Statistics'),
                   _buildReservationStats(),
-                  Divider(thickness: 2),
+                  const Divider(thickness: 2),
                   _buildSectionTitle('Review Statistics'),
                   _buildReviewStats(),
                 ],
@@ -181,14 +183,14 @@ class _StatisticsPageState extends State<StatisticsPage> {
       '60+': 0,
     };
 
-    data.forEach((item) {
+    for (var item in data) {
       String ageGroup = item['age_group'] ?? 'Unknown';
       int count = item['count'] ?? 0;
 
       if (ageGroupCounts.containsKey(ageGroup)) {
         ageGroupCounts[ageGroup] = ageGroupCounts[ageGroup]! + count;
       }
-    });
+    }
 
     List<ChartData> chartData = ageGroupCounts.entries.map((entry) {
       return ChartData(entry.key, entry.value);
@@ -199,13 +201,13 @@ class _StatisticsPageState extends State<StatisticsPage> {
         borderRadius: BorderRadius.circular(12),
         color: Colors.white,
         boxShadow: [
-          BoxShadow(color: Colors.blueAccent.withOpacity(0.3), blurRadius: 10, offset: Offset(0, 4)),
+          BoxShadow(color: Colors.blueAccent.withValues(), blurRadius: 10, offset: const Offset(0, 4)),
         ],
       ),
-      padding: EdgeInsets.all(12),
-      margin: EdgeInsets.symmetric(vertical: 8),
+      padding: const EdgeInsets.all(12),
+      margin: const EdgeInsets.symmetric(vertical: 8),
       child: SfCartesianChart(
-        title: ChartTitle(text: 'Age Group Distribution', textStyle: TextStyle(color: Colors.blueAccent)),
+        title: ChartTitle(text: 'Age Group Distribution', textStyle: const TextStyle(color: Colors.blueAccent)),
         primaryXAxis: CategoryAxis(),
         primaryYAxis: NumericAxis(),
         series: <ChartSeries>[
@@ -214,7 +216,7 @@ class _StatisticsPageState extends State<StatisticsPage> {
             xValueMapper: (ChartData data, _) => data.x,
             yValueMapper: (ChartData data, _) => data.y,
             color: Colors.lightBlueAccent,
-            dataLabelSettings: DataLabelSettings(isVisible: true, textStyle: TextStyle(color: Colors.black)),
+            dataLabelSettings: const DataLabelSettings(isVisible: true, textStyle: TextStyle(color: Colors.black)),
           ),
         ],
       ),
@@ -237,8 +239,8 @@ class _StatisticsPageState extends State<StatisticsPage> {
     var lines = _statistics['vehicles']?['lines'] ?? [];
 
     if (lines.isEmpty) {
-      return Padding(
-        padding: const EdgeInsets.all(8.0),
+      return const Padding(
+        padding: EdgeInsets.all(8.0),
         child: Text('No vehicle data available'),
       );
     }
@@ -267,8 +269,8 @@ class _StatisticsPageState extends State<StatisticsPage> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Padding(
-          padding: const EdgeInsets.all(8.0),
+        const Padding(
+          padding: EdgeInsets.all(8.0),
           child: Text('Rating Distribution', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
         ),
         if (ratingDistribution.isNotEmpty)
@@ -280,24 +282,24 @@ class _StatisticsPageState extends State<StatisticsPage> {
   Widget _buildReviewBarChart(List<dynamic> data, String title) {
     List<ChartData> chartData = [];
 
-    data.forEach((item) {
+    for (var item in data) {
       String x = 'Rating ${item['rating']}';
       int y = item['count'];
       chartData.add(ChartData(x, y));
-    });
+    }
 
     return Container(
-      padding: EdgeInsets.all(12),
-      margin: EdgeInsets.symmetric(vertical: 8),
+      padding: const EdgeInsets.all(12),
+      margin: const EdgeInsets.symmetric(vertical: 8),
       decoration: BoxDecoration(
         borderRadius: BorderRadius.circular(12),
         color: Colors.white,
         boxShadow: [
-          BoxShadow(color: Colors.blueAccent.withOpacity(0.3), blurRadius: 10, offset: Offset(0, 4)),
+          BoxShadow(color: Colors.blueAccent.withValues(), blurRadius: 10, offset: const Offset(0, 4)),
         ],
       ),
       child: SfCartesianChart(
-        title: ChartTitle(text: title, textStyle: TextStyle(color: Colors.blueAccent)),
+        title: ChartTitle(text: title, textStyle: const TextStyle(color: Colors.blueAccent)),
         primaryXAxis: CategoryAxis(),
         primaryYAxis: NumericAxis(),
         series: <ChartSeries>[
@@ -306,7 +308,7 @@ class _StatisticsPageState extends State<StatisticsPage> {
             xValueMapper: (ChartData data, _) => data.x,
             yValueMapper: (ChartData data, _) => data.y,
             color: Colors.orangeAccent,
-            dataLabelSettings: DataLabelSettings(isVisible: true, textStyle: TextStyle(color: Colors.black)),
+            dataLabelSettings: const DataLabelSettings(isVisible: true, textStyle: TextStyle(color: Colors.black)),
           ),
         ],
       ),
@@ -316,7 +318,7 @@ class _StatisticsPageState extends State<StatisticsPage> {
   Widget _buildBarChart(List<dynamic> data, String title) {
     List<ChartData> chartData = [];
 
-    data.forEach((item) {
+    for (var item in data) {
       if (item is Map) {
         String x = '';
         int y = 0;
@@ -335,7 +337,7 @@ class _StatisticsPageState extends State<StatisticsPage> {
 
         chartData.add(ChartData(x, y));
       }
-    });
+    }
 
     return Container(
       decoration: BoxDecoration(
@@ -345,10 +347,10 @@ class _StatisticsPageState extends State<StatisticsPage> {
           BoxShadow(color: Colors.black12, blurRadius: 8, offset: Offset(0, 4)),
         ],
       ),
-      padding: EdgeInsets.all(12),
-      margin: EdgeInsets.symmetric(vertical: 8),
+      padding: const EdgeInsets.all(12),
+      margin: const EdgeInsets.symmetric(vertical: 8),
       child: SfCartesianChart(
-        title: ChartTitle(text: title, textStyle: TextStyle(color: Colors.blueAccent)),
+        title: ChartTitle(text: title, textStyle: const TextStyle(color: Colors.blueAccent)),
         primaryXAxis: CategoryAxis(),
         primaryYAxis: NumericAxis(),
         series: <ChartSeries>[
@@ -357,7 +359,7 @@ class _StatisticsPageState extends State<StatisticsPage> {
             xValueMapper: (ChartData data, _) => data.x,
             yValueMapper: (ChartData data, _) => data.y,
             color: Colors.blueAccent,
-            dataLabelSettings: DataLabelSettings(isVisible: true, textStyle: TextStyle(color: Colors.black)),
+            dataLabelSettings: const DataLabelSettings(isVisible: true, textStyle: TextStyle(color: Colors.black)),
           ),
         ],
       ),
@@ -374,7 +376,6 @@ class _StatisticsPageState extends State<StatisticsPage> {
       item.containsKey('status') ? item['status'] : '';
 
       // Categorize based on "Male" or "Female", "User" or "Driver", "Age Group", or "Reservation Status"
-      String status = item.containsKey('gender') ? (item['gender'] == 'Male' ? 'Male' : 'Female') :
       item.containsKey('role') ? item['role'] :
       item.containsKey('age_group') ? item['age_group'] :
       item.containsKey('status') ? item['status'] : 'Unknown';
@@ -384,24 +385,24 @@ class _StatisticsPageState extends State<StatisticsPage> {
     }).toList();
 
     return Container(
-      padding: EdgeInsets.all(12),
-      margin: EdgeInsets.symmetric(vertical: 8),
+      padding: const EdgeInsets.all(12),
+      margin: const EdgeInsets.symmetric(vertical: 8),
       decoration: BoxDecoration(
         borderRadius: BorderRadius.circular(12),
         color: Colors.white,
         boxShadow: [
-          BoxShadow(color: Colors.blueAccent.withOpacity(0.3), blurRadius: 10, offset: Offset(0, 4)),
+          BoxShadow(color: Colors.blueAccent.withOpacity(0.3), blurRadius: 10, offset: const Offset(0, 4)),
         ],
       ),
       child: SfCircularChart(
-        title: ChartTitle(text: title, textStyle: TextStyle(color: Colors.blueAccent)),
+        title: ChartTitle(text: title, textStyle: const TextStyle(color: Colors.blueAccent)),
         legend: Legend(isVisible: true),
         series: <CircularSeries>[
           PieSeries<PieData, String>(
             dataSource: pieData,
             xValueMapper: (PieData data, _) => data.category,
             yValueMapper: (PieData data, _) => data.count,
-            dataLabelSettings: DataLabelSettings(isVisible: true, textStyle: TextStyle(color: Colors.black)),
+            dataLabelSettings: const DataLabelSettings(isVisible: true, textStyle: TextStyle(color: Colors.black)),
             explode: true,
             explodeIndex: 1,
           ),

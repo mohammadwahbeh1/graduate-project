@@ -1,5 +1,3 @@
-import 'dart:ui';
-
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 import 'dart:convert';
@@ -13,7 +11,6 @@ import 'bookingTaxi.dart';
 import 'closestPointPage.dart';
 import 'profilePage.dart';
 import 'package:web_socket_channel/web_socket_channel.dart';
-import 'package:web_socket_channel/status.dart' as status;
 import 'package:flutter_rating_bar/flutter_rating_bar.dart'; // Import the rating bar package
 import 'package:google_fonts/google_fonts.dart'; // Import Google Fonts
 import 'package:flutter_staggered_animations/flutter_staggered_animations.dart'; // Import animations
@@ -29,7 +26,6 @@ class homePage extends StatefulWidget {
 
 class _homePageState extends State<homePage> {
   List<Map<String, dynamic>> terminals = [];
-  bool _isHovered = false;
   bool isLoading = true;
   final storage = const FlutterSecureStorage();
   List<Map<String, dynamic>> notifications = [];
@@ -39,7 +35,7 @@ class _homePageState extends State<homePage> {
   String username="";
   final List<Widget> _pages = [
     Container(),  // Replace with your Home Page class
-    ClosestPointPage(), // Replace with your Closest Point Page class
+    const ClosestPointPage(), // Replace with your Closest Point Page class
     const BookTaxiPage(), // Replace with your Book Taxi Page class
     const ReservationsPage(), // Replace with your Reservations Page class
   ];
@@ -172,9 +168,7 @@ class _homePageState extends State<homePage> {
             'Content-Type': 'application/json',
           },
         );
-        print('notiiii ');
         if (response.statusCode == 200) {
-          print('notiiii senddddd');
 
           setState(() {
             notifications.removeWhere((notif) => notif == notificationId); // Remove notification from the list
@@ -203,12 +197,6 @@ class _homePageState extends State<homePage> {
     }
   }
 
-  void _removeNotification(int notificationId) {
-    setState(() {
-      notifications.removeWhere((notification) => notification['id'] == notificationId);
-      notificationCount = notifications.length; // Update the count
-    });
-  }
 
 
   void _showNotifications(BuildContext context) {
@@ -254,7 +242,7 @@ class _homePageState extends State<homePage> {
                                 borderRadius: BorderRadius.circular(12),
                                 boxShadow: [
                                   BoxShadow(
-                                    color: Colors.grey.withOpacity(0.1),
+                                    color: Colors.grey.withValues(),
                                     spreadRadius: 2,
                                     blurRadius: 8,
                                   ),
@@ -902,7 +890,7 @@ class _homePageState extends State<homePage> {
         ),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.1),
+            color: Colors.black.withValues(),
             spreadRadius: 2,
             blurRadius: 10,
           ),

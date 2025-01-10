@@ -30,7 +30,6 @@ class _LinePageState extends State<LinePage> {
 
   TextEditingController searchController = TextEditingController();
 
-  // المتغيرات الجديدة لتخزين إحداثيات الموقع المختار
   double? selectedLatitude;
   double? selectedLongitude;
 
@@ -203,14 +202,14 @@ class _LinePageState extends State<LinePage> {
           ElevatedButton(
             onPressed: () => Navigator.pop(context, true),
             style: ElevatedButton.styleFrom(
-              backgroundColor: Colors.red, // لون الخلفية الأحمر
+              backgroundColor: Colors.red,
               shape: RoundedRectangleBorder(
                 borderRadius: BorderRadius.circular(8),
               ),
             ),
             child: const Text(
               'Delete',
-              style: TextStyle(color: Colors.white), // النص أبيض
+              style: TextStyle(color: Colors.white),
             ),
           ),
         ],
@@ -313,7 +312,7 @@ class _LinePageState extends State<LinePage> {
         elevation: 16,
         child: Container(
           padding: const EdgeInsets.all(20),
-          child: SingleChildScrollView( // لضمان ظهور المحتوى بشكل صحيح على الشاشات الصغيرة
+          child: SingleChildScrollView(
             child: Column(
               mainAxisSize: MainAxisSize.min,
               children: [
@@ -359,7 +358,6 @@ class _LinePageState extends State<LinePage> {
                         validator: (value) => value == null ? 'Please select a manager' : null,
                       ),
                       const SizedBox(height: 15),
-                      // عرض الموقع المختار
                       Align(
                         alignment: Alignment.centerLeft,
                         child: Text(
@@ -370,10 +368,8 @@ class _LinePageState extends State<LinePage> {
                         ),
                       ),
                       const SizedBox(height: 15),
-                      // زر اختيار الموقع من الخريطة
                       ElevatedButton.icon(
                         onPressed: () async {
-                          // فتح مربع حوار اختيار الموقع
                           LatLng? selectedLatLng = await showDialog<LatLng>(
                             context: context,
                             builder: (context) => _MapSelectionDialog(
@@ -404,7 +400,6 @@ class _LinePageState extends State<LinePage> {
                         ),
                       ),
                       const SizedBox(height: 20),
-                      // الأزرار
                       Row(
                         mainAxisAlignment: MainAxisAlignment.spaceEvenly,
                         children: [
@@ -454,7 +449,7 @@ class _LinePageState extends State<LinePage> {
       shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.circular(20),
       ),
-      shadowColor: Colors.blue.withOpacity(0.2),
+      shadowColor: Colors.blue.withValues(),
       child: Container(
         decoration: BoxDecoration(
           gradient: LinearGradient(
@@ -512,7 +507,6 @@ class _LinePageState extends State<LinePage> {
                 IconButton(
                   icon: const Icon(Icons.location_on, color: Colors.blueAccent),
                   onPressed: () {
-                    // عرض الموقع على خريطة داخل مربع حوار
                     showDialog(
                       context: context,
                       builder: (context) => _LineLocationDialog(
@@ -581,7 +575,6 @@ class _LinePageState extends State<LinePage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      // استخدام AppBar بتدرج لوني متناسق
       appBar: AppBar(
         title: const Text('Line Management'),
         flexibleSpace: Container(
@@ -599,7 +592,7 @@ class _LinePageState extends State<LinePage> {
       ),
       body: LayoutBuilder(
         builder: (context, constraints) {
-          bool isWeb = constraints.maxWidth > 800; // تحديد حجم الشاشة
+          bool isWeb = constraints.maxWidth > 800;
 
           return isLoading
               ? const Center(
@@ -609,11 +602,10 @@ class _LinePageState extends State<LinePage> {
           )
               : Padding(
             padding: isWeb
-                ? const EdgeInsets.symmetric(horizontal: 32.0, vertical: 24.0) // حشوة أكبر للويب
-                : const EdgeInsets.all(16.0), // حشوة أصغر للموبايل
+                ? const EdgeInsets.symmetric(horizontal: 32.0, vertical: 24.0)
+                : const EdgeInsets.all(16.0),
             child: Column(
               children: [
-                // شريط البحث
                 Padding(
                   padding: const EdgeInsets.symmetric(vertical: 8.0),
                   child: Row(
@@ -640,12 +632,10 @@ class _LinePageState extends State<LinePage> {
                         ),
                       ),
                       const SizedBox(width: 16),
-                      // يمكنك إضافة فلتر إضافي هنا إذا لزم الأمر
                     ],
                   ),
                 ),
                 const SizedBox(height: 16),
-                // قائمة الخطوط
                 Expanded(child: _buildLineList(isWeb)),
               ],
             ),
@@ -662,7 +652,6 @@ class _LinePageState extends State<LinePage> {
   }
 }
 
-// مربع حوار لاختيار الموقع على الخريطة
 class _MapSelectionDialog extends StatefulWidget {
   final LatLng? initialLocation;
 
@@ -680,7 +669,7 @@ class __MapSelectionDialogState extends State<_MapSelectionDialog> {
   void initState() {
     super.initState();
     _selectedLocation = widget.initialLocation ??
-        const LatLng(37.7749, -122.4194); // الافتراضي سان فرانسيسكو
+        const LatLng(32.2185, 35.2677);
   }
 
   void _onMapTapped(LatLng position) {

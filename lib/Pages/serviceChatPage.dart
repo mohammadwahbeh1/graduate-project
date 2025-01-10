@@ -160,7 +160,7 @@ class _ServiceChatPageState extends State<ServiceChatPage> {
                         borderRadius: BorderRadius.circular(15),
                         boxShadow: [
                           BoxShadow(
-                            color: Colors.black.withOpacity(0.2),
+                            color: Colors.black.withValues(),
                             blurRadius: 4,
                             offset: const Offset(0, 2),
                           ),

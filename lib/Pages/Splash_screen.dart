@@ -9,7 +9,7 @@ import 'package:untitled/Pages/lineManagerPage.dart';
 import 'package:untitled/Pages/adminPage.dart';
 import 'package:untitled/Pages/serviceDashboardPage.dart'; // For support dashboard
 
-final storage = FlutterSecureStorage();
+const storage = FlutterSecureStorage();
 
 class SplashScreen extends StatefulWidget {
   const SplashScreen({super.key});

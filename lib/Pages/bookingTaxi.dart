@@ -1,4 +1,3 @@
-import 'package:dropdown_search/dropdown_search.dart';
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 import 'package:intl/intl.dart';
@@ -336,7 +335,7 @@ class _BookTaxiPageState extends State<BookTaxiPage> {
                 const SizedBox(height: 15),
                 // Display days selection if the pattern is Weekly
                 if (_selectedRecurrencePattern == 'Weekly') ...[
-                  Container(
+                  SizedBox(
                     height: 50,
                     child: ListView.builder(
                       scrollDirection: Axis.horizontal,
@@ -670,8 +669,8 @@ class _BookTaxiPageState extends State<BookTaxiPage> {
             borderRadius: BorderRadius.circular(8),
             border: Border.all(),
           ),
-          child: Row(
-            children: const [
+          child: const Row(
+            children: [
               Icon(Icons.phone, color: Colors.black),
               SizedBox(width: 5),
               Text(

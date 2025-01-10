@@ -3,7 +3,6 @@ import 'package:intl/intl.dart';
 import 'dart:convert';
 import 'package:http/http.dart' as http;
 import 'dart:async';
-import 'Splash_screen.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 
 const String ip = "192.168.1.12";
@@ -86,7 +85,6 @@ class _TerminalDetailsPageState extends State<TerminalDetailsPage> {
 
       if (response.statusCode == 200) {
         final responseBody = json.decode(response.body);
-        print('Response Body: $responseBody'); // سجل كامل بيانات الاستجابة
 
         if (responseBody['data'] != null && responseBody['data'] is List) {
           final data = responseBody['data'];
@@ -136,8 +134,6 @@ class _TerminalDetailsPageState extends State<TerminalDetailsPage> {
               line['next_eta'] = null;
             }
 
-            // سجل تصحيح لآخر تحديث
-            print('Line ID: $lineId, Last Updated: ${line['last_updated']}');
           }
 
           if (hasChanged) {
@@ -151,7 +147,6 @@ class _TerminalDetailsPageState extends State<TerminalDetailsPage> {
           setState(() {
             isLoading = false;
           });
-          print('Data is null or not a list');
         }
       } else {
         setState(() {
@@ -240,7 +235,7 @@ class _TerminalDetailsPageState extends State<TerminalDetailsPage> {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
       decoration: BoxDecoration(
-        color: color.withOpacity(0.1),
+        color: color.withAlpha(1),
         borderRadius: BorderRadius.circular(20),
       ),
       child: Text(
@@ -276,7 +271,7 @@ class _TerminalDetailsPageState extends State<TerminalDetailsPage> {
         borderRadius: BorderRadius.circular(16),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.05),
+            color: Colors.black.withAlpha(5),
             blurRadius: 10,
             offset: const Offset(0, 4),
           ),
@@ -380,7 +375,7 @@ class _TerminalDetailsPageState extends State<TerminalDetailsPage> {
           borderRadius: BorderRadius.circular(30),
           boxShadow: [
             BoxShadow(
-              color: Colors.black.withOpacity(0.1),
+              color: Colors.black.withAlpha(1),
               blurRadius: 6,
               offset: const Offset(0, 3),
             ),
@@ -571,7 +566,7 @@ class _FlashingIndicatorState extends State<FlashingIndicator>
             color: indicatorColor,
             boxShadow: [
               BoxShadow(
-                color: indicatorColor.withOpacity(0.3),
+                color: indicatorColor.withAlpha(3),
                 blurRadius: 8,
                 spreadRadius: 2,
               ),
@@ -588,7 +583,7 @@ class _FlashingIndicatorState extends State<FlashingIndicator>
           color: indicatorColor,
           boxShadow: [
             BoxShadow(
-              color: indicatorColor.withOpacity(0.3),
+              color: indicatorColor.withAlpha(3),
               blurRadius: 8,
               spreadRadius: 2,
             ),

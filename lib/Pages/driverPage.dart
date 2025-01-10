@@ -12,7 +12,7 @@ import 'package:web_socket_channel/web_socket_channel.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 
 const String ip = "192.168.1.12";
-final storage = FlutterSecureStorage();
+const storage = FlutterSecureStorage();
 
 class DriverPage extends StatefulWidget {
   const DriverPage({super.key});
@@ -231,7 +231,7 @@ class _DriverPageState extends State<DriverPage> {
           ),
           BottomNavigationBarItem(
             icon: Icon(Icons.check),
-            label: 'Recomindation',
+            label: 'Recommendation',
           ),
         ],
       ),
@@ -243,10 +243,7 @@ class _DriverPageState extends State<DriverPage> {
     required bool isPending,
     required VoidCallback onAction,
   }) {
-    String username = reservation['User'] != null
-        ? reservation['User']['username'] ?? 'Unknown'
-        : 'Unknown';
-    String phoneNumber = reservation['phone_number'] ?? 'N/A';
+
 
     return Card(
       color: Colors.white,
@@ -260,7 +257,6 @@ class _DriverPageState extends State<DriverPage> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            // عنوان الحجز
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
@@ -279,7 +275,6 @@ class _DriverPageState extends State<DriverPage> {
               style: const TextStyle(color: Colors.grey),
             ),
             const Divider(height: 20, color: Colors.grey),
-            // نقطة الانطلاق
             Row(
               children: [
                 Container(
@@ -309,7 +304,6 @@ class _DriverPageState extends State<DriverPage> {
               ],
             ),
             const SizedBox(height: 8),
-            // نقطة الوصول
             Row(
               children: [
                 Container(
@@ -353,13 +347,11 @@ class _DriverPageState extends State<DriverPage> {
               ],
             ),
             const SizedBox(height: 8),
-            // الوصف
             Text(
               "Description: ${reservation['description'] ?? 'No description provided.'}",
               style: const TextStyle(fontSize: 14, color: Colors.black),
             ),
             const SizedBox(height: 8),
-            // تفاصيل التكرار إذا كانت موجودة
             if (reservation['is_recurring'] == true) ...[
               const Text(
                 "Recurring: Yes",
@@ -385,7 +377,6 @@ class _DriverPageState extends State<DriverPage> {
               const SizedBox(height: 8),
             ],
             const SizedBox(height: 16),
-            // زر الإجراء (قبول أو رفض)
             ElevatedButton(
               onPressed: onAction,
               style: ElevatedButton.styleFrom(
@@ -464,7 +455,7 @@ class _DriverPageState extends State<DriverPage> {
           const SizedBox(height: 20),
           ListTile(
             leading: const Icon(Icons.notifications, size: 28),
-            title: const Text('Recommendationspage', style: TextStyle(fontSize: 16)),
+            title: const Text('Recommendations page', style: TextStyle(fontSize: 16)),
             onTap: () {
               Navigator.pop(context);
               Navigator.push(
@@ -492,7 +483,7 @@ class _DriverPageState extends State<DriverPage> {
               Navigator.pop(context);
               Navigator.pushReplacement(
                 context,
-                MaterialPageRoute(builder: (context) => LoginPage()),
+                MaterialPageRoute(builder: (context) => const LoginPage()),
               );
             },
           ),
@@ -538,10 +529,10 @@ class _DriverPageState extends State<DriverPage> {
                   children: [
                     ElevatedButton(
                       onPressed: () => Navigator.of(context).pop(),
-                      child: const Text('Cancel'),
                       style: ElevatedButton.styleFrom(
                         backgroundColor: Colors.grey,
                       ),
+                      child: const Text('Cancel'),
                     ),
                     ElevatedButton(
                       onPressed: () {
@@ -560,7 +551,6 @@ class _DriverPageState extends State<DriverPage> {
     );
   }
 
-  // دالة عرض خيارات الملف الشخصي
   void _showProfileOptions(BuildContext context) {
     showDialog(
       context: context,
@@ -590,21 +580,14 @@ class _DriverPageState extends State<DriverPage> {
     );
   }
 
-  // دالة للتنقل إلى صفحة "My Routes"
   void _navigateToMyRoutes(BuildContext context) {
     ScaffoldMessenger.of(context).showSnackBar(
       const SnackBar(content: Text('Navigating to My Routes...')),
     );
   }
 
-  // دالة للتنقل إلى صفحة "Notifications"
-  void _navigateToNotifications(BuildContext context) {
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(content: Text('Navigating to Notifications...')),
-    );
-  }
 
-  // دالة عرض رسالة النجاح
+
   void _showSuccessDialog(String message) {
     showDialog(
       context: context,
@@ -625,7 +608,6 @@ class _DriverPageState extends State<DriverPage> {
     );
   }
 
-  // دالة عرض رسالة الخطأ
   void _showErrorDialog(String message) {
     showDialog(
       context: context,
@@ -669,7 +651,6 @@ class _DriverPageState extends State<DriverPage> {
           _showErrorDialog('Failed to load pending reservations.');
         }
 
-        // فلترة الحجوزات بعد جلبها
         _filterReservations();
       }
     } catch (error) {
@@ -694,8 +675,8 @@ class _DriverPageState extends State<DriverPage> {
         final responseData = jsonDecode(response.body);
         if (responseData['data'] != null) {
           final driverInfo = responseData['data'];
-          String driverName = driverInfo['driver_id'].toString() ?? 'Unknown';
-          String driverPhone = driverInfo['phone_number'].toString() ?? 'N/A';
+          String driverName = driverInfo['driver_id'].toString() ;
+          String driverPhone = driverInfo['phone_number'].toString() ;
 
           _createNotification(
             userId,
@@ -720,9 +701,7 @@ class _DriverPageState extends State<DriverPage> {
     }
   }
 
-  // دالة إنشاء الإشعارات
   void _createNotification(String userId, String message) async {
-    // إرسال الإشعار إلى الخادم الخلفي
     String? token = await storage.read(key: 'jwt_token');
     if (token == null) return;
 

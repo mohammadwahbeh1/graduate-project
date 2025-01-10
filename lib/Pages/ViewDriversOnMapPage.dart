@@ -23,7 +23,6 @@ class _ViewDriversPageState extends State<ViewDriversOnMapPage> {
   String? _errorMessage;
   final _secureStorage = const FlutterSecureStorage();
   final TextEditingController _searchController = TextEditingController();
-  Marker? _selectedMarker;
 
   @override
   void initState() {

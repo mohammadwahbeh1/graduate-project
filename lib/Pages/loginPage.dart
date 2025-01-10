@@ -10,7 +10,6 @@ import 'Forgot_password.dart';
 import 'adminPage.dart';
 import 'driverPage.dart';
 import 'lineManagerPage.dart';
-import 'package:untitled/Pages/Location Service.dart';
 import 'package:flutter/foundation.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 
@@ -145,7 +144,7 @@ class _LoginPageState extends State<LoginPage> {
 
   @override
   Widget build(BuildContext context) {
-    final isWeb = kIsWeb;
+    const isWeb = kIsWeb;
 
     return Scaffold(
       backgroundColor: Colors.white,
@@ -154,7 +153,7 @@ class _LoginPageState extends State<LoginPage> {
           : Center(
         child: Container(
           width: isWeb ? 500 : MediaQuery.of(context).size.width,
-          padding: EdgeInsets.symmetric(
+          padding: const EdgeInsets.symmetric(
             horizontal: isWeb ? 30.0 : 20.0,
           ),
           child: SingleChildScrollView(
@@ -162,7 +161,7 @@ class _LoginPageState extends State<LoginPage> {
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
                 const SizedBox(height: 30),
-                Container(
+                SizedBox(
                   width: isWeb
                       ? 200
                       : MediaQuery.of(context).size.width * 0.7,
@@ -258,7 +257,7 @@ class _LoginPageState extends State<LoginPage> {
                           Navigator.push(
                             context,
                             MaterialPageRoute(
-                                builder: (context) => ForgotPassword()),
+                                builder: (context) => const ForgotPassword()),
                           );
                         },
                         child: const Text(
@@ -284,7 +283,7 @@ class _LoginPageState extends State<LoginPage> {
                               Navigator.push(
                                 context,
                                 MaterialPageRoute(
-                                    builder: (context) => SignUp()),
+                                    builder: (context) => const SignUp()),
                               );
                             },
                             child: const Text(
@@ -314,14 +313,14 @@ class _LoginPageState extends State<LoginPage> {
                                 boxShadow: [
                                   BoxShadow(
                                     color:
-                                    Colors.grey.withOpacity(0.3),
+                                    Colors.grey.withValues(),
                                     spreadRadius: 2,
                                     blurRadius: 5,
                                     offset: const Offset(0, 3),
                                   ),
                                 ],
                               ),
-                              child: Center(
+                              child: const Center(
                                 child: FaIcon(
                                   FontAwesomeIcons.google,
                                   color: Colors.red,
@@ -343,14 +342,14 @@ class _LoginPageState extends State<LoginPage> {
                                 boxShadow: [
                                   BoxShadow(
                                     color:
-                                    Colors.grey.withOpacity(0.3),
+                                    Colors.grey.withValues(),
                                     spreadRadius: 2,
                                     blurRadius: 5,
                                     offset: const Offset(0, 3),
                                   ),
                                 ],
                               ),
-                              child: Center(
+                              child: const Center(
                                 child: FaIcon(
                                   FontAwesomeIcons.facebookF,
                                   color: Colors.blue,
@@ -372,7 +371,7 @@ class _LoginPageState extends State<LoginPage> {
                                 boxShadow: [
                                   BoxShadow(
                                     color:
-                                    Colors.grey.withOpacity(0.3),
+                                    Colors.grey.withValues(),
                                     spreadRadius: 2,
                                     blurRadius: 5,
                                     offset: const Offset(0, 3),

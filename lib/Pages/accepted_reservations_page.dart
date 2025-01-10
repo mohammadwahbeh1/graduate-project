@@ -14,7 +14,7 @@ import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:intl/intl.dart'; // For date formatting
 
 const String ip = "192.168.1.12";
-final storage = FlutterSecureStorage();
+const storage = FlutterSecureStorage();
 
 class AcceptedReservationsPage extends StatefulWidget {
   const AcceptedReservationsPage({super.key});
@@ -37,7 +37,7 @@ class _AcceptedReservationsPageState extends State<AcceptedReservationsPage> {
   CalendarFormat _calendarFormat = CalendarFormat.month;
   DateTime _focusedDay = DateTime.now();
   DateTime? _selectedDay;
-  Map<DateTime, List<dynamic>> _reservationsByDate = {};
+  final Map<DateTime, List<dynamic>> _reservationsByDate = {};
 
   @override
   void initState() {
@@ -371,7 +371,7 @@ class _AcceptedReservationsPageState extends State<AcceptedReservationsPage> {
           ),
           BottomNavigationBarItem(
             icon: Icon(Icons.check),
-            label: 'Recomindation',
+            label: 'Recommendation',
           ),
 
         ],
@@ -643,7 +643,7 @@ class _AcceptedReservationsPageState extends State<AcceptedReservationsPage> {
               Navigator.pop(context);
               Navigator.pushReplacement(
                 context,
-                MaterialPageRoute(builder: (context) => LoginPage()),
+                MaterialPageRoute(builder: (context) => const LoginPage()),
               );
             },
           ),
@@ -690,10 +690,10 @@ class _AcceptedReservationsPageState extends State<AcceptedReservationsPage> {
                   children: [
                     ElevatedButton(
                       onPressed: () => Navigator.of(context).pop(),
-                      child: const Text('Cancel'),
                       style: ElevatedButton.styleFrom(
                         backgroundColor: Colors.grey,
                       ),
+                      child: const Text('Cancel'),
                     ),
                     ElevatedButton(
                       onPressed: () {
@@ -934,7 +934,7 @@ class _AcceptedReservationsPageState extends State<AcceptedReservationsPage> {
       DateTime occurrence = _nextInstanceOfWeekday(startDate, weekday);
       while (!occurrence.isAfter(endDate)) {
         dates.add(occurrence);
-        occurrence = occurrence.add(Duration(days: 7));
+        occurrence = occurrence.add(const Duration(days: 7));
       }
     }
 
@@ -995,32 +995,6 @@ class _AcceptedReservationsPageState extends State<AcceptedReservationsPage> {
     }
   }
 
-  // Create notification (optional)
-  void _createNotification(String userId, String message) async {
-    // Send notification to backend
-    String? token = await storage.read(key: 'jwt_token');
-    if (token == null) return;
-
-    var notificationDetails = {
-      'userId': userId, // ID of the user receiving the notification
-      'message': message, // The notification message
-    };
-
-    final response = await http.post(
-      Uri.parse('http://$ip:3000/api/v1/notifications/$userId/driver'),
-      headers: {
-        'Content-Type': 'application/json',
-        'Authorization': 'Bearer $token',
-      },
-      body: jsonEncode(notificationDetails),
-    );
-
-    if (response.statusCode == 200) {
-      print('Notification created successfully');
-    } else {
-      print('Failed to create notification: ${response.body}');
-    }
-  }
 }
 
 // New page to display reservations by date
@@ -1037,7 +1011,7 @@ class ReservationsByDatePage extends StatefulWidget {
 class _ReservationsByDatePageState extends State<ReservationsByDatePage> {
   List<dynamic> reservationsForDate = [];
   bool isLoading = true;
-  final storage = FlutterSecureStorage();
+  final storage = const FlutterSecureStorage();
 
   @override
   void initState() {
@@ -1083,7 +1057,6 @@ class _ReservationsByDatePageState extends State<ReservationsByDatePage> {
               if (dateStr != null) {
                 DateTime date;
                 try {
-                  // تأكد من تنسيق التاريخ
                   date = DateTime.parse(dateStr);
                 } catch (e) {
                   print("Invalid date format for reservation ID ${reservation['reservation_id']}: $dateStr");
@@ -1500,10 +1473,10 @@ class _ReservationsByDatePageState extends State<ReservationsByDatePage> {
                   children: [
                     ElevatedButton(
                       onPressed: () => Navigator.of(context).pop(),
-                      child: const Text('Cancel'),
                       style: ElevatedButton.styleFrom(
                         backgroundColor: Colors.grey,
                       ),
+                      child: const Text('Cancel'),
                     ),
                     ElevatedButton(
                       onPressed: () {

@@ -1,7 +1,6 @@
 import 'dart:convert';
 
 import 'package:flutter/material.dart';
-import 'package:untitled/Pages/DriversAndLinesPage.dart';
 import 'package:untitled/Pages/DriversRatingPage.dart';
 import 'package:untitled/Pages/profilePage.dart';
 import 'DriverCall.dart';
@@ -73,7 +72,7 @@ class _LineManagerPageState extends State<LineManagerPage> {
           "Line Manager Dashboard",
           style: TextStyle(fontWeight: FontWeight.w500),
         ),
-        backgroundColor: Color(0xFFF5CF24),
+        backgroundColor: const Color(0xFFF5CF24),
         centerTitle: true,
         actions: [
           IconButton(
@@ -118,7 +117,7 @@ class _LineManagerPageState extends State<LineManagerPage> {
                   radius: 50,
                   backgroundImage: AssetImage('assets/profile.jpg'), // Replace with your image path
                 ),
-                SizedBox(height: 23),
+                const SizedBox(height: 23),
                 // User Information
                 Text(
                   username,
@@ -137,7 +136,7 @@ class _LineManagerPageState extends State<LineManagerPage> {
             ),
           ),
 
-          SizedBox(height: 20),
+          const SizedBox(height: 20),
           ListTile(
             leading:  const Icon(Icons.map_outlined, size: 28),
             title: const Text('Drivers Location', style: TextStyle(fontSize: 16)),
@@ -145,12 +144,12 @@ class _LineManagerPageState extends State<LineManagerPage> {
               Navigator.pop(context);
               Navigator.push(
                 context,
-                MaterialPageRoute(builder: (context) => ViewDriversOnMapPage()),
+                MaterialPageRoute(builder: (context) => const ViewDriversOnMapPage()),
               );
             },
           ),
 
-          SizedBox(height: 20),
+          const SizedBox(height: 20),
           ListTile(
             leading:  const Icon(Icons.star, size: 28),
             title: const Text('Drivers Rating', style: TextStyle(fontSize: 16)),
@@ -158,7 +157,7 @@ class _LineManagerPageState extends State<LineManagerPage> {
               Navigator.pop(context);
               Navigator.push(
                 context,
-                 MaterialPageRoute(builder: (context) => DriversRatingPage()),
+                 MaterialPageRoute(builder: (context) => const DriversRatingPage()),
               );
             },
           ),

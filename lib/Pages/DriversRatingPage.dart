@@ -3,7 +3,6 @@ import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:syncfusion_flutter_charts/charts.dart';
-import 'package:syncfusion_flutter_gauges/gauges.dart';
 
 class DriverRating {
   final int driverId;
@@ -161,7 +160,6 @@ class _DriversRatingPageState extends State<DriversRatingPage>
       }
     }
 
-    // أزل التصنيفات التي قيمتها 0 لتجنب ظهورها في المخطط
     ratingDistribution.removeWhere((key, value) => value == 0);
 
     List<_PieData> pieData = ratingDistribution.entries
@@ -296,7 +294,6 @@ class _DriversRatingPageState extends State<DriversRatingPage>
         const EdgeInsets.symmetric(horizontal: 16.0, vertical: 24.0),
         child: LayoutBuilder(
           builder: (context, constraints) {
-            // تحديد عدد الأعمدة بناءً على عرض الشاشة
             int crossAxisCount = constraints.maxWidth < 600 ? 2 : 4;
 
             return GridView.count(
@@ -367,7 +364,6 @@ class _DriversRatingPageState extends State<DriversRatingPage>
 
   String _getHighestRatedDriver() {
     if (_drivers.isEmpty) return "N/A";
-    // لا تقم بتعديل قائمة السائقين مباشرةً لأن ذلك سيؤثر على ترتيب البيانات الأصلية
     List<DriverRating> sortedDrivers = List.from(_drivers);
     sortedDrivers.sort((a, b) => b.avgRating.compareTo(a.avgRating));
     return "${sortedDrivers.first.driverName} (${sortedDrivers.first.avgRating})";
@@ -375,7 +371,6 @@ class _DriversRatingPageState extends State<DriversRatingPage>
 
   String _getLowestRatedDriver() {
     if (_drivers.isEmpty) return "N/A";
-    // لا تقم بتعديل قائمة السائقين مباشرةً لأن ذلك سيؤثر على ترتيب البيانات الأصلية
     List<DriverRating> sortedDrivers = List.from(_drivers);
     sortedDrivers.sort((a, b) => a.avgRating.compareTo(b.avgRating));
     return "${sortedDrivers.first.driverName} (${sortedDrivers.first.avgRating})";
@@ -410,7 +405,6 @@ class _DriversRatingPageState extends State<DriversRatingPage>
       return buildError();
     }
 
-    // الحصول على حجم الشاشة
     final width = MediaQuery.of(context).size.width;
 
     return SingleChildScrollView(
@@ -444,20 +438,7 @@ class _DriversRatingPageState extends State<DriversRatingPage>
                 child: buildBarChart(width),
               ),
             ),
-            // إزالة بطاقة الـ Average Rating Gauge
-            // const SizedBox(height: 30),
-            // Card(
-            //   elevation: 4,
-            //   shape: RoundedRectangleBorder(
-            //     borderRadius: BorderRadius.circular(20),
-            //   ),
-            //   color: Colors.white,
-            //   child: Padding(
-            //     padding: const EdgeInsets.all(16.0),
-            //     child: buildAverageRatingGauge(width),
-            //   ),
-            // ),
-            // const SizedBox(height: 30),
+
           ],
         ),
       ),

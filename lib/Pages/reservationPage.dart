@@ -269,8 +269,8 @@ class _ReservationsPageState extends State<ReservationsPage> {
   }
 
   void _showRatingDialog(Map<String, dynamic> reservation) {
-    double _ratingValue = 3.0;
-    final TextEditingController _commentController = TextEditingController();
+    double ratingValue = 3.0;
+    final TextEditingController commentController = TextEditingController();
 
     showDialog(
       context: context,
@@ -282,7 +282,7 @@ class _ReservationsPageState extends State<ReservationsPage> {
               mainAxisSize: MainAxisSize.min,
               children: [
                 RatingBar.builder(
-                  initialRating: _ratingValue,
+                  initialRating: ratingValue,
                   minRating: 1,
                   direction: Axis.horizontal,
                   allowHalfRating: true,
@@ -290,12 +290,12 @@ class _ReservationsPageState extends State<ReservationsPage> {
                   itemBuilder: (context, _) =>
                   const Icon(Icons.star, color: Colors.amber),
                   onRatingUpdate: (rating) {
-                    _ratingValue = rating;
+                    ratingValue = rating;
                   },
                 ),
                 const SizedBox(height: 16),
                 TextField(
-                  controller: _commentController,
+                  controller: commentController,
                   decoration: const InputDecoration(
                     labelText: 'Add a comment',
                   ),
@@ -315,8 +315,8 @@ class _ReservationsPageState extends State<ReservationsPage> {
                 _submitRating(
                   reservationId: reservation['reservation_id'].toString(),
                   driverId: reservation['driver_id'].toString(),
-                  rating: _ratingValue.toString(),
-                  comment: _commentController.text,
+                  rating: ratingValue.toString(),
+                  comment: commentController.text,
                 );
               },
             ),
@@ -514,7 +514,7 @@ class _ReservationsPageState extends State<ReservationsPage> {
                 width: double.infinity,
                 padding: const EdgeInsets.all(8),
                 decoration: BoxDecoration(
-                  color: Colors.red.withOpacity(0.1),
+                  color: Colors.red.withValues(),
                   borderRadius: BorderRadius.circular(8),
                 ),
                 child: const Row(
@@ -589,7 +589,7 @@ class _ReservationsPageState extends State<ReservationsPage> {
             style: buttonTextStyle.copyWith(color: Colors.red),
           ),
           style: TextButton.styleFrom(
-            backgroundColor: Colors.red.withOpacity(0.1),
+            backgroundColor: Colors.red.withValues(),
             minimumSize: Size.zero,
             padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 2),
             shape: RoundedRectangleBorder(
@@ -610,7 +610,7 @@ class _ReservationsPageState extends State<ReservationsPage> {
             style: buttonTextStyle.copyWith(color: Colors.blue),
           ),
           style: TextButton.styleFrom(
-            backgroundColor: Colors.blue.withOpacity(0.1),
+            backgroundColor: Colors.blue.withValues(),
             minimumSize: Size.zero,
             padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 2),
             shape: RoundedRectangleBorder(
@@ -626,7 +626,7 @@ class _ReservationsPageState extends State<ReservationsPage> {
             style: buttonTextStyle.copyWith(color: Colors.red),
           ),
           style: TextButton.styleFrom(
-            backgroundColor: Colors.red.withOpacity(0.1),
+            backgroundColor:Colors.red.withValues(),
             minimumSize: Size.zero,
             padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 2),
             shape: RoundedRectangleBorder(
@@ -636,13 +636,13 @@ class _ReservationsPageState extends State<ReservationsPage> {
           onPressed: () => _deleteReservation(reservation['reservation_id']),
         ),
         TextButton.icon(
-          icon: Icon(Icons.star, color: Colors.amber, size: iconSize),
+          icon: const Icon(Icons.star, color: Colors.amber, size: iconSize),
           label: Text(
             'Rate Driver',
             style: buttonTextStyle.copyWith(color: Colors.amber),
           ),
           style: TextButton.styleFrom(
-            backgroundColor: Colors.amber.withOpacity(0.1),
+            backgroundColor: Colors.amber.withValues(),
             minimumSize: Size.zero,
             padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 2),
             shape: RoundedRectangleBorder(
@@ -657,13 +657,13 @@ class _ReservationsPageState extends State<ReservationsPage> {
     if (statusLower == 'pause') {
       buttons.addAll([
         TextButton.icon(
-          icon: Icon(Icons.play_arrow, color: Colors.green, size: iconSize),
+          icon: const Icon(Icons.play_arrow, color: Colors.green, size: iconSize),
           label: Text(
             'Resume',
             style: buttonTextStyle.copyWith(color: Colors.green),
           ),
           style: TextButton.styleFrom(
-            backgroundColor: Colors.green.withOpacity(0.1),
+            backgroundColor: Colors.green.withValues(),
             minimumSize: Size.zero,
             padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 2),
             shape: RoundedRectangleBorder(
@@ -673,13 +673,13 @@ class _ReservationsPageState extends State<ReservationsPage> {
           onPressed: () => _resumeReservation(reservation),
         ),
         TextButton.icon(
-          icon: Icon(Icons.delete_forever, color: Colors.red, size: iconSize),
+          icon: const Icon(Icons.delete_forever, color: Colors.red, size: iconSize),
           label: Text(
             'Delete',
             style: buttonTextStyle.copyWith(color: Colors.red),
           ),
           style: TextButton.styleFrom(
-            backgroundColor: Colors.red.withOpacity(0.1),
+            backgroundColor: Colors.red.withValues(),
             minimumSize: Size.zero,
             padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 2),
             shape: RoundedRectangleBorder(
@@ -700,7 +700,7 @@ class _ReservationsPageState extends State<ReservationsPage> {
             style: buttonTextStyle.copyWith(color: Colors.green),
           ),
           style: TextButton.styleFrom(
-            backgroundColor: Colors.green.withOpacity(0.1),
+            backgroundColor: Colors.green.withValues(),
             minimumSize: Size.zero,
             padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 2),
             shape: RoundedRectangleBorder(
@@ -715,7 +715,6 @@ class _ReservationsPageState extends State<ReservationsPage> {
     return buttons;
   }
 
-  /// بناء معلومات المسار (From - To)
   Widget _buildRouteInfo(String start, String end) {
     return Row(
       children: [
@@ -756,12 +755,11 @@ class _ReservationsPageState extends State<ReservationsPage> {
     );
   }
 
-  /// بناء معلومات التاريخ والوقت المجدول
   Widget _buildScheduledInfo(DateTime date, String? time) {
     return Container(
       padding: const EdgeInsets.all(8),
       decoration: BoxDecoration(
-        color: Colors.blue.withOpacity(0.1),
+        color: Colors.blue.withValues(),
         borderRadius: BorderRadius.circular(8),
       ),
       child: Row(
@@ -786,7 +784,6 @@ class _ReservationsPageState extends State<ReservationsPage> {
     );
   }
 
-  /// بناء الأيام المتكررة
   Widget _buildRecurringDays(List<String>? days) {
     if (days == null || days.isEmpty) return const SizedBox.shrink();
 
@@ -824,7 +821,6 @@ class _ReservationsPageState extends State<ReservationsPage> {
     );
   }
 
-  /// بناء معلومات التواصل (رقم الهاتف + الوصف)
   Widget _buildContactInfo(String phone, String? description) {
     return Container(
       padding: const EdgeInsets.symmetric(vertical: 8),
@@ -865,7 +861,6 @@ class _ReservationsPageState extends State<ReservationsPage> {
     );
   }
 
-  /// معلومات السائق (Driver ID) إن وجدت
   Widget _buildDriverInfo(int driverId) {
     return Padding(
       padding: const EdgeInsets.only(top: 8.0),
@@ -882,7 +877,6 @@ class _ReservationsPageState extends State<ReservationsPage> {
     );
   }
 
-  /// معلومات التكرار (Recurrence Pattern) إن وجدت
   Widget _buildRecurrenceInfo(Map<String, dynamic> reservation) {
     return Padding(
       padding: const EdgeInsets.only(top: 8.0),

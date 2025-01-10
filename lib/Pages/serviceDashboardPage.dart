@@ -29,7 +29,6 @@ class ServiceDashboardPage extends StatefulWidget {
 class _ServiceDashboardPageState extends State<ServiceDashboardPage> {
   late Future<List<Conversation>> _conversationsFuture;
   late WebSocketChannel _channel;
-  final List<Message> _messages = [];
   static const storage = FlutterSecureStorage();
 
   @override

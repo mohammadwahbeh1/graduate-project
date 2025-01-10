@@ -3,7 +3,6 @@ import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 
-import 'Splash_screen.dart';
 
 const String ip = "192.168.1.12";
 
@@ -15,12 +14,12 @@ class DriversAndLinesPage extends StatefulWidget {
 }
 
 class _DriversAndLinesPageState extends State<DriversAndLinesPage> {
-  final storage = FlutterSecureStorage();
+  final storage = const FlutterSecureStorage();
   List<Map<String, dynamic>> driversAndLines = [];
   List<Map<String, dynamic>> filteredDrivers = [];
   bool isLoading = true;
 
-  String? selectedRole; // إذا كان هناك دور لتصفية السائقين بناءً عليه
+  String? selectedRole;
 
   TextEditingController searchController = TextEditingController();
 
@@ -87,19 +86,11 @@ class _DriversAndLinesPageState extends State<DriversAndLinesPage> {
                 .toString()
                 .toLowerCase()
                 .contains(query);
-        // إذا كان هناك دور للتصفية، يمكن إضافة شرط هنا
-        // bool matchesRole = selectedRole == null || driver['role'] == selectedRole;
         return matchesQuery; // && matchesRole;
       }).toList();
     });
   }
 
-  void _filterByRole(String? role) {
-    setState(() {
-      selectedRole = role;
-      _filterDrivers();
-    });
-  }
 
   // Show error snackbar
   void _showErrorSnackbar(String message) {
@@ -111,22 +102,12 @@ class _DriversAndLinesPageState extends State<DriversAndLinesPage> {
     );
   }
 
-  // Show success snackbar
-  void _showSuccessSnackbar(String message) {
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Text(message),
-        backgroundColor: Colors.green,
-      ),
-    );
-  }
 
-  // إذا كنت تحتاج إلى تحديث دور السائقين، يمكنك إضافة دوال هنا
+
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      // استخدام AppBar بتصميم متناسق
       appBar: AppBar(
         title: const Text('Drivers and Lines'),
         flexibleSpace: Container(
@@ -147,9 +128,9 @@ class _DriversAndLinesPageState extends State<DriversAndLinesPage> {
           bool isWeb = constraints.maxWidth > 800; // Determines if the screen size is for web
 
           return isLoading
-              ? Center(
+              ? const Center(
             child: CircularProgressIndicator(
-              valueColor: const AlwaysStoppedAnimation<Color>(Color(0xFF00B4DB)),
+              valueColor: AlwaysStoppedAnimation<Color>(Color(0xFF00B4DB)),
             ),
           )
               : Padding(
@@ -185,48 +166,7 @@ class _DriversAndLinesPageState extends State<DriversAndLinesPage> {
                         ),
                       ),
                       const SizedBox(width: 16),
-                      // إذا كنت تحتاج إلى فلتر إضافي بناءً على الدور، يمكنك إلغاء التعليق على الكود التالي
-                      /*
-                            Container(
-                              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
-                              decoration: BoxDecoration(
-                                color: Colors.white,
-                                borderRadius: BorderRadius.circular(30),
-                                border: Border.all(color: const Color(0xFF0083B0)),
-                              ),
-                              child: DropdownButton<String>(
-                                value: selectedRole,
-                                hint: const Text('Filter by Role',
-                                    style: TextStyle(color: Color(0xFF0083B0))),
-                                icon: const Icon(Icons.filter_list, color: Color(0xFF0083B0)),
-                                dropdownColor: Colors.white,
-                                underline: const SizedBox(),
-                                items: const [
-                                  DropdownMenuItem(
-                                    value: null,
-                                    child: Text('All Roles', style: TextStyle(color: Colors.black)),
-                                  ),
-                                  DropdownMenuItem(
-                                    value: 'user',
-                                    child: Text('User'),
-                                  ),
-                                  DropdownMenuItem(
-                                    value: 'driver',
-                                    child: Text('Driver'),
-                                  ),
-                                  DropdownMenuItem(
-                                    value: 'line_manager',
-                                    child: Text('Line Manager'),
-                                  ),
-                                  DropdownMenuItem(
-                                    value: 'admin',
-                                    child: Text('Admin'),
-                                  ),
-                                ],
-                                onChanged: _filterByRole,
-                              ),
-                            ),
-                            */
+
                     ],
                   ),
                 ),
@@ -280,7 +220,7 @@ class _DriversAndLinesPageState extends State<DriversAndLinesPage> {
       shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.circular(20),
       ),
-      shadowColor: Colors.grey.withOpacity(0.2),
+      shadowColor: Colors.grey.withValues(),
       child: Container(
         decoration: BoxDecoration(
           gradient: LinearGradient(
@@ -296,10 +236,9 @@ class _DriversAndLinesPageState extends State<DriversAndLinesPage> {
         padding: const EdgeInsets.all(20),
         child: Row(
           children: [
-            // أيقونة السائق أو الخط
-            CircleAvatar(
+            const CircleAvatar(
               radius: 30,
-              backgroundColor: const Color(0xFF00B4DB),
+              backgroundColor: Color(0xFF00B4DB),
               child: Icon(
                 Icons.person,
                 size: 30,
@@ -307,7 +246,6 @@ class _DriversAndLinesPageState extends State<DriversAndLinesPage> {
               ),
             ),
             const SizedBox(width: 20),
-            // معلومات السائق أو الخط
             Expanded(
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,

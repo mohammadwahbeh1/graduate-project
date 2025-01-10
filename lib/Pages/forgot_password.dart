@@ -22,17 +22,17 @@ class _ForgotPasswordState extends State<ForgotPassword> {
   final TextEditingController passwordController = TextEditingController();
   final TextEditingController confirmPasswordController = TextEditingController();
 
-  static const String ip = "192.168.1.8";
+  static const String ip = "192.168.1.12";
   final _formKey = GlobalKey<FormState>();
 
   // Color constants
-  final Color primaryColor = Color(0xFFFFD700);
-  final Color backgroundColor = Color(0xFF121212);
-  final Color cardColor = Color(0xFF1E1E1E);
+  final Color primaryColor = const Color(0xFFFFD700);
+  final Color backgroundColor = const Color(0xFF121212);
+  final Color cardColor = const Color(0xFF1E1E1E);
   final Color textColor = Colors.white;
 
   Future<void> requestCode() async {
-    final url = 'http://$ip:3000/api/v1/users/forgot-password';
+    const url = 'http://$ip:3000/api/v1/users/forgot-password';
     try {
       final response = await http.post(
         Uri.parse(url),
@@ -46,7 +46,7 @@ class _ForgotPasswordState extends State<ForgotPassword> {
         });
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text("Verification code sent to your email"),
+            content: const Text("Verification code sent to your email"),
             backgroundColor: primaryColor,
           ),
         );
@@ -55,7 +55,7 @@ class _ForgotPasswordState extends State<ForgotPassword> {
           SnackBar(
             content: Text(
               "Error: ${json.decode(response.body)['message']}",
-              style: TextStyle(color: Colors.white),
+              style: const TextStyle(color: Colors.white),
             ),
             backgroundColor: Colors.red,
           ),
@@ -66,7 +66,7 @@ class _ForgotPasswordState extends State<ForgotPassword> {
         SnackBar(
           content: Text(
             "An error occurred: $error",
-            style: TextStyle(color: Colors.white),
+            style: const TextStyle(color: Colors.white),
           ),
           backgroundColor: Colors.red,
         ),
@@ -75,7 +75,7 @@ class _ForgotPasswordState extends State<ForgotPassword> {
   }
 
   Future<void> verifyCode() async {
-    final url = 'http://$ip:3000/api/v1/users/verify-reset-code';
+    const url = 'http://$ip:3000/api/v1/users/verify-reset-code';
     try {
       final response = await http.post(
         Uri.parse(url),
@@ -92,7 +92,7 @@ class _ForgotPasswordState extends State<ForgotPassword> {
         });
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text("Code verified successfully"),
+            content: const Text("Code verified successfully"),
             backgroundColor: primaryColor,
           ),
         );
@@ -101,7 +101,7 @@ class _ForgotPasswordState extends State<ForgotPassword> {
           SnackBar(
             content: Text(
               "Error: ${json.decode(response.body)['message']}",
-              style: TextStyle(color: Colors.white),
+              style: const TextStyle(color: Colors.white),
             ),
             backgroundColor: Colors.red,
           ),
@@ -112,7 +112,7 @@ class _ForgotPasswordState extends State<ForgotPassword> {
         SnackBar(
           content: Text(
             "An error occurred: $error",
-            style: TextStyle(color: Colors.white),
+            style: const TextStyle(color: Colors.white),
           ),
           backgroundColor: Colors.red,
         ),
@@ -121,7 +121,7 @@ class _ForgotPasswordState extends State<ForgotPassword> {
   }
 
   Future<void> resetPassword() async {
-    final url = 'http://$ip:3000/api/v1/users/reset-password';
+    const url = 'http://$ip:3000/api/v1/users/reset-password';
     try {
       final response = await http.post(
         Uri.parse(url),
@@ -135,7 +135,7 @@ class _ForgotPasswordState extends State<ForgotPassword> {
       if (response.statusCode == 200) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text("Password reset successfully"),
+            content: const Text("Password reset successfully"),
             backgroundColor: primaryColor,
           ),
         );
@@ -145,7 +145,7 @@ class _ForgotPasswordState extends State<ForgotPassword> {
           SnackBar(
             content: Text(
               "Error: ${json.decode(response.body)['message']}",
-              style: TextStyle(color: Colors.white),
+              style: const TextStyle(color: Colors.white),
             ),
             backgroundColor: Colors.red,
           ),
@@ -156,7 +156,7 @@ class _ForgotPasswordState extends State<ForgotPassword> {
         SnackBar(
           content: Text(
             "An error occurred: $error",
-            style: TextStyle(color: Colors.white),
+            style: const TextStyle(color: Colors.white),
           ),
           backgroundColor: Colors.red,
         ),
@@ -170,7 +170,7 @@ class _ForgotPasswordState extends State<ForgotPassword> {
       backgroundColor: backgroundColor,
       body: SingleChildScrollView(
         child: Padding(
-          padding: EdgeInsets.all(24.0),
+          padding: const EdgeInsets.all(24.0),
           child: Form(
             key: _formKey,
             child: Column(
@@ -180,7 +180,7 @@ class _ForgotPasswordState extends State<ForgotPassword> {
                   icon: Icon(Icons.arrow_back_ios, color: textColor),
                   onPressed: () => Navigator.pop(context),
                 ),
-                SizedBox(height: 80.0),
+                const SizedBox(height: 80.0),
 
 
                 Center(
@@ -206,7 +206,7 @@ class _ForgotPasswordState extends State<ForgotPassword> {
                     ),
                  ),
 
-                SizedBox(height: 40.0),
+                const SizedBox(height: 40.0),
 
                 if (!codeSent) ...[
                   _buildTextField(
@@ -221,7 +221,7 @@ class _ForgotPasswordState extends State<ForgotPassword> {
                     },
                     onChanged: (value) => email = value,
                   ),
-                  SizedBox(height: 24.0),
+                  const SizedBox(height: 24.0),
                   _buildButton(
                     text: "Send Verification Code",
                     onPressed: () {
@@ -245,7 +245,7 @@ class _ForgotPasswordState extends State<ForgotPassword> {
                     },
                     onChanged: (value) => verificationCode = value,
                   ),
-                  SizedBox(height: 24.0),
+                  const SizedBox(height: 24.0),
                   _buildButton(
                     text: "Verify Code",
                     onPressed: () {
@@ -273,7 +273,7 @@ class _ForgotPasswordState extends State<ForgotPassword> {
                     },
                     onChanged: (value) => newPassword = value,
                   ),
-                  SizedBox(height: 16.0),
+                  const SizedBox(height: 16.0),
                   _buildTextField(
                     controller: confirmPasswordController,
                     label: "Confirm Password",
@@ -290,7 +290,7 @@ class _ForgotPasswordState extends State<ForgotPassword> {
                     },
                     onChanged: (value) => confirmPassword = value,
                   ),
-                  SizedBox(height: 24.0),
+                  const SizedBox(height: 24.0),
                   _buildButton(
                     text: "Reset Password",
                     onPressed: () {
@@ -320,7 +320,7 @@ class _ForgotPasswordState extends State<ForgotPassword> {
       decoration: BoxDecoration(
         color: cardColor,
         borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: primaryColor.withOpacity(0.3), width: 1),
+        border: Border.all(color: primaryColor.withValues(), width: 1),
       ),
       child: TextFormField(
         controller: controller,
@@ -337,14 +337,14 @@ class _ForgotPasswordState extends State<ForgotPassword> {
           ),
           filled: true,
           fillColor: cardColor,
-          contentPadding: EdgeInsets.symmetric(horizontal: 20, vertical: 16),
+          contentPadding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
           focusedBorder: OutlineInputBorder(
             borderRadius: BorderRadius.circular(16),
-            borderSide: BorderSide(color: Colors.white, width: 1),
+            borderSide: const BorderSide(color: Colors.white, width: 1),
           ),
           enabledBorder: OutlineInputBorder(
             borderRadius: BorderRadius.circular(16),
-            borderSide: BorderSide(color: primaryColor.withOpacity(0.3), width: 1),
+            borderSide: BorderSide(color: primaryColor.withValues(), width: 1),
           ),
         ),
         validator: validator,
@@ -357,25 +357,25 @@ class _ForgotPasswordState extends State<ForgotPassword> {
     required String text,
     required VoidCallback onPressed,
   }) {
-    return Container(
+    return SizedBox(
       width: double.infinity,
       height: 56,
       child: ElevatedButton(
         onPressed: onPressed,
-        child: Text(
-          text,
-          style: TextStyle(
-            fontSize: 16,
-            fontWeight: FontWeight.bold,
-            color: Colors.black,
-          ),
-        ),
         style: ElevatedButton.styleFrom(
           backgroundColor: primaryColor,
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(16),
           ),
           elevation: 4,
+        ),
+        child: Text(
+          text,
+          style: const TextStyle(
+            fontSize: 16,
+            fontWeight: FontWeight.bold,
+            color: Colors.black,
+          ),
         ),
       ),
     );
