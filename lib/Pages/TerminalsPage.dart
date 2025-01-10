@@ -615,7 +615,7 @@ class _TerminalPageState extends State<TerminalPage> {
       shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.circular(20),
       ),
-      shadowColor: Colors.grey.withAlpha(2),
+      shadowColor: Colors.grey.withOpacity(0.2),
       child: Container(
         decoration: BoxDecoration(
           gradient: LinearGradient(

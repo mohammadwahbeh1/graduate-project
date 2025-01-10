@@ -505,7 +505,6 @@ class _homePageState extends State<homePage> {
                     ),
                   ),
                 ),
-                // Additional Information or Stats can be added here
               ],
             ),
           ),
@@ -513,7 +512,7 @@ class _homePageState extends State<homePage> {
           // Drawer List Items
           AnimationLimiter(
             child: Column(
-              children: List.generate(8, (index) { // Increased to 7 to include Dark Mode
+              children: List.generate(7, (index) {
                 return AnimationConfiguration.staggeredList(
                   position: index,
                   duration: const Duration(milliseconds: 375),
@@ -523,7 +522,7 @@ class _homePageState extends State<homePage> {
                       child: Column(
                         children: [
                           // Dark Mode Toggle
-                          if (index == 6)
+                          if (index == 5)
                             SwitchListTile(
                               secondary: Icon(
                                 isDarkMode ? Icons.dark_mode : Icons.light_mode,
@@ -559,7 +558,7 @@ class _homePageState extends State<homePage> {
                                 _handleDrawerTap(index);
                               },
                             ),
-                          if (index < 8) const Divider(),
+                          if (index < 6) const Divider(),
                         ],
                       ),
                     ),
@@ -580,15 +579,13 @@ class _homePageState extends State<homePage> {
       case 1:
         return const Icon(Icons.location_on, color: Colors.blue);
       case 2:
-        return const Icon(Icons.contact_phone, color: Colors.blue);
-      case 3:
         return const Icon(Icons.book_online, color: Colors.blue);
-      case 4:
+      case 3:
         return const Icon(Icons.event_available, color: Colors.blue);
-      case 5:
-        return const Icon(Icons.logout, color: Colors.blue);
-      case 7:
+      case 4:
         return const Icon(Icons.support_agent, color: Colors.blue);
+      case 6:
+        return const Icon(Icons.logout, color: Colors.blue);
       default:
         return const Icon(Icons.help, color: Colors.blue);
     }
@@ -601,17 +598,15 @@ class _homePageState extends State<homePage> {
       case 1:
         return 'Closest Point';
       case 2:
-        return 'Contact Us';
-      case 3:
         return 'Reservation';
-      case 4:
+      case 3:
         return 'Book A Taxi';
-      case 5:
-        return 'Log out';
-      case 6:
-        return 'Dark Mode';
-      case 7:
+      case 4:
         return 'Customer Service';
+      case 5:
+        return 'Dark Mode';
+      case 6:
+        return 'Log out';
       default:
         return 'Unknown';
     }
@@ -630,34 +625,30 @@ class _homePageState extends State<homePage> {
         });
         break;
       case 2:
-
-
-        break;
-      case 3:
         setState(() {
           _currentIndex = 3;
         });
         break;
-      case 4:
+      case 3:
         setState(() {
           _currentIndex = 2;
         });
         break;
-      case 5:
-        Navigator.pushReplacement(
-          context,
-          MaterialPageRoute(builder: (context) => const LoginPage()),
-        );
-        break;
-      case 6:
-      // Handled by the SwitchListTile
-        break;
-      case 7:
+      case 4:
         Navigator.push(
           context,
           MaterialPageRoute(
             builder: (context) => const ServiceChatPage(receiverId: '13'),
           ),
+        );
+        break;
+      case 5:
+      // Handled by the SwitchListTile
+        break;
+      case 6:
+        Navigator.pushReplacement(
+          context,
+          MaterialPageRoute(builder: (context) => const LoginPage()),
         );
         break;
       default:

@@ -514,7 +514,7 @@ class _ReservationsPageState extends State<ReservationsPage> {
                 width: double.infinity,
                 padding: const EdgeInsets.all(8),
                 decoration: BoxDecoration(
-                  color: Colors.red.withValues(),
+                  color: Colors.red.withOpacity(0.1),
                   borderRadius: BorderRadius.circular(8),
                 ),
                 child: const Row(
@@ -589,7 +589,7 @@ class _ReservationsPageState extends State<ReservationsPage> {
             style: buttonTextStyle.copyWith(color: Colors.red),
           ),
           style: TextButton.styleFrom(
-            backgroundColor: Colors.red.withValues(),
+            backgroundColor: Colors.red.withOpacity(0.1),
             minimumSize: Size.zero,
             padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 2),
             shape: RoundedRectangleBorder(
@@ -610,7 +610,7 @@ class _ReservationsPageState extends State<ReservationsPage> {
             style: buttonTextStyle.copyWith(color: Colors.blue),
           ),
           style: TextButton.styleFrom(
-            backgroundColor: Colors.blue.withValues(),
+            backgroundColor: Colors.blue.withOpacity(0.1),
             minimumSize: Size.zero,
             padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 2),
             shape: RoundedRectangleBorder(
@@ -626,7 +626,7 @@ class _ReservationsPageState extends State<ReservationsPage> {
             style: buttonTextStyle.copyWith(color: Colors.red),
           ),
           style: TextButton.styleFrom(
-            backgroundColor:Colors.red.withValues(),
+            backgroundColor: Colors.red.withOpacity(0.1),
             minimumSize: Size.zero,
             padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 2),
             shape: RoundedRectangleBorder(
@@ -642,7 +642,7 @@ class _ReservationsPageState extends State<ReservationsPage> {
             style: buttonTextStyle.copyWith(color: Colors.amber),
           ),
           style: TextButton.styleFrom(
-            backgroundColor: Colors.amber.withValues(),
+            backgroundColor: Colors.amber.withOpacity(0.1),
             minimumSize: Size.zero,
             padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 2),
             shape: RoundedRectangleBorder(
@@ -663,7 +663,7 @@ class _ReservationsPageState extends State<ReservationsPage> {
             style: buttonTextStyle.copyWith(color: Colors.green),
           ),
           style: TextButton.styleFrom(
-            backgroundColor: Colors.green.withValues(),
+            backgroundColor: Colors.green.withOpacity(0.1),
             minimumSize: Size.zero,
             padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 2),
             shape: RoundedRectangleBorder(
@@ -679,7 +679,7 @@ class _ReservationsPageState extends State<ReservationsPage> {
             style: buttonTextStyle.copyWith(color: Colors.red),
           ),
           style: TextButton.styleFrom(
-            backgroundColor: Colors.red.withValues(),
+            backgroundColor: Colors.red.withOpacity(0.1),
             minimumSize: Size.zero,
             padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 2),
             shape: RoundedRectangleBorder(
@@ -700,7 +700,7 @@ class _ReservationsPageState extends State<ReservationsPage> {
             style: buttonTextStyle.copyWith(color: Colors.green),
           ),
           style: TextButton.styleFrom(
-            backgroundColor: Colors.green.withValues(),
+            backgroundColor: Colors.green.withOpacity(0.1),
             minimumSize: Size.zero,
             padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 2),
             shape: RoundedRectangleBorder(
@@ -759,7 +759,7 @@ class _ReservationsPageState extends State<ReservationsPage> {
     return Container(
       padding: const EdgeInsets.all(8),
       decoration: BoxDecoration(
-        color: Colors.blue.withValues(),
+        color: Colors.blue.withOpacity(0.1),
         borderRadius: BorderRadius.circular(8),
       ),
       child: Row(
