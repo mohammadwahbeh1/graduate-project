@@ -6,8 +6,8 @@ import 'package:google_maps_flutter/google_maps_flutter.dart';
 import 'package:http/http.dart' as http;
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'dart:convert';
-const String ip = "192.168.1.12";
 
+const String ip = "192.168.1.12";
 
 class ViewDriversOnMapPage extends StatefulWidget {
   const ViewDriversOnMapPage({super.key});
@@ -19,6 +19,7 @@ class ViewDriversOnMapPage extends StatefulWidget {
 class _ViewDriversPageState extends State<ViewDriversOnMapPage> {
   GoogleMapController? _mapController;
   Set<Marker> _markers = {};
+  Set<Marker> _originalMarkers = {};
   bool _isLoading = true;
   String? _errorMessage;
   final _secureStorage = const FlutterSecureStorage();
@@ -36,12 +37,15 @@ class _ViewDriversPageState extends State<ViewDriversOnMapPage> {
     final ui.Image image = await decodeImageFromList(bytes);
 
     final PictureRecorder recorder = PictureRecorder();
-    final Canvas canvas = Canvas(recorder, Rect.fromPoints(const Offset(0, 0), const Offset(100, 100)));
+    final Canvas canvas = Canvas(
+      recorder,
+      Rect.fromPoints(const Offset(0, 0), const Offset(100, 100)),
+    );
     canvas.drawImageRect(
-        image,
-        Rect.fromLTWH(0, 0, image.width.toDouble(), image.height.toDouble()),
-        const Rect.fromLTWH(0, 0, 100, 100),
-        Paint()
+      image,
+      Rect.fromLTWH(0, 0, image.width.toDouble(), image.height.toDouble()),
+      const Rect.fromLTWH(0, 0, 100, 100),
+      Paint(),
     );
 
     final Picture picture = recorder.endRecording();
@@ -67,18 +71,21 @@ class _ViewDriversPageState extends State<ViewDriversOnMapPage> {
         for (var vehicle in data) {
           final driver = vehicle['driver'];
           final customIcon = await _loadCustomIcon();
-          _markers.add(
-            Marker(
-              markerId: MarkerId(vehicle['vehicle_id'].toString()),
-              position: LatLng(vehicle['latitude'], vehicle['longitude']),
-              infoWindow: InfoWindow(
-                title: driver['username'],
-                snippet: 'Phone: ${driver['phone_number']}\nEmail: ${driver['email']}',
-              ),
-              icon: customIcon,
+          final marker = Marker(
+            markerId: MarkerId(vehicle['vehicle_id'].toString()),
+            position: LatLng(vehicle['latitude'], vehicle['longitude']),
+            infoWindow: InfoWindow(
+              title: driver['username'],
+              snippet: 'Phone: ${driver['phone_number']}\nEmail: ${driver['email']}',
             ),
+            icon: customIcon,
           );
+          _markers.add(marker);
         }
+
+        // حفظ العلامات الأصلية
+        _originalMarkers = Set.from(_markers);
+
         if (_mapController != null && _markers.isNotEmpty) {
           _centerMapAroundMarkers();
         }
@@ -103,34 +110,40 @@ class _ViewDriversPageState extends State<ViewDriversOnMapPage> {
     var latitudes = _markers.map((m) => m.position.latitude).toList();
     var longitudes = _markers.map((m) => m.position.longitude).toList();
     bounds = LatLngBounds(
-      southwest: LatLng(latitudes.reduce((a, b) => a < b ? a : b),
-          longitudes.reduce((a, b) => a < b ? a : b)),
-      northeast: LatLng(latitudes.reduce((a, b) => a > b ? a : b),
-          longitudes.reduce((a, b) => a > b ? a : b)),
+      southwest: LatLng(
+        latitudes.reduce((a, b) => a < b ? a : b),
+        longitudes.reduce((a, b) => a < b ? a : b),
+      ),
+      northeast: LatLng(
+        latitudes.reduce((a, b) => a > b ? a : b),
+        longitudes.reduce((a, b) => a > b ? a : b),
+      ),
     );
     _mapController?.animateCamera(CameraUpdate.newLatLngBounds(bounds, 50));
   }
 
   void _searchDriver(String query) {
     final lowerCaseQuery = query.toLowerCase();
-    final filteredMarkers = _markers.where((marker) {
-      final infoWindow = marker.infoWindow;
-      final driverName = infoWindow.title?.toLowerCase() ?? '';
-      final phoneNumber = infoWindow.snippet?.toLowerCase() ?? '';
-      final email = infoWindow.snippet?.toLowerCase() ?? '';
-      return driverName.contains(lowerCaseQuery) ||
-          phoneNumber.contains(lowerCaseQuery) ||
-          email.contains(lowerCaseQuery);
-    }).toSet();
 
     setState(() {
-      _markers = filteredMarkers;
+      if (query.isEmpty) {
+        _markers = Set.from(_originalMarkers);
+      } else {
+        _markers = _originalMarkers.where((marker) {
+          final infoWindow = marker.infoWindow;
+          final driverName = infoWindow.title?.toLowerCase() ?? '';
+          final phoneNumber = infoWindow.snippet?.toLowerCase() ?? '';
+          final email = infoWindow.snippet?.toLowerCase() ?? '';
+          return driverName.contains(lowerCaseQuery) ||
+              phoneNumber.contains(lowerCaseQuery) ||
+              email.contains(lowerCaseQuery);
+        }).toSet();
+      }
     });
 
-    if (filteredMarkers.isNotEmpty) {
+    if (_markers.isNotEmpty) {
       _centerMapAroundMarkers();
     } else {
-      // Reset the camera to the default position if no drivers are found
       _resetCamera();
     }
   }
@@ -157,253 +170,28 @@ class _ViewDriversPageState extends State<ViewDriversOnMapPage> {
       ),
       body: Stack(
         children: [
-             _isLoading
-                ? const Center(child: CircularProgressIndicator())
-                : _errorMessage != null
-                ? Center(child: Text(_errorMessage!))
-                : GoogleMap(
-              initialCameraPosition: const CameraPosition(
-                target: LatLng(37.4221, -122.084),
-                zoom: 10,
-              ),
-              markers: _markers,
-              onMapCreated: (GoogleMapController controller) {
-                _mapController = controller;
-                _mapController?.setMapStyle('''
-            [
-              {
-                "elementType": "geometry",
-                "stylers": [
-                  {
-                    "color": "#ebe3cd"
-                  }
-                ]
-              },
-              {
-                "elementType": "labels.text.fill",
-                "stylers": [
-                  {
-                    "color": "#523735"
-                  }
-                ]
-              },
-              {
-                "elementType": "labels.text.stroke",
-                "stylers": [
-                  {
-                    "color": "#f5f1e6"
-                  }
-                ]
-              },
-              {
-                "featureType": "administrative",
-                "elementType": "geometry.stroke",
-                "stylers": [
-                  {
-                    "color": "#c9b2a6"
-                  }
-                ]
-              },
-              {
-                "featureType": "administrative.land_parcel",
-                "elementType": "geometry.stroke",
-                "stylers": [
-                  {
-                    "color": "#dcd2be"
-                  }
-                ]
-              },
-              {
-                "featureType": "administrative.land_parcel",
-                "elementType": "labels.text.fill",
-                "stylers": [
-                  {
-                    "color": "#ae9e90"
-                  }
-                ]
-              },
-              {
-                "featureType": "landscape.natural",
-                "elementType": "geometry",
-                "stylers": [
-                  {
-                    "color": "#dfd2ae"
-                  }
-                ]
-              },
-              {
-                "featureType": "poi",
-                "elementType": "geometry",
-                "stylers": [
-                  {
-                    "color": "#dfd2ae"
-                  }
-                ]
-              },
-              {
-                "featureType": "poi",
-                "elementType": "labels.text.fill",
-                "stylers": [
-                  {
-                    "color": "#93817c"
-                  }
-                ]
-              },
-              {
-                "featureType": "poi.park",
-                "elementType": "geometry.fill",
-                "stylers": [
-                  {
-                    "color": "#a5b076"
-                  }
-                ]
-              },
-              {
-                "featureType": "poi.park",
-                "elementType": "labels.text.fill",
-                "stylers": [
-                  {
-                    "color": "#447530"
-                  }
-                ]
-              },
-              {
-                "featureType": "road",
-                "elementType": "geometry",
-                "stylers": [
-                  {
-                    "color": "#f5f1e6"
-                  }
-                ]
-              },
-              {
-                "featureType": "road.arterial",
-                "elementType": "labels.text.fill",
-                "stylers": [
-                  {
-                    "color": "#757575"
-                  }
-                ]
-              },
-              {
-                "featureType": "road.highway",
-                "elementType": "geometry",
-                "stylers": [
-                  {
-                    "color": "#f8c967"
-                  }
-                ]
-              },
-              {
-                "featureType": "road.highway",
-                "elementType": "geometry.stroke",
-                "stylers": [
-                  {
-                    "color": "#e9bc62"
-                  }
-                ]
-              },
-              {
-                "featureType": "road.highway.controlled_access",
-                "elementType": "geometry",
-                "stylers": [
-                  {
-                    "color": "#e98d58"
-                  }
-                ]
-              },
-              {
-                "featureType": "road.highway.controlled_access",
-                "elementType": "geometry.stroke",
-                "stylers": [
-                  {
-                    "color": "#db8555"
-                  }
-                ]
-              },
-              {
-                "featureType": "road.local",
-                "elementType": "labels.text.fill",
-                "stylers": [
-                  {
-                    "color": "#806b63"
-                  }
-                ]
-              },
-              {
-                "featureType": "transit.line",
-                "elementType": "geometry",
-                "stylers": [
-                  {
-                    "color": "#dfd2ae"
-                  }
-                ]
-              },
-              {
-                "featureType": "transit.line",
-                "elementType": "labels.text.fill",
-                "stylers": [
-                  {
-                    "color": "#8f7d77"
-                  }
-                ]
-              },
-              {
-                "featureType": "transit.line",
-                "elementType": "labels.text.stroke",
-                "stylers": [
-                  {
-                    "color": "#ebe3cd"
-                  }
-                ]
-              },
-              {
-                "featureType": "transit.station",
-                "elementType": "geometry",
-                "stylers": [
-                  {
-                    "color": "#dfd2ae"
-                  }
-                ]
-              },
-              {
-                "featureType": "water",
-                "elementType": "geometry.fill",
-                "stylers": [
-                  {
-                    "color": "#b9d3c2"
-                  }
-                ]
-              },
-              {
-                "featureType": "water",
-                "elementType": "labels.text.fill",
-                "stylers": [
-                  {
-                    "color": "#92998d"
-                  }
-                ]
-              }
-            ]
-          ''');
-                if (_markers.isNotEmpty) {
-                  _centerMapAroundMarkers();
-                }
-              },
+          _isLoading
+              ? const Center(child: CircularProgressIndicator())
+              : _errorMessage != null
+              ? Center(child: Text(_errorMessage!))
+              : GoogleMap(
+            initialCameraPosition: const CameraPosition(
+              target: LatLng(37.4221, -122.084),
+              zoom: 20,
             ),
-
+            markers: _markers,
+            onMapCreated: (GoogleMapController controller) {
+              _mapController = controller;
+              if (_markers.isNotEmpty) {
+                _centerMapAroundMarkers();
+              }
+            },
+          ),
           Padding(
             padding: const EdgeInsets.all(10.0),
-
             child: Container(
-
-
-
               decoration: BoxDecoration(
-
-
                 borderRadius: BorderRadius.circular(25),
-
                 boxShadow: [
                   BoxShadow(
                     color: Colors.black.withOpacity(0.1),
@@ -413,18 +201,16 @@ class _ViewDriversPageState extends State<ViewDriversOnMapPage> {
                 ],
               ),
               child: TextField(
-
-
                 controller: _searchController,
-
                 decoration: InputDecoration(
-
                   prefixIcon: Icon(Icons.search, color: Colors.grey[600]),
                   suffixIcon: IconButton(
                     icon: Icon(Icons.clear, color: Colors.grey[600]),
                     onPressed: () {
                       _searchController.clear();
-                      _fetchDriverLocations(); // Reset the markers when cleared
+                      setState(() {
+                        _markers = Set.from(_originalMarkers);
+                      }); // Reset the markers when cleared
                     },
                   ),
                   hintText: 'Search by name, phone, or email',
@@ -435,7 +221,7 @@ class _ViewDriversPageState extends State<ViewDriversOnMapPage> {
                   ),
                   filled: true,
                   fillColor: Colors.white,
-                  contentPadding: const EdgeInsets.symmetric(vertical: 10.0,),
+                  contentPadding: const EdgeInsets.symmetric(vertical: 10.0),
                 ),
                 onChanged: _searchDriver,
               ),
@@ -445,12 +231,11 @@ class _ViewDriversPageState extends State<ViewDriversOnMapPage> {
       ),
       floatingActionButton: _markers.isNotEmpty
           ? FloatingActionButton(
-
         onPressed: _centerMapAroundMarkers,
         child: const Icon(Icons.my_location),
       )
           : null,
-      floatingActionButtonLocation: FloatingActionButtonLocation.startFloat
+      floatingActionButtonLocation: FloatingActionButtonLocation.startFloat,
     );
   }
 }

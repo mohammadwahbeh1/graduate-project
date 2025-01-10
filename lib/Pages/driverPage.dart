@@ -230,7 +230,7 @@ class _DriverPageState extends State<DriverPage> {
             label: 'Accepted Reservations',
           ),
           BottomNavigationBarItem(
-            icon: Icon(Icons.check),
+            icon: Icon(Icons.recommend),
             label: 'Recommendation',
           ),
         ],
@@ -434,27 +434,10 @@ class _DriverPageState extends State<DriverPage> {
               ],
             ),
           ),
-          const SizedBox(height: 20),
-          // Drawer List Items
-          ListTile(
-            leading: const Icon(Icons.map, size: 28),
-            title: const Text('My Routes', style: TextStyle(fontSize: 16)),
-            onTap: () {
-              Navigator.pop(context);
-              _navigateToMyRoutes(context);
-            },
-          ),
+
           const SizedBox(height: 20),
           ListTile(
-            leading: const Icon(Icons.contact_phone),
-            title: const Text('Contact with Us'),
-            onTap: () {
-              Navigator.pop(context);
-            },
-          ),
-          const SizedBox(height: 20),
-          ListTile(
-            leading: const Icon(Icons.notifications, size: 28),
+            leading: const Icon(Icons.recommend, size: 28),
             title: const Text('Recommendations page', style: TextStyle(fontSize: 16)),
             onTap: () {
               Navigator.pop(context);
@@ -463,6 +446,19 @@ class _DriverPageState extends State<DriverPage> {
                 MaterialPageRoute(builder: (context) => const Recommendationspage()),
               );            },
           ),
+          const SizedBox(height: 20),
+
+          ListTile(
+            leading: const Icon(Icons.check_circle_sharp, size: 28),
+            title: const Text('Accepted Reservations', style: TextStyle(fontSize: 16)),
+            onTap: () {
+              Navigator.pop(context);
+              Navigator.push(
+                context,
+                MaterialPageRoute(builder: (context) => const AcceptedReservationsPage()),
+              );            },
+          ),
+
           const SizedBox(height: 20),
           ListTile(
             leading: const Icon(Icons.supervisor_account, size: 28),
@@ -580,11 +576,6 @@ class _DriverPageState extends State<DriverPage> {
     );
   }
 
-  void _navigateToMyRoutes(BuildContext context) {
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(content: Text('Navigating to My Routes...')),
-    );
-  }
 
 
 
