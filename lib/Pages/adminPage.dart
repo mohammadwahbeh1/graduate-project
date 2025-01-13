@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 import 'DriversAndLinesPage.dart';
+import 'DriversRequestsPage.dart';
 import 'Reports.dart';
 import 'TerminalsPage.dart';
 import 'UsersManagementPage.dart';
@@ -129,7 +130,7 @@ class ManagerPage extends StatelessWidget {
                     Navigator.push(
                       context,
                       MaterialPageRoute(
-                        builder: (context) => TerminalPage(),
+                        builder: (context) => const TerminalPage(),
                       ),
                     );
                   },
@@ -142,7 +143,7 @@ class ManagerPage extends StatelessWidget {
                     Navigator.push(
                       context,
                       MaterialPageRoute(
-                        builder: (context) => StatisticsPage(),
+                        builder: (context) => const StatisticsPage(),
                       ),
                     );
                   },
@@ -157,6 +158,17 @@ class ManagerPage extends StatelessWidget {
                       MaterialPageRoute(
                         builder: (context) => const DriversAndLinesPage(),
                       ),
+                    );
+                  },
+                ),_buildDrawerItem(
+                  context,
+                  icon: Icons.check,
+                  title: 'Accept Driver',
+                  onTap: () {
+                    Navigator.pop(context);
+                    Navigator.pushReplacement(
+                      context,
+                      MaterialPageRoute(builder: (context) => const DriversRequestsPage()),
                     );
                   },
                 ),
