@@ -320,7 +320,7 @@ class _ForgotPasswordState extends State<ForgotPassword> {
       decoration: BoxDecoration(
         color: cardColor,
         borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: primaryColor.withValues(), width: 1),
+        border: Border.all(color: primaryColor.withOpacity(0.2), width: 1),
       ),
       child: TextFormField(
         controller: controller,
@@ -344,7 +344,7 @@ class _ForgotPasswordState extends State<ForgotPassword> {
           ),
           enabledBorder: OutlineInputBorder(
             borderRadius: BorderRadius.circular(16),
-            borderSide: BorderSide(color: primaryColor.withValues(), width: 1),
+            borderSide: BorderSide(color: primaryColor.withOpacity(0.2), width: 1),
           ),
         ),
         validator: validator,

@@ -5,8 +5,6 @@ import 'package:web_socket_channel/web_socket_channel.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:untitled/Pages/serviceChatPage.dart';
 
-
-
 class Conversation {
   final int userId;
   final String username;
@@ -36,37 +34,41 @@ class _ServiceDashboardPageState extends State<ServiceDashboardPage> {
     super.initState();
     _conversationsFuture = fetchMessages();
     _initializeWebSocket();
-
   }
-
 
   void _initializeWebSocket() async {
     final supporterId = await storage.read(key: 'user_id');
     print('Support ID: $supporterId');
 
     _channel = WebSocketChannel.connect(
-      Uri.parse('ws://192.168.1.12:3000/ws/notifications?userId=$supporterId'),
+      Uri.parse('ws://192.168.1.8:3000/ws/notifications?userId=$supporterId'),
     );
 
-    _channel.stream.listen(
-          (message) {
-        print('Raw WebSocket message: $message');
-        final parsedMessage = jsonDecode(message);
+    _channel.stream.listen((dynamic message) {
+      Map<String, dynamic> parsedMessage;
+      if (message is String) {
+        parsedMessage = jsonDecode(message);
+      } else {
+        parsedMessage = Map<String, dynamic>.from(message);
+      }
 
-        if (parsedMessage['type'] == 'chat') {
+      switch (parsedMessage['type']) {
+        case 'chat':
+        case 'delete_message':
+        case 'message_sent':
           setState(() {
             _conversationsFuture = fetchMessages();
           });
-        }
-      },
-    );
+          break;
+      }
+    });
   }
 
   Future<List<Conversation>> fetchMessages() async {
     print("Fetching messages...");
     String? token = await storage.read(key: 'jwt_token');
     final response = await http.get(
-      Uri.parse('http://192.168.1.12:3000/api/v1/messages'),
+      Uri.parse('http://192.168.1.8:3000/api/v1/messages'),
       headers: {
         'Authorization': 'Bearer $token',
         'Content-Type': 'application/json',
@@ -75,7 +77,10 @@ class _ServiceDashboardPageState extends State<ServiceDashboardPage> {
 
     if (response.statusCode == 200) {
       List jsonResponse = json.decode(response.body);
-      List<Message> messages = jsonResponse.map((message) => Message.fromJson(message)).toList();
+      List<Message> messages = jsonResponse
+          .where((message) => message != null)
+          .map((message) => Message.fromJson(message))
+          .toList();
 
       final supporterId = await storage.read(key: 'user_id');
       final supporterIdInt = int.parse(supporterId ?? '13');
@@ -83,10 +88,13 @@ class _ServiceDashboardPageState extends State<ServiceDashboardPage> {
       Map<int, Conversation> conversations = {};
 
       for (var message in messages) {
-        int otherUserId = message.senderId == supporterIdInt ? message.receiverId : message.senderId;
+        int otherUserId = message.senderId == supporterIdInt
+            ? message.receiverId
+            : message.senderId;
 
         if (!conversations.containsKey(otherUserId) ||
-            DateTime.parse(message.timestamp).isAfter(DateTime.parse(conversations[otherUserId]!.lastMessage.timestamp))) {
+            DateTime.parse(message.timestamp)
+                .isAfter(DateTime.parse(conversations[otherUserId]!.lastMessage.timestamp))) {
           conversations[otherUserId] = Conversation(
             userId: otherUserId,
             username: message.senderName,
@@ -229,41 +237,40 @@ class ChatUserCard extends StatelessWidget {
           maxLines: 1,
           overflow: TextOverflow.ellipsis,
         ),
-          trailing: SizedBox(
-            width: 57,
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                Text(
-                  message.timestamp,
-                  style: const TextStyle(
-                    color: Color(0xFFF6D533),
-                    fontSize: 10,
-                  ),
-                  overflow: TextOverflow.ellipsis,
+        trailing: SizedBox(
+          width: 57,
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Text(
+                message.timestamp,
+                style: const TextStyle(
+                  color: Color(0xFFF6D533),
+                  fontSize: 10,
                 ),
-                if (!message.isRead)
-                  Container(
-                    margin: const EdgeInsets.only(top: 2),
-                    padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 2),
-                    decoration: const BoxDecoration(
-                      color: Color(0xFFF6D533),
-                      shape: BoxShape.circle,
-                    ),
-                    child: const Text(
-                      'New',
-                      style: TextStyle(
-                        color: Colors.black,
-                        fontSize: 9,
-                        fontWeight: FontWeight.bold,
-                      ),
+                overflow: TextOverflow.ellipsis,
+              ),
+              if (!message.isRead)
+                Container(
+                  margin: const EdgeInsets.only(top: 2),
+                  padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 2),
+                  decoration: const BoxDecoration(
+                    color: Color(0xFFF6D533),
+                    shape: BoxShape.circle,
+                  ),
+                  child: const Text(
+                    'New',
+                    style: TextStyle(
+                      color: Colors.black,
+                      fontSize: 9,
+                      fontWeight: FontWeight.bold,
                     ),
                   ),
-              ],
-            ),
-          )
-
+                ),
+            ],
+          ),
+        ),
       ),
     );
   }

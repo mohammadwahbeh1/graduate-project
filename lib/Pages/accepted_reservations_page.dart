@@ -13,7 +13,7 @@ import 'package:web_socket_channel/web_socket_channel.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:intl/intl.dart'; // For date formatting
 
-const String ip = "192.168.1.12";
+const String ip = "192.168.1.8";
 const storage = FlutterSecureStorage();
 
 class AcceptedReservationsPage extends StatefulWidget {
@@ -340,42 +340,7 @@ class _AcceptedReservationsPageState extends State<AcceptedReservationsPage> {
           ],
         ),
       ),
-      bottomNavigationBar: BottomNavigationBar(
-        currentIndex: 1, // Fixed to 1 for the Accepted Reservations page
-        onTap: (index) {
-          if (index == 0) {
-            Navigator.pushReplacement(
-              context,
-              MaterialPageRoute(builder: (context) => const DriverPage()),
-            );
-          }
-          else if(index == 2){
-            Navigator.push(
-              context,
-              MaterialPageRoute(builder: (context) => const Recommendationspage()),
-            );
 
-          }
-
-        }
-        ,
-
-        items: const [
-          BottomNavigationBarItem(
-            icon: Icon(Icons.access_time),
-            label: 'Pending Reservations',
-          ),
-          BottomNavigationBarItem(
-            icon: Icon(Icons.check),
-            label: 'Accepted Reservations',
-          ),
-          BottomNavigationBarItem(
-            icon: Icon(Icons.check),
-            label: 'Recommendation',
-          ),
-
-        ],
-      ),
     );
   }
 
@@ -593,45 +558,40 @@ class _AcceptedReservationsPageState extends State<AcceptedReservationsPage> {
               ],
             ),
           ),
-          const SizedBox(height: 20),
-          // Drawer List Items
-          ListTile(
-            leading: const Icon(Icons.map, size: 28),
-            title: const Text('My Routes', style: TextStyle(fontSize: 16)),
-            onTap: () {
-              Navigator.pop(context);
-              _navigateToMyRoutes(context);
-            },
-          ),
+
           const SizedBox(height: 20),
           ListTile(
-            leading: const Icon(Icons.contact_phone),
-            title: const Text('Contact with Us'),
-            onTap: () {
-              Navigator.pop(context);
-            },
-          ),
-          const SizedBox(height: 20),
-          ListTile(
-            leading: const Icon(Icons.notifications, size: 28),
-            title:
-            const Text('Notifications', style: TextStyle(fontSize: 16)),
-            onTap: () {
-              Navigator.pop(context);
-              _navigateToNotifications(context);
-            },
-          ),
-          const SizedBox(height: 20),
-          ListTile(
-            leading: const Icon(Icons.supervisor_account, size: 28),
-            title: const Text('Line Manager',
-                style: TextStyle(fontSize: 16)),
+            leading: const Icon(Icons.recommend, size: 28),
+            title: const Text('Recommendations page', style: TextStyle(fontSize: 16)),
             onTap: () {
               Navigator.pop(context);
               Navigator.push(
                 context,
-                MaterialPageRoute(
-                    builder: (context) => const LineManagerCall()),
+                MaterialPageRoute(builder: (context) => const Recommendationspage()),
+              );            },
+          ),
+          const SizedBox(height: 20),
+
+          ListTile(
+            leading: const Icon(Icons.check_circle_sharp, size: 28),
+            title: const Text('Accepted Reservations', style: TextStyle(fontSize: 16)),
+            onTap: () {
+              Navigator.pop(context);
+              Navigator.push(
+                context,
+                MaterialPageRoute(builder: (context) => const AcceptedReservationsPage()),
+              );            },
+          ),
+
+          const SizedBox(height: 20),
+          ListTile(
+            leading: const Icon(Icons.supervisor_account, size: 28),
+            title: const Text('Line Manager', style: TextStyle(fontSize: 16)),
+            onTap: () {
+              Navigator.pop(context);
+              Navigator.push(
+                context,
+                MaterialPageRoute(builder: (context) => const LineManagerCall()),
               );
             },
           ),

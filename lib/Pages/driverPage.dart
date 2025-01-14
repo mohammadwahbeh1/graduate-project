@@ -1,5 +1,6 @@
 // driver_page.dart
 import 'package:flutter/material.dart';
+import 'package:google_fonts/google_fonts.dart';
 import 'package:untitled/Pages/Recommendationspage.dart';
 import 'accepted_reservations_page.dart';
 import 'loginPage.dart';
@@ -11,7 +12,7 @@ import 'package:untitled/Pages/Location Service.dart';
 import 'package:web_socket_channel/web_socket_channel.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 
-const String ip = "192.168.1.12";
+const String ip = "192.168.1.8";
 const storage = FlutterSecureStorage();
 
 class DriverPage extends StatefulWidget {
@@ -27,9 +28,10 @@ class _DriverPageState extends State<DriverPage> {
   bool isLoading = true;
   String searchQuery = '';
   String username = '';
+  int _currentIndex = 0;
   final locationService = LocationService();
   WebSocketChannel? _channel;
-
+  late final List<Widget> navigationPages;
   @override
   void initState() {
     super.initState();
@@ -38,14 +40,43 @@ class _DriverPageState extends State<DriverPage> {
     WidgetsBinding.instance.addPostFrameCallback((_) {
       locationService.startTracking(context);
     });
+
+  }
+  List<Widget> getNavigationPages() {
+    return [
+      Builder(  // Wrap the Scaffold with Builder
+        builder: (BuildContext context) {
+          return Scaffold(
+            appBar: AppBar(
+              title: const Text(
+                "Pending Reservations",
+                style: TextStyle(fontWeight: FontWeight.w500),
+              ),
+              backgroundColor: const Color(0xFFF5CF24),
+              centerTitle: true,
+              leading: IconButton(
+                icon: const Icon(Icons.menu, color: Colors.black),
+                onPressed: () {
+                  Scaffold.of(context).openDrawer();
+                },
+              ),
+              actions: [
+                IconButton(
+                  icon: const Icon(Icons.person, size: 30, color: Colors.black),
+                  onPressed: () => _showProfileOptions(context),
+                ),
+              ],
+            ),
+            body: _buildPendingReservationsContent(),
+          );
+        },
+      ),
+      const AcceptedReservationsPage(),
+      const Recommendationspage(),
+    ];
   }
 
-  @override
-  void dispose() {
-    locationService.stopTracking();
-    super.dispose();
-    _channel?.sink.close();
-  }
+
 
   void _filterReservations() {
     setState(() {
@@ -118,126 +149,144 @@ class _DriverPageState extends State<DriverPage> {
       print("Error fetching user profile: $e");
     }
   }
+  Widget _buildPendingReservationsContent() {
+    return isLoading
+        ? const Center(child: CircularProgressIndicator())
+        : Column(
+      children: [
+        Padding(
+          padding: const EdgeInsets.all(16.0),
+          child: TextField(
+            decoration: const InputDecoration(
+              hintText: 'Search',
+              border: OutlineInputBorder(
+                borderRadius: BorderRadius.all(Radius.circular(12)),
+              ),
+              prefixIcon: Icon(Icons.search),
+              fillColor: Colors.white,
+              filled: true,
+            ),
+            onChanged: (value) {
+              setState(() {
+                searchQuery = value;
+                _filterReservations();
+              });
+            },
+          ),
+        ),
+        Expanded(
+          child: ListView(
+            children: [
+              if (filteredPendingReservations.isNotEmpty) ...[
+                for (var reservation in filteredPendingReservations)
+                  _buildReservationCard(
+                    reservation: reservation,
+                    isPending: true,
+                    onAction: () {
+                      _showConfirmationDialog(
+                        context: context,
+                        title: 'Accept Reservation',
+                        message: 'Are you sure you want to accept this reservation?',
+                        onConfirm: () {
+                          _acceptReservation(
+                            reservation['reservation_id'],
+                            reservation['user_id'].toString(),
+                          );
+                        },
+                        confirmText: 'Accept',
+                      );
+                    },
+                  ),
+              ],
+              if (filteredPendingReservations.isEmpty)
+                const Padding(
+                  padding: EdgeInsets.all(16.0),
+                  child: Center(child: Text("No pending reservations.")),
+                ),
+            ],
+          ),
+        ),
+      ],
+    );
+  }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(
-        title: const Text(
-          "Driver Dashboard",
-          style: TextStyle(fontWeight: FontWeight.w500),
-        ),
-        backgroundColor: const Color(0xFFF5CF24),
-        centerTitle: true,
-        actions: [
-          IconButton(
-            icon: const Icon(
-              Icons.person,
-              size: 30,
-              color: Colors.black,
-            ),
-            onPressed: () {
-              _showProfileOptions(context);
-            },
-          ),
-        ],
-      ),
       drawer: buildDrawer(context),
-      body: isLoading
-          ? const Center(child: CircularProgressIndicator())
-          : Column(
-        children: [
-          Padding(
-            padding: const EdgeInsets.all(16.0),
-            child: TextField(
-              decoration: const InputDecoration(
-                hintText: 'Search',
-                border: OutlineInputBorder(
-                  borderRadius: BorderRadius.all(Radius.circular(12)),
-                ),
-                prefixIcon: Icon(Icons.search),
-                fillColor: Colors.white,
-                filled: true,
-              ),
-              onChanged: (value) {
-                setState(() {
-                  searchQuery = value;
-                  _filterReservations();
-                });
-              },
-            ),
-          ),
-          Expanded(
-            child: ListView(
-              children: [
-                if (filteredPendingReservations.isNotEmpty) ...[
-                  for (var reservation in filteredPendingReservations)
-                    _buildReservationCard(
-                      reservation: reservation,
-                      isPending: true,
-                      onAction: () {
-                        _showConfirmationDialog(
-                          context: context,
-                          title: 'Accept Reservation',
-                          message:
-                          'Are you sure you want to accept this reservation?',
-                          onConfirm: () {
-                            _acceptReservation(
-                              reservation['reservation_id'],
-                              reservation['user_id'].toString(),
-                            );
-                          },
-                          confirmText: 'Accept',
-                        );
-                      },
-                    ),
-                ],
-                if (filteredPendingReservations.isEmpty)
-                  const Padding(
-                    padding: EdgeInsets.all(16.0),
-                    child: Center(child: Text("No pending reservations.")),
-                  ),
-              ],
-            ),
-          ),
-        ],
+      body: IndexedStack(
+        index: _currentIndex,
+        children: getNavigationPages(),
       ),
-      bottomNavigationBar: BottomNavigationBar(
-        currentIndex: 0,
-        onTap: (index) {
-          if (index == 1) {
-            Navigator.push(
-              context,
-              MaterialPageRoute(builder: (context) => const AcceptedReservationsPage()),
-            );
-          }
-
-         else if(index == 2){
-            Navigator.push(
-              context,
-                MaterialPageRoute(builder: (context) => const Recommendationspage()),
-            );
-
-          }
-        },
-        items: const [
-          BottomNavigationBarItem(
-            icon: Icon(Icons.access_time),
-            label: 'Pending Reservations',
+      bottomNavigationBar: Container(
+        decoration: BoxDecoration(
+          color: Colors.white,
+          borderRadius: const BorderRadius.only(
+            topLeft: Radius.circular(30),
+            topRight: Radius.circular(30),
           ),
-          BottomNavigationBarItem(
-            icon: Icon(Icons.check),
-            label: 'Accepted Reservations',
-          ),
-          BottomNavigationBarItem(
-            icon: Icon(Icons.recommend),
-            label: 'Recommendation',
-          ),
-        ],
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withOpacity(0.2),
+              spreadRadius: 2,
+              blurRadius: 10,
+            ),
+          ],
+        ),
+        child: BottomNavigationBar(
+          type: BottomNavigationBarType.fixed,
+          currentIndex: _currentIndex,
+          onTap: (index) {
+            setState(() {
+              _currentIndex = index;
+            });
+          },
+          backgroundColor: Colors.transparent,
+          elevation: 0,
+          selectedItemColor: Colors.black,
+          unselectedItemColor: Colors.grey,
+          showSelectedLabels: true,
+          showUnselectedLabels: true,
+          selectedLabelStyle: GoogleFonts.lato(fontSize: 12),
+          unselectedLabelStyle: GoogleFonts.lato(fontSize: 12),
+          items: [
+            _buildNavItem(Icons.location_on, 'Pending Reservation', 0),
+            _buildNavItem(Icons.event_available, 'Accepted Reservations', 1),
+            _buildNavItem(Icons.book_online, 'Recommendations page', 2),
+          ],
+        ),
       ),
     );
   }
 
+
+
+  BottomNavigationBarItem _buildNavItem(
+      IconData icon, String label, int index) {
+    return BottomNavigationBarItem(
+      icon: Stack(
+        alignment: Alignment.center,
+        children: [
+          if (_currentIndex == index)
+            Container(
+              height: 50,
+              width: 50,
+              decoration: BoxDecoration(
+                color:  const Color(0xFFF6D533), // Adjust color based on theme
+                shape: BoxShape.circle,
+              ),
+            ),
+          Icon(
+            icon,
+            size: 28,
+            color:  Colors.black
+
+          ),
+        ],
+      ),
+      label: label,
+    );
+  }
   Widget _buildReservationCard({
     required Map<String, dynamic> reservation,
     required bool isPending,
@@ -630,28 +679,34 @@ class _DriverPageState extends State<DriverPage> {
         );
 
         if (pendingResponse.statusCode == 200) {
-          setState(() {
-            pendingReservations = json.decode(pendingResponse.body)['data'];
-            filteredPendingReservations = List.from(pendingReservations);
-            isLoading = false;
-          });
+          if (mounted) {
+            setState(() {
+              pendingReservations = json.decode(pendingResponse.body)['data'];
+              filteredPendingReservations = List.from(pendingReservations);
+              isLoading = false;
+            });
+            _filterReservations();
+          }
         } else {
-          setState(() {
-            isLoading = false;
-          });
-          _showErrorDialog('Failed to load pending reservations.');
+          if (mounted) {
+            setState(() {
+              isLoading = false;
+            });
+            _showErrorDialog('Failed to load pending reservations.');
+          }
         }
-
-        _filterReservations();
       }
     } catch (error) {
-      setState(() {
-        isLoading = false;
-      });
-      print("Error fetching pending reservations: $error");
-      _showErrorDialog('Error fetching pending reservations.');
+      if (mounted) {
+        setState(() {
+          isLoading = false;
+        });
+        print("Error fetching pending reservations: $error");
+        _showErrorDialog('Error fetching pending reservations.');
+      }
     }
   }
+
 
   Future<void> _acceptReservation(int reservationId, String userId) async {
     try {
@@ -715,5 +770,11 @@ class _DriverPageState extends State<DriverPage> {
     } else {
       print('Failed to create notification: ${response.body}');
     }
+  }
+  @override
+  void dispose() {
+    locationService.stopTracking();
+    super.dispose();
+    _channel?.sink.close();
   }
 }

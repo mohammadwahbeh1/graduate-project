@@ -14,7 +14,7 @@ import 'package:flutter/foundation.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 
 
-const String ip = "192.168.1.12";
+const String ip = "192.168.1.8";
 
 
 // Create a secure storage instance
@@ -49,8 +49,8 @@ class _LoginPageState extends State<LoginPage> {
       var url = Uri.parse('http://$ip:3000/api/v1/login');
 
       var body = json.encode({
-        'email': email,
-        'password': password,
+        'email': email.trim(),
+        'password': password.trim(),
       });
 
       try {
@@ -61,7 +61,8 @@ class _LoginPageState extends State<LoginPage> {
           },
           body: body,
         );
-
+        print('Response status: ${response.statusCode}');
+        print('Response body: ${response.body}');
         if (response.statusCode == 200) {
           var jsonResponse = jsonDecode(response.body);
           var token = jsonResponse['data']['token'];
@@ -313,7 +314,7 @@ class _LoginPageState extends State<LoginPage> {
                                 boxShadow: [
                                   BoxShadow(
                                     color:
-                                    Colors.grey.withValues(),
+                                    Colors.grey.withOpacity(0.2),
                                     spreadRadius: 2,
                                     blurRadius: 5,
                                     offset: const Offset(0, 3),
@@ -342,7 +343,7 @@ class _LoginPageState extends State<LoginPage> {
                                 boxShadow: [
                                   BoxShadow(
                                     color:
-                                    Colors.grey.withValues(),
+                                    Colors.grey.withOpacity(0.2),
                                     spreadRadius: 2,
                                     blurRadius: 5,
                                     offset: const Offset(0, 3),
@@ -371,7 +372,7 @@ class _LoginPageState extends State<LoginPage> {
                                 boxShadow: [
                                   BoxShadow(
                                     color:
-                                    Colors.grey.withValues(),
+                                    Colors.grey.withOpacity(0.2),
                                     spreadRadius: 2,
                                     blurRadius: 5,
                                     offset: const Offset(0, 3),

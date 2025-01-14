@@ -4,7 +4,7 @@ import 'package:http/http.dart' as http;
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:syncfusion_flutter_charts/charts.dart';
 
-const String ip = "192.168.1.12";
+const String ip = "192.168.1.8";
 const storage = FlutterSecureStorage();
 
 class StatisticsPage extends StatefulWidget {
@@ -201,7 +201,7 @@ class _StatisticsPageState extends State<StatisticsPage> {
         borderRadius: BorderRadius.circular(12),
         color: Colors.white,
         boxShadow: [
-          BoxShadow(color: Colors.blueAccent.withValues(), blurRadius: 10, offset: const Offset(0, 4)),
+          BoxShadow(color: Colors.blueAccent.withOpacity(0.1), blurRadius: 10, offset: const Offset(0, 4)),
         ],
       ),
       padding: const EdgeInsets.all(12),
@@ -295,7 +295,7 @@ class _StatisticsPageState extends State<StatisticsPage> {
         borderRadius: BorderRadius.circular(12),
         color: Colors.white,
         boxShadow: [
-          BoxShadow(color: Colors.blueAccent.withValues(), blurRadius: 10, offset: const Offset(0, 4)),
+          BoxShadow(color: Colors.blueAccent.withOpacity(0.1), blurRadius: 10, offset: const Offset(0, 4)),
         ],
       ),
       child: SfCartesianChart(

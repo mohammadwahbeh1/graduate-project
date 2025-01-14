@@ -57,7 +57,7 @@ class ManagerPage extends StatelessWidget {
                 Shadow(
                   offset: const Offset(2, 2),
                   blurRadius: 3,
-                  color: Colors.grey.withValues(),
+                  color: Colors.grey.withOpacity(0.2),
                 ),
               ],
             ),

@@ -5,7 +5,7 @@ import 'package:flutter_secure_storage/flutter_secure_storage.dart'; // For secu
 import 'loginPage.dart'; // Navigate to login page after successful sign-up
 import 'package:flutter/foundation.dart';
 
-const String ip = "192.168.1.12";
+const String ip = "192.168.1.8";
 
 // Create a secure storage instance
 const storage = FlutterSecureStorage();

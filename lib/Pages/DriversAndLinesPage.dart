@@ -4,7 +4,7 @@ import 'package:http/http.dart' as http;
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 
 
-const String ip = "192.168.1.12";
+const String ip = "192.168.1.8";
 
 class DriversAndLinesPage extends StatefulWidget {
   const DriversAndLinesPage({super.key});
@@ -220,7 +220,7 @@ class _DriversAndLinesPageState extends State<DriversAndLinesPage> {
       shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.circular(20),
       ),
-      shadowColor: Colors.grey.withValues(),
+      shadowColor: Colors.grey.withOpacity(0.2),
       child: Container(
         decoration: BoxDecoration(
           gradient: LinearGradient(

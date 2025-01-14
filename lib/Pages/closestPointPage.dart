@@ -8,7 +8,7 @@ import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:geocoding/geocoding.dart';
 import 'dart:math' as math;
 
-const ip = '192.168.1.12';
+const ip = '192.168.1.8';
 class SearchResult {
   final String lineName;
   final String description;
@@ -253,7 +253,7 @@ class _ClosestPointPageState extends State<ClosestPointPage> {
     }
   ]
   
- '''; // Your existing map style
+ ''';
 
   @override
   void initState() {
@@ -499,7 +499,7 @@ class _ClosestPointPageState extends State<ClosestPointPage> {
                     borderRadius: BorderRadius.circular(8),
                     boxShadow: [
                       BoxShadow(
-                        color: Colors.black.withValues(),
+                        color: Colors.black.withOpacity(0.2),
                         blurRadius: 8,
                         offset: const Offset(0, 2),
                       ),
@@ -569,7 +569,7 @@ class _ClosestPointPageState extends State<ClosestPointPage> {
                       borderRadius: BorderRadius.circular(8),
                       boxShadow: [
                         BoxShadow(
-                          color: Colors.black.withValues(),
+                          color: Colors.black.withOpacity(0.2),
                           blurRadius: 8,
                           offset: const Offset(0, 2),
                         ),
