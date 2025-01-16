@@ -264,6 +264,7 @@ class WebRTCSignaling {
         remoteStream!.getTracks().forEach((track) => track.stop());
       }
     } catch (e) {
+      print(e);
     }
   }
 

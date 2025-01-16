@@ -59,7 +59,6 @@ class _SignUpState extends State<SignUp>
   bool _isAddressValid = false;
   bool _isDOBValid = false;
 
-  // متغير لحفظ الصورة المختارة
   File? _licenseImage;
 
   @override
@@ -77,7 +76,6 @@ class _SignUpState extends State<SignUp>
     super.dispose();
   }
 
-  /// الدالة الخاصة بالتقاط الصورة سواء من الكاميرا أو من الملفات
   Future<void> _pickImage(ImageSource source) async {
     final ImagePicker picker = ImagePicker();
     final XFile? image = await picker.pickImage(source: source);
@@ -88,7 +86,6 @@ class _SignUpState extends State<SignUp>
     }
   }
 
-  /// دالة التسجيل المعدلة بحيث تتعامل مع دور الـ Driver وترفع الصورة مع البيانات
   Future<void> registration() async {
     if (_formkey.currentState!.validate()) {
       setState(() {
@@ -101,22 +98,19 @@ class _SignUpState extends State<SignUp>
         role = _selectedRole?.toLowerCase() ?? 'user';
       });
 
-      // التحقق إذا كان الدور Driver والتأكد من رفع الصورة
       if (role == 'driver' && _licenseImage == null) {
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('يرجى رفع صورة رخصة القيادة')),
+          const SnackBar(content: Text('Please upload a photo of your driving license.')),
         );
         return;
       }
 
-      // إذا كان الدور Driver نستخدم API المخصص للسائقين مع رفع الصورة
       if (role == 'driver') {
         var url = Uri.parse('http://$ip:3000/api/driversQue/drivers');
 
         try {
           var request = http.MultipartRequest('POST', url);
 
-          // إضافة الحقول النصية إلى الطلب
           request.fields['username'] = name;
           request.fields['email'] = email;
           request.fields['password'] = password;
@@ -125,9 +119,7 @@ class _SignUpState extends State<SignUp>
           request.fields['gender'] = gender;
           request.fields['address'] = address;
 
-          // إرفاق الصورة مع المفتاح license_image
           if (_licenseImage != null) {
-            // الحصول على اسم الملف ونوعه (يمكنك تعديله حسب الصورة)
             var stream = http.ByteStream(_licenseImage!.openRead());
             var length = await _licenseImage!.length();
             var multipartFile = http.MultipartFile(
@@ -135,12 +127,11 @@ class _SignUpState extends State<SignUp>
               stream,
               length,
               filename: _licenseImage!.path.split('/').last,
-              contentType: MediaType('image', 'jpeg'), // تأكد من نوع الصورة أو قم بالتعديل عليها
+              contentType: MediaType('image', 'jpeg'),
             );
             request.files.add(multipartFile);
           }
 
-          // إرسال الطلب والحصول على الاستجابة
           var response = await request.send();
 
           if (response.statusCode == 201) {
@@ -152,7 +143,6 @@ class _SignUpState extends State<SignUp>
               MaterialPageRoute(builder: (context) => const LoginPage()),
             );
           } else {
-            // قراءة الاستجابة في حال وجود خطأ
             final respStr = await response.stream.bytesToString();
             var errorResponse = json.decode(respStr);
             ScaffoldMessenger.of(context).showSnackBar(
@@ -165,7 +155,6 @@ class _SignUpState extends State<SignUp>
           );
         }
       } else {
-        // إذا كان الدور User، يتم استخدام التسجيل العادي (كما هو موجود في الكود السابق)
         var body = {
           'username': name,
           'email': email,
@@ -305,7 +294,7 @@ class _SignUpState extends State<SignUp>
               const SizedBox(height: 30.0),
               Container(
                 width: containerWidth.toDouble(),
-                margin: EdgeInsets.symmetric(
+                margin: const EdgeInsets.symmetric(
                     horizontal: isWeb ? 0 : 20.0),
                 child: Card(
                   color: cardColor,
@@ -563,7 +552,6 @@ class _SignUpState extends State<SignUp>
                                 dropdownColor: fieldBgColor,
                               ),
                               const SizedBox(height: 25.0),
-                              // إذا كان الدور Driver نعرض خيارات رفع الصورة
                               if (_selectedRole?.toLowerCase() ==
                                   'driver')
                                 Column(
@@ -571,7 +559,7 @@ class _SignUpState extends State<SignUp>
                                   CrossAxisAlignment.stretch,
                                   children: [
                                     _buildLabel(
-                                        "رفع صورة رخصة القيادة",
+                                        "Upload a picture of your driving license",
                                         labelColor),
                                     const SizedBox(height: 8.0),
                                     Row(
@@ -587,7 +575,7 @@ class _SignUpState extends State<SignUp>
                                           icon: const Icon(
                                               Icons.camera_alt),
                                           label:
-                                          const Text("كاميرا"),
+                                          const Text("camera"),
                                         ),
                                         ElevatedButton.icon(
                                           onPressed: () {
@@ -597,7 +585,7 @@ class _SignUpState extends State<SignUp>
                                           icon: const Icon(
                                               Icons.image),
                                           label:
-                                          const Text("ملف"),
+                                          const Text("file"),
                                         ),
                                       ],
                                     ),

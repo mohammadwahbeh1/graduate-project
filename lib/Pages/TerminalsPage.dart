@@ -16,7 +16,7 @@ class _TerminalPageState extends State<TerminalPage> {
   List<dynamic> terminals = [];
   List<dynamic> filteredTerminals = [];
   List<dynamic> admins = [];
-  String ip = "192.168.1.8";
+  String ip = "192.168.1.12";
   bool isLoading = false;
   final TextEditingController searchController = TextEditingController();
 

@@ -12,7 +12,7 @@ import 'package:untitled/Pages/Location Service.dart';
 import 'package:web_socket_channel/web_socket_channel.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 
-const String ip = "192.168.1.8";
+const String ip = "192.168.1.12";
 const storage = FlutterSecureStorage();
 
 class DriverPage extends StatefulWidget {
@@ -271,8 +271,8 @@ class _DriverPageState extends State<DriverPage> {
             Container(
               height: 50,
               width: 50,
-              decoration: BoxDecoration(
-                color:  const Color(0xFFF6D533), // Adjust color based on theme
+              decoration: const BoxDecoration(
+                color:  Color(0xFFF6D533), // Adjust color based on theme
                 shape: BoxShape.circle,
               ),
             ),
@@ -410,10 +410,7 @@ class _DriverPageState extends State<DriverPage> {
                 "Pattern: ${reservation['recurrence_pattern'] ?? 'N/A'}",
                 style: const TextStyle(fontSize: 14, color: Colors.black),
               ),
-              Text(
-                "Interval: ${reservation['recurrence_interval'] ?? 'N/A'}",
-                style: const TextStyle(fontSize: 14, color: Colors.black),
-              ),
+
               Text(
                 "End Date: ${reservation['recurrence_end_date'] ?? 'N/A'}",
                 style: const TextStyle(fontSize: 14, color: Colors.black),

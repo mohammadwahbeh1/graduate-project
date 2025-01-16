@@ -9,7 +9,7 @@ import 'package:flutter_webrtc/flutter_webrtc.dart';
 import 'package:web_socket_channel/web_socket_channel.dart';
 import 'WebRTC.dart';
 
-const String ip = "192.168.1.8";
+const String ip = "192.168.1.12";
 String targetId = "";
 
 class LineManagerCall extends StatefulWidget {

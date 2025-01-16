@@ -5,7 +5,7 @@ import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:intl/intl.dart';
 import 'package:flutter_rating_bar/flutter_rating_bar.dart';
 
-const String ip = "192.168.1.8";
+const String ip = "192.168.1.12";
 
 const storage = FlutterSecureStorage();
 

@@ -41,7 +41,7 @@ class _ServiceDashboardPageState extends State<ServiceDashboardPage> {
     print('Support ID: $supporterId');
 
     _channel = WebSocketChannel.connect(
-      Uri.parse('ws://192.168.1.8:3000/ws/notifications?userId=$supporterId'),
+      Uri.parse('ws://192.168.1.12:3000/ws/notifications?userId=$supporterId'),
     );
 
     _channel.stream.listen((dynamic message) {
@@ -68,7 +68,7 @@ class _ServiceDashboardPageState extends State<ServiceDashboardPage> {
     print("Fetching messages...");
     String? token = await storage.read(key: 'jwt_token');
     final response = await http.get(
-      Uri.parse('http://192.168.1.8:3000/api/v1/messages'),
+      Uri.parse('http://192.168.1.12:3000/api/v1/messages'),
       headers: {
         'Authorization': 'Bearer $token',
         'Content-Type': 'application/json',
@@ -135,7 +135,7 @@ class _ServiceDashboardPageState extends State<ServiceDashboardPage> {
           } else if (snapshot.hasError) {
             return Center(child: Text('Error: ${snapshot.error}'));
           } else if (!snapshot.hasData || snapshot.data!.isEmpty) {
-            return const Center(child: Text('No conversations found'));
+            return const Center(child: Text('No conversations found', style: TextStyle(color: Colors.white)));
           } else {
             List<Conversation> conversations = snapshot.data!;
             return ListView.builder(
@@ -195,75 +195,90 @@ class ChatUserCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Card(
-      color: const Color(0xFF252525),
-      margin: const EdgeInsets.symmetric(vertical: 8),
-      elevation: 4,
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-      child: ListTile(
-        onTap: () {
-          Navigator.push(
-            context,
-            MaterialPageRoute(
-              builder: (context) => ServiceChatPage(receiverId: message.senderId.toString()),
+    return GestureDetector(
+      onTap: () {
+        Navigator.push(
+          context,
+          MaterialPageRoute(
+            builder: (context) => ServiceChatPage(receiverId: message.senderId.toString()),
+          ),
+        );
+      },
+      child: Container(
+        margin: const EdgeInsets.symmetric(vertical: 8),
+        decoration: BoxDecoration(
+          borderRadius: BorderRadius.circular(16),
+          // A subtle gradient background for a modern look.
+          gradient: const LinearGradient(
+            colors: [Color(0xFF2C2C2C), Color(0xFF373737)],
+            begin: Alignment.topLeft,
+            end: Alignment.bottomRight,
+          ),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withOpacity(0.3),
+              blurRadius: 8,
+              offset: const Offset(0, 4),
+            )
+          ],
+        ),
+        child: ListTile(
+          contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+          leading: CircleAvatar(
+            backgroundColor: const Color(0xFFF6D533),
+            radius: 28,
+            child: Text(
+              message.senderName[0].toUpperCase(),
+              style: const TextStyle(
+                color: Colors.black,
+                fontWeight: FontWeight.bold,
+                fontSize: 24,
+              ),
             ),
-          );
-        },
-        contentPadding: const EdgeInsets.all(12),
-        leading: CircleAvatar(
-          backgroundColor: const Color(0xFFF6D533),
-          radius: 25,
-          child: Text(
-            message.senderName[0].toUpperCase(),
+          ),
+          title: Text(
+            message.senderName,
             style: const TextStyle(
-              color: Colors.black,
-              fontWeight: FontWeight.bold,
-              fontSize: 20,
+              color: Colors.white,
+              fontSize: 18,
+              fontWeight: FontWeight.w600,
             ),
           ),
-        ),
-        title: Text(
-          message.senderName,
-          style: const TextStyle(
-            color: Colors.white,
-            fontWeight: FontWeight.bold,
+          subtitle: Padding(
+            padding: const EdgeInsets.only(top: 4.0),
+            child: Text(
+              message.content,
+              style: const TextStyle(
+                color: Colors.grey,
+                fontSize: 14,
+              ),
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+            ),
           ),
-        ),
-        subtitle: Text(
-          message.content,
-          style: const TextStyle(
-            color: Colors.grey,
-          ),
-          maxLines: 1,
-          overflow: TextOverflow.ellipsis,
-        ),
-        trailing: SizedBox(
-          width: 57,
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
+          trailing: Column(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
               Text(
                 message.timestamp,
                 style: const TextStyle(
                   color: Color(0xFFF6D533),
-                  fontSize: 10,
+                  fontSize: 12,
                 ),
-                overflow: TextOverflow.ellipsis,
               ),
+              const SizedBox(height: 4),
               if (!message.isRead)
                 Container(
-                  margin: const EdgeInsets.only(top: 2),
-                  padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 2),
-                  decoration: const BoxDecoration(
-                    color: Color(0xFFF6D533),
-                    shape: BoxShape.circle,
+                  padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                  decoration: BoxDecoration(
+                    color: const Color(0xFFF6D533),
+                    borderRadius: BorderRadius.circular(12),
                   ),
                   child: const Text(
                     'New',
                     style: TextStyle(
                       color: Colors.black,
-                      fontSize: 9,
+                      fontSize: 10,
                       fontWeight: FontWeight.bold,
                     ),
                   ),
