@@ -222,7 +222,7 @@ class _SignUpState extends State<SignUp>
     _isDarkMode ? const Color(0xFF2A2A2A) : Colors.white;
     final Color textColor = _isDarkMode ? Colors.white : Colors.grey[800]!;
     final Color labelColor =
-    _isDarkMode ? Colors.yellow.shade200 : Colors.grey[800]!;
+    _isDarkMode ? Colors.white: Colors.grey[800]!;
     final Color hintColor = _isDarkMode
         ? Colors.grey[400]!
         : const Color(0xFFb2b7bf);
@@ -279,7 +279,7 @@ class _SignUpState extends State<SignUp>
                     Icons.person_add_alt,
                     size: 36,
                     color: _isDarkMode
-                        ? Colors.yellow.shade200
+                        ? Colors.white
                         : const Color(0xFFFFD700),
                   ),
                   const SizedBox(width: 12),
@@ -768,18 +768,22 @@ class _SignUpState extends State<SignUp>
           contentPadding: const EdgeInsets.symmetric(
               horizontal: 16, vertical: 4),
           hintStyle: TextStyle(
-            color: hintColor,
+            color: textColor,
             fontSize: 14.0,
           ),
         ),
         style: TextStyle(
           fontSize: 14,
-          color: textColor,
+          color: hintColor,
         ),
         value: value,
         onChanged: onChanged,
         validator: validator,
-        hint: Text(hint),
+        hint: Text(hint,
+          style: TextStyle(color: hintColor),
+        ),
+
+
         items: items.map((String item) {
           return DropdownMenuItem<String>(
             value: item,
