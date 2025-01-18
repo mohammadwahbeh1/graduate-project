@@ -8,7 +8,7 @@ import 'loginPage.dart';
 import 'package:flutter/foundation.dart';
 import 'package:image_picker/image_picker.dart';
 
-const String ip = "192.168.1.12";
+const String ip = "192.168.1.8";
 const storage = FlutterSecureStorage();
 
 class SignUp extends StatefulWidget {
@@ -82,6 +82,35 @@ class _SignUpState extends State<SignUp>
     if (image != null) {
       setState(() {
         _licenseImage = File(image.path);
+      });
+    }
+  }
+
+  Future<void> _selectDate(BuildContext context) async {
+    final DateTime? picked = await showDatePicker(
+      context: context,
+      initialDate: DateTime.now(),
+      firstDate: DateTime(1900),
+      lastDate: DateTime.now(),
+      builder: (context, child) {
+        return Theme(
+          data: Theme.of(context).copyWith(
+            colorScheme: ColorScheme.light(
+              primary: const Color(0xFFFFD700),
+              onPrimary: _isDarkMode ? Colors.black : Colors.white,
+              surface: _isDarkMode ? const Color(0xFF2A2A2A) : Colors.white,
+              onSurface: _isDarkMode ? Colors.white : Colors.black,
+            ),
+          ),
+          child: child!,
+        );
+      },
+    );
+
+    if (picked != null) {
+      setState(() {
+        dateOfBirthController.text = "${picked.year}-${picked.month.toString().padLeft(2, '0')}-${picked.day.toString().padLeft(2, '0')}";
+        _isDOBValid = true;
       });
     }
   }
@@ -424,42 +453,44 @@ class _SignUpState extends State<SignUp>
                                 dropdownColor: fieldBgColor,
                               ),
                               const SizedBox(height: 25.0),
-                              _buildLabel(
-                                  "Date of Birth", labelColor),
+                              _buildLabel("Date of Birth", labelColor),
                               const SizedBox(height: 8.0),
-                              _buildInputField(
-                                controller:
-                                dateOfBirthController,
-                                hint: "YYYY-MM-DD",
-                                isFieldValid: _isDOBValid,
-                                validator: (value) {
-                                  if (value == null ||
-                                      value.isEmpty) {
-                                    return 'Please Enter Date of Birth';
-                                  }
-                                  final RegExp dateRegex =
-                                  RegExp(
-                                      r'^\d{4}-\d{2}-\d{2}$');
-                                  if (!dateRegex.hasMatch(
-                                      value)) {
-                                    return 'Use format YYYY-MM-DD';
-                                  }
-                                  return null;
-                                },
-                                onChanged: (value) {
-                                  setState(() {
-                                    final dateRegex =
-                                    RegExp(
-                                        r'^\d{4}-\d{2}-\d{2}$');
-                                    _isDOBValid = dateRegex.hasMatch(
-                                        value.trim());
-                                  });
-                                },
-                                invalidMessage:
-                                "Use format YYYY-MM-DD",
-                                fieldBgColor: fieldBgColor,
-                                textColor: textColor,
-                                hintColor: hintColor,
+                              Container(
+                                decoration: BoxDecoration(
+                                  color: fieldBgColor,
+                                  borderRadius: BorderRadius.circular(12),
+                                ),
+                                child: TextFormField(
+                                  controller: dateOfBirthController,
+                                  readOnly: true, // Makes the field read-only
+                                  onTap: () => _selectDate(context), // Opens date picker on tap
+                                  validator: (value) {
+                                    if (value == null || value.isEmpty) {
+                                      return 'Please select date of birth';
+                                    }
+                                    return null;
+                                  },
+                                  style: TextStyle(
+                                    fontSize: 16,
+                                    color: textColor,
+                                  ),
+                                  decoration: InputDecoration(
+                                    contentPadding: const EdgeInsets.symmetric(
+                                      horizontal: 16,
+                                      vertical: 12,
+                                    ),
+                                    border: InputBorder.none,
+                                    hintText: "Select your birth date",
+                                    hintStyle: TextStyle(
+                                      color: hintColor,
+                                      fontSize: 14.0,
+                                    ),
+                                    suffixIcon: Icon(
+                                      Icons.calendar_today,
+                                      color: _isDarkMode ? Colors.white70 : Colors.grey[600],
+                                    ),
+                                  ),
+                                ),
                               ),
                               const SizedBox(height: 25.0),
                               _buildLabel("Password", labelColor),
@@ -467,26 +498,26 @@ class _SignUpState extends State<SignUp>
                               _buildInputField(
                                 controller:
                                 passwordcontroller,
-                                hint: "At least 6 characters",
+                                hint: "At least 8 characters must contain letters and numbers. ",
                                 isPassword: true,
                                 isFieldValid: _isPasswordValid,
                                 validator: (value) {
                                   if (value == null ||
                                       value.isEmpty) {
                                     return 'Please Enter Password';
-                                  } else if (value.length < 6) {
-                                    return 'Password must be at least 6 characters';
+                                  } else if (value.length < 8) {
+                                    return 'Password must be at least 8 characters';
                                   }
                                   return null;
                                 },
                                 onChanged: (value) {
                                   setState(() {
                                     _isPasswordValid =
-                                        value.length >= 6;
+                                        value.length >= 8;
                                   });
                                 },
                                 invalidMessage:
-                                "Password must be at least 6 characters",
+                                "Password must be at least 8 characters",
                                 fieldBgColor: fieldBgColor,
                                 textColor: textColor,
                                 hintColor: hintColor,
