@@ -36,7 +36,8 @@ class ManagerPage extends StatelessWidget {
         iconTheme: const IconThemeData(color: Colors.white),
         elevation: 0,
       ),
-      drawer: buildDrawer(context, 'Manager'),
+      // نستدعي الـDrawer المُحسّن:
+      drawer: buildImprovedDrawer(context),
       body: Container(
         width: double.infinity,
         height: double.infinity,
@@ -68,185 +69,232 @@ class ManagerPage extends StatelessWidget {
     );
   }
 
-  Widget buildDrawer(BuildContext context, String role) {
+  /// دالة لبناء الـDrawer المُحسّن
+  Widget buildImprovedDrawer(BuildContext context) {
     return Drawer(
-      child: Column(
-        children: [
-          Container(
-            height: MediaQuery.of(context).size.height * 0.25,
-            decoration: const BoxDecoration(
-              gradient: LinearGradient(
-                colors: [Color(0xFF00B4DB), Color(0xFF0083B0)], //
-                begin: Alignment.topLeft,
-                end: Alignment.bottomRight,
+      // استخدمنا Container لتطبيق خلفية متدرجة على كامل الـDrawer
+      child: Container(
+        decoration: const BoxDecoration(
+          gradient: LinearGradient(
+            colors: [
+              Color(0xFFE1F5FE),
+              Color(0xFFB3E5FC),
+            ],
+            begin: Alignment.topCenter,
+            end: Alignment.bottomCenter,
+          ),
+        ),
+        child: Column(
+          children: [
+            // رأس القائمة (Drawer Header)
+            Container(
+              width: double.infinity,
+              padding: const EdgeInsets.all(20),
+              decoration: const BoxDecoration(
+                gradient: LinearGradient(
+                  colors: [Color(0xFF00B4DB), Color(0xFF0083B0)],
+                  begin: Alignment.topLeft,
+                  end: Alignment.bottomRight,
+                ),
+              ),
+              child: SafeArea(
+                child: Column(
+                  children: const [
+                    Icon(
+                      Icons.admin_panel_settings,
+                      size: 80,
+                      color: Colors.white,
+                    ),
+                    SizedBox(height: 10),
+                    Text(
+                      'Manager Dashboard',
+                      style: TextStyle(
+                        color: Colors.white,
+                        fontSize: 24,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                  ],
+                ),
               ),
             ),
-            child: const DrawerHeader(
-              margin: EdgeInsets.zero,
-              padding: EdgeInsets.all(20),
-              child: Column(
-                mainAxisAlignment: MainAxisAlignment.center,
+
+            // باقي عناصر الـDrawer
+            Expanded(
+              child: ListView(
+                padding: EdgeInsets.zero,
                 children: [
-                  Icon(
-                    Icons.admin_panel_settings,
-                    size: 80,
-                    color: Colors.white,
+                  const SizedBox(height: 10),
+                  buildCustomDrawerItem(
+                    context,
+                    icon: Icons.supervised_user_circle,
+                    title: 'Manage Users',
+                    onTap: () {
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (context) => const UsersManagementPage(),
+                        ),
+                      );
+                    },
                   ),
-                  SizedBox(height: 10),
-                  Text(
-                    'Manager Dashboard',
-                    style: TextStyle(
-                      color: Colors.white,
-                      fontSize: 24,
-                      fontWeight: FontWeight.bold,
-                    ),
+                  buildDivider(),
+                  buildCustomDrawerItem(
+                    context,
+                    icon: Icons.apartment,
+                    title: 'Terminals',
+                    onTap: () {
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (context) => const TerminalPage(),
+                        ),
+                      );
+                    },
                   ),
+                  buildDivider(),
+                  buildCustomDrawerItem(
+                    context,
+                    icon: Icons.assessment,
+                    title: 'View Reports',
+                    onTap: () {
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (context) => const StatisticsPage(),
+                        ),
+                      );
+                    },
+                  ),
+                  buildDivider(),
+                  buildCustomDrawerItem(
+                    context,
+                    icon: Icons.directions_car,
+                    title: 'View Drivers and Lines',
+                    onTap: () {
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (context) => const DriversAndLinesPage(),
+                        ),
+                      );
+                    },
+                  ),
+                  buildDivider(),
+                  buildCustomDrawerItem(
+                    context,
+                    icon: Icons.check,
+                    title: 'Accept Driver',
+                    onTap: () {
+                      Navigator.pop(context);
+                      Navigator.pushReplacement(
+                        context,
+                        MaterialPageRoute(
+                          builder: (context) => const DriversRequestsPage(),
+                        ),
+                      );
+                    },
+                  ),
+                  buildDivider(),
+                  buildCustomDrawerItem(
+                    context,
+                    icon: Icons.directions_car_filled,
+                    title: 'Vehicle',
+                    onTap: () {
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (context) => const VehiclePage(),
+                        ),
+                      );
+                    },
+                  ),
+                  buildDivider(),
+                  buildCustomDrawerItem(
+                    context,
+                    icon: Icons.route,
+                    title: 'Line',
+                    onTap: () {
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (context) => const LinePage(),
+                        ),
+                      );
+                    },
+                  ),
+                  const SizedBox(height: 10),
+                  const Divider(
+                    color: Colors.black54,
+                    thickness: 1.2,
+                    indent: 20,
+                    endIndent: 20,
+                  ),
+                  const SizedBox(height: 10),
+                  buildCustomDrawerItem(
+                    context,
+                    icon: Icons.logout,
+                    title: 'Log out',
+                    onTap: () {
+                      Navigator.pop(context);
+                      Navigator.pushReplacement(
+                        context,
+                        MaterialPageRoute(builder: (context) => const LoginPage()),
+                      );
+                    },
+                  ),
+                  const SizedBox(height: 20),
                 ],
               ),
             ),
-          ),
-          Expanded(
-            child: ListView(
-              padding: EdgeInsets.zero,
-              children: [
-                _buildDrawerItem(
-                  context,
-                  icon: Icons.supervised_user_circle,
-                  title: 'Manage Users',
-                  onTap: () {
-                    Navigator.push(
-                      context,
-                      MaterialPageRoute(
-                        builder: (context) => const UsersManagementPage(),
-                      ),
-                    );
-                  },
-                ),
-                _buildDrawerItem(
-                  context,
-                  icon: Icons.apartment,
-                  title: 'Terminals',
-                  onTap: () {
-                    Navigator.push(
-                      context,
-                      MaterialPageRoute(
-                        builder: (context) => const TerminalPage(),
-                      ),
-                    );
-                  },
-                ),
-                _buildDrawerItem(
-                  context,
-                  icon: Icons.assessment,
-                  title: 'View Reports',
-                  onTap: () {
-                    Navigator.push(
-                      context,
-                      MaterialPageRoute(
-                        builder: (context) => const StatisticsPage(),
-                      ),
-                    );
-                  },
-                ),
-                _buildDrawerItem(
-                  context,
-                  icon: Icons.directions_car,
-                  title: 'View Drivers and Lines',
-                  onTap: () {
-                    Navigator.push(
-                      context,
-                      MaterialPageRoute(
-                        builder: (context) => const DriversAndLinesPage(),
-                      ),
-                    );
-                  },
-                ),_buildDrawerItem(
-                  context,
-                  icon: Icons.check,
-                  title: 'Accept Driver',
-                  onTap: () {
-                    Navigator.pop(context);
-                    Navigator.pushReplacement(
-                      context,
-                      MaterialPageRoute(builder: (context) => const DriversRequestsPage()),
-                    );
-                  },
-                ),
-                _buildDrawerItem(
-                  context,
-                  icon: Icons.directions_car_filled,
-                  title: 'Vehicle',
-                  onTap: () {
-                    Navigator.push(
-                      context,
-                      MaterialPageRoute(
-                        builder: (context) => const VehiclePage(),
-                      ),
-                    );
-                  },
-                ),
-                _buildDrawerItem(
-                  context,
-                  icon: Icons.route,
-                  title: 'Line',
-                  onTap: () {
-                    Navigator.push(
-                      context,
-                      MaterialPageRoute(
-                        builder: (context) => const LinePage(),
-                      ),
-                    );
-                  },
-                ),
-                const Divider(
-                  color: Colors.black,
-                  thickness: 1,
-                  indent: 20,
-                  endIndent: 20,
-                ),
-                _buildDrawerItem(
-                  context,
-                  icon: Icons.logout,
-                  title: 'Log out',
-                  onTap: () {
-                    Navigator.pop(context);
-                    Navigator.pushReplacement(
-                      context,
-                      MaterialPageRoute(builder: (context) => const LoginPage()),
-                    );
-                  },
-                ),
-              ],
-            ),
-          ),
-        ],
+          ],
+        ),
       ),
     );
   }
 
-  Widget _buildDrawerItem(
+  /// عنصر خاص لكل خيار في الـDrawer مع بعض الزخارف
+  Widget buildCustomDrawerItem(
       BuildContext context, {
         required IconData icon,
         required String title,
         required VoidCallback onTap,
       }) {
-    return ListTile(
-      leading: Icon(
-        icon,
-        color: Colors.black,
-        size: 24,
-      ),
-      title: Text(
-        title,
-        style: const TextStyle(
-          fontSize: 16,
-          fontWeight: FontWeight.w500,
-          color: Colors.black,
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
+      child: Material(
+        color: Colors.white.withOpacity(0.7),
+        borderRadius: BorderRadius.circular(12),
+        child: InkWell(
+          borderRadius: BorderRadius.circular(12),
+          onTap: onTap,
+          child: ListTile(
+            leading: Icon(icon, color: Colors.blueGrey[800], size: 24),
+            title: Text(
+              title,
+              style: TextStyle(
+                fontSize: 16,
+                fontWeight: FontWeight.w500,
+                color: Colors.blueGrey[800],
+              ),
+            ),
+            trailing: const Icon(
+              Icons.arrow_forward_ios,
+              size: 16,
+              color: Colors.black45,
+            ),
+          ),
         ),
       ),
-      contentPadding: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
-      tileColor: Colors.transparent,
-      onTap: onTap,
+    );
+  }
+
+  Widget buildDivider() {
+    return const Divider(
+      color: Colors.black26,
+      thickness: 0.8,
+      indent: 70,
+      endIndent: 20,
     );
   }
 }

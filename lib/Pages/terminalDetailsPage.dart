@@ -5,7 +5,7 @@ import 'package:http/http.dart' as http;
 import 'dart:async';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 
-const String ip = "192.168.1.8";
+const String ip = "192.168.1.12";
 
 const storage = FlutterSecureStorage();
 

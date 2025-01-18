@@ -58,6 +58,7 @@ dependencies:
   permission_handler: ^10.0.0
   shared_preferences: ^2.2.0
   image_picker: ^1.0.4
+  emoji_picker_flutter: ^1.1.5
 
   syncfusion_flutter_charts: ^20.3.55  # or the latest version
   syncfusion_flutter_gauges: ^20.3.55
