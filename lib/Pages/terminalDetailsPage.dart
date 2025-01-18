@@ -6,7 +6,6 @@ import 'dart:async';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 
 const String ip = "192.168.1.12";
-
 const storage = FlutterSecureStorage();
 
 class TerminalDetailsPage extends StatefulWidget {
@@ -26,7 +25,7 @@ class TerminalDetailsPage extends StatefulWidget {
 class _TerminalDetailsPageState extends State<TerminalDetailsPage> {
   List<dynamic> lines = [];
   List<dynamic> filteredLines = [];
-  Map<String, int> previousVehicleCounts = {};
+  Map<String, int> previousInsideCounts = {};
   bool isLoading = true;
   Timer? timer;
   TextEditingController searchController = TextEditingController();
@@ -77,7 +76,8 @@ class _TerminalDetailsPageState extends State<TerminalDetailsPage> {
     try {
       String? token = await storage.read(key: 'jwt_token');
       final response = await http.get(
-        Uri.parse('http://$ip:3000/api/v1/terminals/${widget.terminalId}/lineVehicle/locations'),
+        Uri.parse(
+            'http://$ip:3000/api/v1/terminals/${widget.terminalId}/lineVehicle/locations'),
         headers: {
           'Authorization': 'Bearer $token',
         },
@@ -91,23 +91,24 @@ class _TerminalDetailsPageState extends State<TerminalDetailsPage> {
           bool hasChanged = false;
 
           for (var line in data) {
-            String lineId = line['line_id'].toString();
-            int currentCount =
-            line['vehicles'] != null ? (line['vehicles'] as List).length : 0;
+            int insideCount = line['inside_vehicle_count'] ?? 0;
+            List<dynamic> vehicles = line['vehicles'] ?? [];
 
-            if (previousVehicleCounts[lineId] != currentCount) {
+            String lineId = line['line_id'].toString();
+
+            if (previousInsideCounts[lineId] != insideCount) {
               hasChanged = true;
-              previousVehicleCounts[lineId] = currentCount;
+              previousInsideCounts[lineId] = insideCount;
             }
 
-            List<dynamic> vehicles = line['vehicles'] ?? [];
             List<Future<int?>> etaFutures = [];
-
             for (var vehicle in vehicles) {
-              double vehicleLat =
-                  vehicle['vehicle_lat']?.toDouble() ?? 0.0;
-              double vehicleLng =
-                  vehicle['vehicle_long']?.toDouble() ?? 0.0;
+              double vehicleLat = (vehicle['vehicle_lat'] != null)
+                  ? vehicle['vehicle_lat'].toDouble()
+                  : 0.0;
+              double vehicleLng = (vehicle['vehicle_long'] != null)
+                  ? vehicle['vehicle_long'].toDouble()
+                  : 0.0;
               double lineLat = (line['line_lat'] != null)
                   ? double.tryParse(line['line_lat'].toString()) ?? 0.0
                   : 0.0;
@@ -118,22 +119,12 @@ class _TerminalDetailsPageState extends State<TerminalDetailsPage> {
             }
 
             List<int?> etas = await Future.wait(etaFutures);
-            for (int i = 0; i < vehicles.length; i++) {
-              vehicles[i]['eta'] = etas[i];
-            }
-
-            vehicles.sort((a, b) {
-              if (a['eta'] == null) return 1;
-              if (b['eta'] == null) return -1;
-              return a['eta']!.compareTo(b['eta']!);
-            });
-
-            if (vehicles.isNotEmpty) {
-              line['next_eta'] = vehicles.first['eta'];
+            List<int> validEtas = etas.whereType<int>().toList();
+            if (validEtas.isNotEmpty) {
+              line['next_eta'] = validEtas.reduce((a, b) => a < b ? a : b);
             } else {
               line['next_eta'] = null;
             }
-
           }
 
           if (hasChanged) {
@@ -191,8 +182,7 @@ class _TerminalDetailsPageState extends State<TerminalDetailsPage> {
     }
   }
 
-  Widget _buildInfoRow(
-      IconData icon, String label, String value, Color color) {
+  Widget _buildInfoRow(IconData icon, String label, String value, Color color) {
     return Row(
       children: [
         Icon(icon, size: 16, color: color),
@@ -217,41 +207,9 @@ class _TerminalDetailsPageState extends State<TerminalDetailsPage> {
     );
   }
 
-  Widget _buildStatusBadge(int vehicleCount) {
-    String statusText;
-    Color color;
-
-    if (vehicleCount <= 2) {
-      statusText = 'Critical';
-      color = Colors.red;
-    } else if (vehicleCount >= 3 && vehicleCount <= 5) {
-      statusText = 'Moderate';
-      color = Colors.orange;
-    } else {
-      statusText = 'Excellent';
-      color = Colors.green;
-    }
-
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-      decoration: BoxDecoration(
-        color: color.withAlpha(1),
-        borderRadius: BorderRadius.circular(20),
-      ),
-      child: Text(
-        statusText,
-        style: TextStyle(
-          color: color,
-          fontWeight: FontWeight.bold,
-          fontSize: 12,
-        ),
-      ),
-    );
-  }
-
   Widget buildLineCard(dynamic line) {
-    int currentCount =
-    line['vehicles'] != null ? (line['vehicles'] as List).length : 0;
+    int insideVehicleCount = line['inside_vehicle_count'] ?? 0;
+
     String lineName = line['line_name'] ?? 'Unnamed Line';
     String? lastUpdatedRaw = line['last_updated'];
     String lastUpdated = formatDateTime(lastUpdatedRaw);
@@ -282,7 +240,8 @@ class _TerminalDetailsPageState extends State<TerminalDetailsPage> {
         child: Material(
           color: Colors.transparent,
           child: InkWell(
-            onTap: () {},
+            onTap: () {
+            },
             child: Padding(
               padding: const EdgeInsets.all(16),
               child: Column(
@@ -300,20 +259,22 @@ class _TerminalDetailsPageState extends State<TerminalDetailsPage> {
                           ),
                         ),
                       ),
-                      FlashingIndicator(vehicleCount: currentCount),
+                      FlashingIndicator(vehicleCount: insideVehicleCount),
                     ],
                   ),
                   const SizedBox(height: 12),
                   _buildInfoRow(
                     Icons.directions_car,
                     'Number of Vehicles',
-                    '$currentCount',
-                    currentCount <= 2
+                    '$insideVehicleCount',
+                    insideVehicleCount <= 2
                         ? Colors.red
-                        : (currentCount >= 3 && currentCount <= 5
+                        : (insideVehicleCount >= 3 && insideVehicleCount <= 5
                         ? Colors.orange
                         : Colors.green),
                   ),
+
+
                   const SizedBox(height: 8),
                   _buildInfoRow(
                     Icons.access_time,
@@ -322,19 +283,17 @@ class _TerminalDetailsPageState extends State<TerminalDetailsPage> {
                     Colors.grey[600]!,
                   ),
                   const SizedBox(height: 8),
-                  _buildStatusBadge(currentCount),
+                  _buildStatusBadge(insideVehicleCount),
                   const SizedBox(height: 8),
-                  // عرض ETA
                   if (nextEta != null)
                     Row(
                       children: [
-                        const Icon(Icons.timer,
-                            size: 16, color: Colors.blue),
+                        const Icon(Icons.timer, size: 16, color:  Colors.blue),
                         const SizedBox(width: 8),
                         Text(
-                          'The next car will arrive in $nextEta minutes',
+                          'Next car arrives in $nextEta minutes',
                           style: const TextStyle(
-                            color: Colors.blue,
+                            color:  Colors.blue,
                             fontWeight: FontWeight.bold,
                             fontSize: 14,
                           ),
@@ -344,8 +303,7 @@ class _TerminalDetailsPageState extends State<TerminalDetailsPage> {
                   else
                     const Row(
                       children: [
-                        Icon(Icons.timer_off,
-                            size: 16, color: Colors.grey),
+                        Icon(Icons.timer_off, size: 16, color: Colors.grey),
                         SizedBox(width: 8),
                         Text(
                           'No ETA data',
@@ -361,6 +319,38 @@ class _TerminalDetailsPageState extends State<TerminalDetailsPage> {
               ),
             ),
           ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildStatusBadge(int vehicleCount) {
+    String statusText;
+    Color color;
+
+    if (vehicleCount <= 2) {
+      statusText = 'Critical';
+      color = Colors.red;
+    } else if (vehicleCount >= 3 && vehicleCount <= 5) {
+      statusText = 'Moderate';
+      color = Colors.orange;
+    } else {
+      statusText = 'Excellent';
+      color = Colors.green;
+    }
+
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+      decoration: BoxDecoration(
+        color: color.withAlpha(1),
+        borderRadius: BorderRadius.circular(20),
+      ),
+      child: Text(
+        statusText,
+        style: TextStyle(
+          color: color,
+          fontWeight: FontWeight.bold,
+          fontSize: 12,
         ),
       ),
     );
@@ -449,13 +439,11 @@ class _TerminalDetailsPageState extends State<TerminalDetailsPage> {
                     ? const Center(
                   child: Text(
                     'No results found',
-                    style: TextStyle(
-                        fontSize: 18, color: Colors.grey),
+                    style: TextStyle(fontSize: 18, color: Colors.grey),
                   ),
                 )
                     : ListView.builder(
-                  padding:
-                  const EdgeInsets.only(top: 0, bottom: 20),
+                  padding: const EdgeInsets.only(top: 0, bottom: 20),
                   itemCount: filteredLines.length,
                   itemBuilder: (context, index) {
                     return buildLineCard(filteredLines[index]);
@@ -513,10 +501,12 @@ class _FlashingIndicatorState extends State<FlashingIndicator>
           tween: Tween<double>(begin: 1.5, end: 1.0),
           weight: 50,
         ),
-      ]).animate(CurvedAnimation(
-        parent: _controller,
-        curve: Curves.easeInOut,
-      ));
+      ]).animate(
+        CurvedAnimation(
+          parent: _controller,
+          curve: Curves.easeInOut,
+        ),
+      );
     }
   }
 
@@ -527,7 +517,7 @@ class _FlashingIndicatorState extends State<FlashingIndicator>
       setState(() {
         if (widget.vehicleCount <= 2) {
           indicatorColor = Colors.red;
-          if (_controller.isAnimating == false) {
+          if (!_controller.isAnimating) {
             _controller.repeat(reverse: true);
           }
         } else if (widget.vehicleCount >= 3 && widget.vehicleCount <= 5) {

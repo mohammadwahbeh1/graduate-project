@@ -167,7 +167,6 @@ class _TerminalPageState extends State<TerminalPage> {
 
       final requestBody = {
         'terminal_name': terminalName,
-        'total_vehicles': totalVehicles,
         'user_id': userId,
         'latitude': latitude,
         'longitude': longitude,
@@ -337,16 +336,6 @@ class _TerminalPageState extends State<TerminalPage> {
                     controller: terminalNameController,
                     decoration: const InputDecoration(
                       labelText: 'Terminal Name',
-                      border: OutlineInputBorder(),
-                    ),
-                  ),
-                  const SizedBox(height: 15),
-                  // Total Vehicles
-                  TextField(
-                    controller: totalVehiclesController,
-                    keyboardType: TextInputType.number,
-                    decoration: const InputDecoration(
-                      labelText: 'Total Vehicles',
                       border: OutlineInputBorder(),
                     ),
                   ),
