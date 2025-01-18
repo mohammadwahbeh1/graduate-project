@@ -434,7 +434,7 @@ class _DriverPageState extends State<DriverPage> {
                 minimumSize: const Size(double.infinity, 48),
               ),
               child: Text(
-                isPending ? 'Accept' : 'Reject',
+                isPending ? 'Accept' : 'Cancel',
                 style: const TextStyle(
                     fontWeight: FontWeight.bold,
                     color: Colors.black,
@@ -718,7 +718,7 @@ class _DriverPageState extends State<DriverPage> {
         final responseData = jsonDecode(response.body);
         if (responseData['data'] != null) {
           final driverInfo = responseData['data'];
-          String driverName = driverInfo['driver_id'].toString() ;
+          String driverName = driverInfo['username'] ?? 'Driver';
           String driverPhone = driverInfo['phone_number'].toString() ;
 
           _createNotification(

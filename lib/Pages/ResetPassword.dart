@@ -17,7 +17,7 @@ class _ResetPasswordState extends State<ResetPassword> {
   final _passwordController = TextEditingController();
   final _confirmPasswordController = TextEditingController();
   bool isLoading = false;
-  static const String ip = "192.168.1.12";
+  static const String ip = "192.168.1.8";
 
   Future<void> resetPassword() async {
     if (_passwordController.text != _confirmPasswordController.text) {
