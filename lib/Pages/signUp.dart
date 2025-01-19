@@ -8,7 +8,7 @@ import 'loginPage.dart';
 import 'package:flutter/foundation.dart';
 import 'package:image_picker/image_picker.dart';
 
-const String ip = "192.168.1.8";
+const String ip = "192.168.1.12";
 const storage = FlutterSecureStorage();
 
 class SignUp extends StatefulWidget {
@@ -652,7 +652,7 @@ class _SignUpState extends State<SignUp>
                                   boxShadow: [
                                     BoxShadow(
                                       color: const Color(0xFFFFD700)
-                                          .withAlpha(3),
+                                          .withOpacity(0.3),
                                       blurRadius: 8,
                                       offset: const Offset(0, 4),
                                     ),

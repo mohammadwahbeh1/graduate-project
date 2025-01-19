@@ -1,4 +1,3 @@
-// driver_page.dart
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:untitled/Pages/Recommendationspage.dart';
@@ -32,6 +31,20 @@ class _DriverPageState extends State<DriverPage> {
   final locationService = LocationService();
   WebSocketChannel? _channel;
   late final List<Widget> navigationPages;
+
+  List<Map<String, String>> notifications = [
+    {
+      'title': 'Booking cancelled',
+      'message': 'User Abbas cancelled the booking for Amman Street',
+      'time': '2 hours ago'
+    },
+    {
+      'title': 'Booking reminder',
+      'message': 'Only 30 minutes left for Nidal\'s booking',
+    'time': '10 minutes ago'
+    },
+  ];
+
   @override
   void initState() {
     super.initState();
@@ -40,11 +53,11 @@ class _DriverPageState extends State<DriverPage> {
     WidgetsBinding.instance.addPostFrameCallback((_) {
       locationService.startTracking(context);
     });
-
   }
+
   List<Widget> getNavigationPages() {
     return [
-      Builder(  // Wrap the Scaffold with Builder
+      Builder(
         builder: (BuildContext context) {
           return Scaffold(
             appBar: AppBar(
@@ -62,6 +75,42 @@ class _DriverPageState extends State<DriverPage> {
               ),
               actions: [
                 IconButton(
+                  icon: Stack(
+                    clipBehavior: Clip.none,
+                    children: [
+                      const Icon(Icons.notifications,
+                          size: 30, color: Colors.black),
+                      if (notifications.isNotEmpty)
+                        Positioned(
+                          right: -1,
+                          top: -1,
+                          child: Container(
+                            padding: const EdgeInsets.all(2),
+                            decoration: BoxDecoration(
+                              color: Colors.red,
+                              borderRadius: BorderRadius.circular(10),
+                            ),
+                            constraints: const BoxConstraints(
+                              minWidth: 16,
+                              minHeight: 16,
+                            ),
+                            child: Text(
+                              '${notifications.length}',
+                              style: const TextStyle(
+                                color: Colors.white,
+                                fontSize: 12,
+                              ),
+                              textAlign: TextAlign.center,
+                            ),
+                          ),
+                        )
+                    ],
+                  ),
+                  onPressed: () {
+                    _showNotificationsDialog();
+                  },
+                ),
+                IconButton(
                   icon: const Icon(Icons.person, size: 30, color: Colors.black),
                   onPressed: () => _showProfileOptions(context),
                 ),
@@ -76,39 +125,23 @@ class _DriverPageState extends State<DriverPage> {
     ];
   }
 
-
-
   void _filterReservations() {
     setState(() {
       List<dynamic> filteredList = pendingReservations.where((reservation) {
-        String username = reservation['User'] != null
-            ? reservation['User']['username'] ?? ''
-            : '';
-        return username.toLowerCase().contains(searchQuery.toLowerCase()) ||
+        String resUsername = reservation['User'] != null ? reservation['User']['username'] ?? '' : '';
+        return resUsername.toLowerCase().contains(searchQuery.toLowerCase()) ||
             (reservation['phone_number'] != null &&
-                reservation['phone_number']
-                    .toLowerCase()
-                    .contains(searchQuery.toLowerCase())) ||
+                reservation['phone_number'].toLowerCase().contains(searchQuery.toLowerCase())) ||
             (reservation['start_destination'] != null &&
-                reservation['start_destination']
-                    .toLowerCase()
-                    .contains(searchQuery.toLowerCase())) ||
+                reservation['start_destination'].toLowerCase().contains(searchQuery.toLowerCase())) ||
             (reservation['end_destination'] != null &&
-                reservation['end_destination']
-                    .toLowerCase()
-                    .contains(searchQuery.toLowerCase())) ||
+                reservation['end_destination'].toLowerCase().contains(searchQuery.toLowerCase())) ||
             (reservation['created_at'] != null &&
-                reservation['created_at']
-                    .toLowerCase()
-                    .contains(searchQuery.toLowerCase())) ||
+                reservation['created_at'].toLowerCase().contains(searchQuery.toLowerCase())) ||
             (reservation['recurrence_pattern'] != null &&
-                reservation['recurrence_pattern']
-                    .toLowerCase()
-                    .contains(searchQuery.toLowerCase())) ||
+                reservation['recurrence_pattern'].toLowerCase().contains(searchQuery.toLowerCase())) ||
             (reservation['recurring_days'] != null &&
-                reservation['recurring_days']
-                    .toLowerCase()
-                    .contains(searchQuery.toLowerCase()));
+                reservation['recurring_days'].toLowerCase().contains(searchQuery.toLowerCase()));
       }).toList();
 
       filteredPendingReservations = filteredList;
@@ -117,21 +150,17 @@ class _DriverPageState extends State<DriverPage> {
 
   Future<void> fetchUserProfile() async {
     String? token = await storage.read(key: 'jwt_token');
-
     if (token == null) {
       setState(() {
         username = "No Token Found";
       });
       return;
     }
-
     final url = Uri.parse("http://$ip:3000/api/v1/users/Profile");
-
     try {
       final response = await http.get(url, headers: {
         'Authorization': 'Bearer $token',
       });
-
       if (response.statusCode == 200) {
         final data = json.decode(response.body);
         setState(() {
@@ -149,6 +178,7 @@ class _DriverPageState extends State<DriverPage> {
       print("Error fetching user profile: $e");
     }
   }
+
   Widget _buildPendingReservationsContent() {
     return isLoading
         ? const Center(child: CircularProgressIndicator())
@@ -186,7 +216,7 @@ class _DriverPageState extends State<DriverPage> {
                       _showConfirmationDialog(
                         context: context,
                         title: 'Accept Reservation',
-                        message: 'Are you sure you want to accept this reservation?',
+                        message: 'Are you sure you want to accept reservation for ${reservation['User'] != null ? reservation['User']['username'] : 'the user'} with ride ID ${reservation['reservation_id']}?',
                         onConfirm: () {
                           _acceptReservation(
                             reservation['reservation_id'],
@@ -259,10 +289,7 @@ class _DriverPageState extends State<DriverPage> {
     );
   }
 
-
-
-  BottomNavigationBarItem _buildNavItem(
-      IconData icon, String label, int index) {
+  BottomNavigationBarItem _buildNavItem(IconData icon, String label, int index) {
     return BottomNavigationBarItem(
       icon: Stack(
         alignment: Alignment.center,
@@ -272,28 +299,26 @@ class _DriverPageState extends State<DriverPage> {
               height: 50,
               width: 50,
               decoration: const BoxDecoration(
-                color:  Color(0xFFF6D533), // Adjust color based on theme
+                color: Color(0xFFF6D533),
                 shape: BoxShape.circle,
               ),
             ),
           Icon(
             icon,
             size: 28,
-            color:  Colors.black
-
+            color: Colors.black,
           ),
         ],
       ),
       label: label,
     );
   }
+
   Widget _buildReservationCard({
     required Map<String, dynamic> reservation,
     required bool isPending,
     required VoidCallback onAction,
   }) {
-
-
     return Card(
       color: Colors.white,
       elevation: 8,
@@ -381,7 +406,7 @@ class _DriverPageState extends State<DriverPage> {
                 ),
                 Expanded(
                   child: Text(
-                    "Start_date: ${reservation['scheduled_date']}",
+                    "Start Date: ${reservation['scheduled_date']}",
                     style: const TextStyle(
                         fontSize: 14, fontWeight: FontWeight.w500),
                   ),
@@ -410,7 +435,6 @@ class _DriverPageState extends State<DriverPage> {
                 "Pattern: ${reservation['recurrence_pattern'] ?? 'N/A'}",
                 style: const TextStyle(fontSize: 14, color: Colors.black),
               ),
-
               Text(
                 "End Date: ${reservation['recurrence_end_date'] ?? 'N/A'}",
                 style: const TextStyle(fontSize: 14, color: Colors.black),
@@ -426,8 +450,9 @@ class _DriverPageState extends State<DriverPage> {
             ElevatedButton(
               onPressed: onAction,
               style: ElevatedButton.styleFrom(
-                backgroundColor:
-                isPending ? const Color(0xFFF5CF24) : const Color(0xFFF2643A),
+                backgroundColor: isPending
+                    ? const Color(0xFFF5CF24)
+                    : const Color(0xFFF2643A),
                 shape: RoundedRectangleBorder(
                   borderRadius: BorderRadius.circular(8.0),
                 ),
@@ -436,9 +461,10 @@ class _DriverPageState extends State<DriverPage> {
               child: Text(
                 isPending ? 'Accept' : 'Cancel',
                 style: const TextStyle(
-                    fontWeight: FontWeight.bold,
-                    color: Colors.black,
-                    fontSize: 16),
+                  fontWeight: FontWeight.bold,
+                  color: Colors.black,
+                  fontSize: 16,
+                ),
               ),
             ),
           ],
@@ -453,7 +479,6 @@ class _DriverPageState extends State<DriverPage> {
       child: ListView(
         padding: EdgeInsets.zero,
         children: <Widget>[
-          // Header Section with Profile Info
           Container(
             height: MediaQuery.of(context).size.height * 0.30,
             decoration: const BoxDecoration(
@@ -462,13 +487,11 @@ class _DriverPageState extends State<DriverPage> {
             child: Column(
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
-                // Profile Picture
                 const CircleAvatar(
                   radius: 50,
                   backgroundImage: AssetImage('assets/profile.jpg'),
                 ),
                 const SizedBox(height: 23),
-                // User Information
                 Text(
                   username,
                   style: const TextStyle(
@@ -480,31 +503,30 @@ class _DriverPageState extends State<DriverPage> {
               ],
             ),
           ),
-
           const SizedBox(height: 20),
           ListTile(
             leading: const Icon(Icons.recommend, size: 28),
             title: const Text('Recommendations page', style: TextStyle(fontSize: 16)),
-            onTap: () {
+            onTap: () async {
               Navigator.pop(context);
-              Navigator.push(
+              await Navigator.push(
                 context,
                 MaterialPageRoute(builder: (context) => const Recommendationspage()),
-              );            },
+              );
+            },
           ),
           const SizedBox(height: 20),
-
           ListTile(
             leading: const Icon(Icons.check_circle_sharp, size: 28),
             title: const Text('Accepted Reservations', style: TextStyle(fontSize: 16)),
-            onTap: () {
+            onTap: () async {
               Navigator.pop(context);
-              Navigator.push(
+              await Navigator.push(
                 context,
                 MaterialPageRoute(builder: (context) => const AcceptedReservationsPage()),
-              );            },
+              );
+            },
           ),
-
           const SizedBox(height: 20),
           ListTile(
             leading: const Icon(Icons.supervisor_account, size: 28),
@@ -556,8 +578,7 @@ class _DriverPageState extends State<DriverPage> {
               children: [
                 Text(
                   title,
-                  style:
-                  const TextStyle(fontSize: 22, fontWeight: FontWeight.bold),
+                  style: const TextStyle(fontSize: 22, fontWeight: FontWeight.bold),
                 ),
                 const SizedBox(height: 10),
                 Text(
@@ -609,8 +630,7 @@ class _DriverPageState extends State<DriverPage> {
                     Navigator.pop(context);
                     Navigator.push(
                       context,
-                      MaterialPageRoute(
-                          builder: (context) => const ProfilePage()),
+                      MaterialPageRoute(builder: (context) => const ProfilePage()),
                     );
                   },
                 ),
@@ -622,8 +642,81 @@ class _DriverPageState extends State<DriverPage> {
     );
   }
 
-
-
+  void _showNotificationsDialog() {
+    showDialog(
+      context: context,
+      builder: (BuildContext context) {
+        return AlertDialog(
+          title: const Text('Notifications'),
+          content: SizedBox(
+            width: double.maxFinite,
+            child: ListView.separated(
+              shrinkWrap: true,
+              itemCount: notifications.length,
+              separatorBuilder: (context, index) => const Divider(color: Colors.grey),
+              itemBuilder: (context, index) {
+                final notification = notifications[index];
+                return Card(
+                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                  elevation: 4,
+                  child: Padding(
+                    padding: const EdgeInsets.all(12.0),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          notification['title']!,
+                          style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+                        ),
+                        const SizedBox(height: 6),
+                        Text(
+                          notification['message']!,
+                          style: const TextStyle(fontSize: 14),
+                        ),
+                        const SizedBox(height: 6),
+                        Text(
+                          notification['time']!,
+                          style: const TextStyle(fontSize: 12, color: Colors.grey),
+                        ),
+                        const SizedBox(height: 8),
+                        Align(
+                          alignment: Alignment.centerRight,
+                          child: ElevatedButton(
+                            style: ElevatedButton.styleFrom(
+                              backgroundColor: const Color(0xFFF5CF24),
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(8.0),
+                              ),
+                            ),
+                            onPressed: () {
+                              setState(() {
+                                notifications.removeAt(index);
+                              });
+                              Navigator.of(context).pop();
+                              _showNotificationsDialog();
+                            },
+                            child: const Text('Mark as Seen'),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                );
+              },
+            ),
+          ),
+          actions: [
+            TextButton(
+              onPressed: () {
+                Navigator.of(context).pop();
+              },
+              child: const Text('Close'),
+            ),
+          ],
+        );
+      },
+    );
+  }
 
   void _showSuccessDialog(String message) {
     showDialog(
@@ -668,13 +761,11 @@ class _DriverPageState extends State<DriverPage> {
   Future<void> _fetchPendingReservations() async {
     try {
       String? token = await storage.read(key: 'jwt_token');
-
       if (token != null) {
         final pendingResponse = await http.get(
           Uri.parse('http://$ip:3000/api/v1/reservation/pending/all'),
           headers: {'Authorization': 'Bearer $token'},
         );
-
         if (pendingResponse.statusCode == 200) {
           if (mounted) {
             setState(() {
@@ -704,7 +795,6 @@ class _DriverPageState extends State<DriverPage> {
     }
   }
 
-
   Future<void> _acceptReservation(int reservationId, String userId) async {
     try {
       String? token = await storage.read(key: 'jwt_token');
@@ -712,15 +802,13 @@ class _DriverPageState extends State<DriverPage> {
         Uri.parse('http://$ip:3000/api/v1/reservation/accept/$reservationId'),
         headers: {'Authorization': 'Bearer $token'},
       );
-      print("the response is :  $response");
-
+      print("Response: $response");
       if (response.statusCode == 200) {
         final responseData = jsonDecode(response.body);
         if (responseData['data'] != null) {
           final driverInfo = responseData['data'];
           String driverName = driverInfo['username'] ?? 'Driver';
-          String driverPhone = driverInfo['phone_number'].toString() ;
-
+          String driverPhone = driverInfo['phone_number'].toString();
           _createNotification(
             userId,
             'Your taxi has been booked successfully by $driverName. Contact: $driverPhone.',
@@ -728,13 +816,11 @@ class _DriverPageState extends State<DriverPage> {
         } else {
           _showErrorDialog('Driver information not found.');
         }
-
         _fetchPendingReservations();
         _showSuccessDialog('Reservation accepted successfully');
         setState(() {
           filteredPendingReservations.removeWhere(
-                (reservation) => reservation['reservation_id'] == reservationId,
-          );
+                  (reservation) => reservation['reservation_id'] == reservationId);
         });
       } else {
         _showErrorDialog('Error accepting reservation');
@@ -747,12 +833,10 @@ class _DriverPageState extends State<DriverPage> {
   void _createNotification(String userId, String message) async {
     String? token = await storage.read(key: 'jwt_token');
     if (token == null) return;
-
     var notificationDetails = {
-      'userId': userId, // ID of the user receiving the notification
-      'message': message, // The notification message
+      'userId': userId,
+      'message': message,
     };
-
     final response = await http.post(
       Uri.parse('http://$ip:3000/api/v1/notifications/$userId/driver'),
       headers: {
@@ -761,17 +845,17 @@ class _DriverPageState extends State<DriverPage> {
       },
       body: jsonEncode(notificationDetails),
     );
-
     if (response.statusCode == 200) {
       print('Notification created successfully');
     } else {
       print('Failed to create notification: ${response.body}');
     }
   }
+
   @override
   void dispose() {
     locationService.stopTracking();
-    super.dispose();
     _channel?.sink.close();
+    super.dispose();
   }
 }

@@ -229,7 +229,7 @@ class _TerminalDetailsPageState extends State<TerminalDetailsPage> {
         borderRadius: BorderRadius.circular(16),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withAlpha(5),
+            color: Colors.black.withOpacity(0.5),
             blurRadius: 10,
             offset: const Offset(0, 4),
           ),
@@ -342,7 +342,7 @@ class _TerminalDetailsPageState extends State<TerminalDetailsPage> {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
       decoration: BoxDecoration(
-        color: color.withAlpha(1),
+        color: color.withOpacity(0.1),
         borderRadius: BorderRadius.circular(20),
       ),
       child: Text(
@@ -365,7 +365,7 @@ class _TerminalDetailsPageState extends State<TerminalDetailsPage> {
           borderRadius: BorderRadius.circular(30),
           boxShadow: [
             BoxShadow(
-              color: Colors.black.withAlpha(1),
+              color: Colors.black.withOpacity(0.1),
               blurRadius: 6,
               offset: const Offset(0, 3),
             ),
@@ -556,7 +556,7 @@ class _FlashingIndicatorState extends State<FlashingIndicator>
             color: indicatorColor,
             boxShadow: [
               BoxShadow(
-                color: indicatorColor.withAlpha(3),
+                color: indicatorColor.withOpacity(0.3),
                 blurRadius: 8,
                 spreadRadius: 2,
               ),
@@ -573,7 +573,7 @@ class _FlashingIndicatorState extends State<FlashingIndicator>
           color: indicatorColor,
           boxShadow: [
             BoxShadow(
-              color: indicatorColor.withAlpha(3),
+              color: indicatorColor.withOpacity(0.3),
               blurRadius: 8,
               spreadRadius: 2,
             ),

@@ -22,7 +22,7 @@ class _ForgotPasswordState extends State<ForgotPassword> {
   final TextEditingController passwordController = TextEditingController();
   final TextEditingController confirmPasswordController = TextEditingController();
 
-  static const String ip = "192.168.1.8";
+  static const String ip = "192.168.1.12";
   final _formKey = GlobalKey<FormState>();
 
   // Color constants

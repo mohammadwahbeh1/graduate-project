@@ -144,7 +144,22 @@ class _AcceptedReservationsPageState extends State<AcceptedReservationsPage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      // إزالة الـ Drawer واستبداله بزر سهم في الـ AppBar
       appBar: AppBar(
+        leading: IconButton(
+          icon: const Icon(
+            Icons.arrow_back,
+            size: 30,
+            color: Colors.black,
+          ),
+          onPressed: () {
+            // العودة للصفحة الرئيسية (DriverPage)
+            Navigator.pushReplacement(
+              context,
+              MaterialPageRoute(builder: (context) => const DriverPage()),
+            );
+          },
+        ),
         title: const Text(
           "Accepted Reservations",
           style: TextStyle(fontWeight: FontWeight.w500),
@@ -176,7 +191,7 @@ class _AcceptedReservationsPageState extends State<AcceptedReservationsPage> {
           ),
         ],
       ),
-      drawer: buildDrawer(context),
+      // إزالة الـ Drawer الأيسر وإبقاء الـ End Drawer للتقويم
       endDrawer: SizedBox(
         width: MediaQuery.of(context).size.width * 0.8, // 80% of screen width
         child: Drawer(
@@ -289,8 +304,7 @@ class _AcceptedReservationsPageState extends State<AcceptedReservationsPage> {
                 decoration: const InputDecoration(
                   hintText: 'Search',
                   border: OutlineInputBorder(
-                    borderRadius:
-                    BorderRadius.all(Radius.circular(12)),
+                    borderRadius: BorderRadius.all(Radius.circular(12)),
                   ),
                   prefixIcon: Icon(Icons.search),
                   fillColor: Colors.white,
@@ -325,7 +339,7 @@ class _AcceptedReservationsPageState extends State<AcceptedReservationsPage> {
                         _cancelReservation(
                             reservation['reservation_id']);
                       },
-                      confirmText: 'Cancel',
+                      confirmText: 'Delete',
                     );
                   },
                 );
@@ -340,7 +354,6 @@ class _AcceptedReservationsPageState extends State<AcceptedReservationsPage> {
           ],
         ),
       ),
-
     );
   }
 
@@ -463,12 +476,10 @@ class _AcceptedReservationsPageState extends State<AcceptedReservationsPage> {
               "Start Date: ${reservation['scheduled_date'] != null && reservation['scheduled_time'] != null ? '${reservation['scheduled_date']} at ${reservation['scheduled_time']}' : 'Not specified'}",
               style: const TextStyle(fontSize: 14, color: Colors.black),
             ),
-
             Text(
               "End Date: ${reservation['recurrence_end_date'] ?? 'Not specified'}",
               style: const TextStyle(fontSize: 14, color: Colors.black),
             ),
-
             const SizedBox(height: 8),
             // Recurrence details
             if (reservation['is_recurring'] == true) ...[
@@ -521,93 +532,6 @@ class _AcceptedReservationsPageState extends State<AcceptedReservationsPage> {
             ),
           ],
         ),
-      ),
-    );
-  }
-
-  Widget buildDrawer(BuildContext context) {
-    return Drawer(
-      backgroundColor: Colors.white,
-      child: ListView(
-        padding: EdgeInsets.zero,
-        children: <Widget>[
-          // Header Section with Profile Info
-          Container(
-            height: MediaQuery.of(context).size.height * 0.30,
-            decoration: const BoxDecoration(
-              color: Color(0xFFF5CF24),
-            ),
-            child: Column(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                // Profile Picture
-                const CircleAvatar(
-                  radius: 50,
-                  backgroundImage: AssetImage('assets/profile.jpg'),
-                ),
-                const SizedBox(height: 23),
-                // User Information
-                Text(
-                  username,
-                  style: const TextStyle(
-                    color: Colors.black,
-                    fontSize: 20,
-                    fontWeight: FontWeight.bold,
-                  ),
-                ),
-              ],
-            ),
-          ),
-
-          const SizedBox(height: 20),
-          ListTile(
-            leading: const Icon(Icons.recommend, size: 28),
-            title: const Text('Recommendations page', style: TextStyle(fontSize: 16)),
-            onTap: () {
-              Navigator.pop(context);
-              Navigator.push(
-                context,
-                MaterialPageRoute(builder: (context) => const Recommendationspage()),
-              );            },
-          ),
-          const SizedBox(height: 20),
-
-          ListTile(
-            leading: const Icon(Icons.check_circle_sharp, size: 28),
-            title: const Text('Accepted Reservations', style: TextStyle(fontSize: 16)),
-            onTap: () {
-              Navigator.pop(context);
-              Navigator.push(
-                context,
-                MaterialPageRoute(builder: (context) => const AcceptedReservationsPage()),
-              );            },
-          ),
-
-          const SizedBox(height: 20),
-          ListTile(
-            leading: const Icon(Icons.supervisor_account, size: 28),
-            title: const Text('Line Manager', style: TextStyle(fontSize: 16)),
-            onTap: () {
-              Navigator.pop(context);
-              Navigator.push(
-                context,
-                MaterialPageRoute(builder: (context) => const LineManagerCall()),
-              );
-            },
-          ),
-          const SizedBox(height: 20),
-          ListTile(
-            leading: const Icon(Icons.logout),
-            title: const Text('Log out'),
-            onTap: () {
-              Navigator.pop(context);
-              Navigator.pushReplacement(
-                context,
-                MaterialPageRoute(builder: (context) => const LoginPage()),
-              );
-            },
-          ),
-        ],
       ),
     );
   }
@@ -702,19 +626,6 @@ class _AcceptedReservationsPageState extends State<AcceptedReservationsPage> {
     );
   }
 
-  // Navigate to "My Routes" page
-  void _navigateToMyRoutes(BuildContext context) {
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(content: Text('Navigating to My Routes...')),
-    );
-  }
-
-  // Navigate to "Notifications" page
-  void _navigateToNotifications(BuildContext context) {
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(content: Text('Navigating to Notifications...')),
-    );
-  }
 
   // Show success dialog
   void _showSuccessDialog(String message) {
@@ -848,9 +759,6 @@ class _AcceptedReservationsPageState extends State<AcceptedReservationsPage> {
         }
       }
     }
-
-    // Debug: Print reservations by date to verify correctness
-
   }
 
   // Generate weekly occurrences without using interval
@@ -954,7 +862,6 @@ class _AcceptedReservationsPageState extends State<AcceptedReservationsPage> {
       _showErrorDialog('Error canceling reservation: $e');
     }
   }
-
 }
 
 // New page to display reservations by date
@@ -1294,12 +1201,10 @@ class _ReservationsByDatePageState extends State<ReservationsByDatePage> {
               "Start Date: ${reservation['scheduled_date'] != null && reservation['scheduled_time'] != null ? '${reservation['scheduled_date']} at ${reservation['scheduled_time']}' : 'Not specified'}",
               style: const TextStyle(fontSize: 14, color: Colors.black),
             ),
-
             Text(
               "End Date: ${reservation['recurrence_end_date'] ?? 'Not specified'}",
               style: const TextStyle(fontSize: 14, color: Colors.black),
             ),
-
             const SizedBox(height: 8),
             // Recurrence details
             if (reservation['is_recurring'] == true) ...[

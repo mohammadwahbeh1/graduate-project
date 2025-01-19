@@ -465,16 +465,7 @@ class _TerminalPageState extends State<TerminalPage> {
                       border: OutlineInputBorder(),
                     ),
                   ),
-                  const SizedBox(height: 15),
-                  // Total Vehicles
-                  TextField(
-                    controller: totalVehiclesController,
-                    keyboardType: TextInputType.number,
-                    decoration: const InputDecoration(
-                      labelText: 'Total Vehicles',
-                      border: OutlineInputBorder(),
-                    ),
-                  ),
+
                   const SizedBox(height: 15),
                   // Select Admin
                   DropdownButtonFormField<String>(

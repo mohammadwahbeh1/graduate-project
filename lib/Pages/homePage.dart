@@ -814,7 +814,7 @@ class _homePageState extends State<homePage> {
                                 ),
                                 itemCount: 5,
                                 itemSize: 24.0,
-                                unratedColor: Colors.amber.withAlpha(50),
+                                unratedColor: Colors.amber.withOpacity(0.50),
                                 direction: Axis.horizontal,
                               ),
                               const SizedBox(width: 10),
