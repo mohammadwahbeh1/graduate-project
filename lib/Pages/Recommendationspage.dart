@@ -9,7 +9,7 @@ import 'dart:math' as math;
 
 import 'mapServiceDirectionTime.dart';
 
-const String ip = "192.168.1.12";
+const String ip = "192.168.1.8";
 const storage = FlutterSecureStorage();
 
 class Recommendationspage extends StatefulWidget {
@@ -28,7 +28,7 @@ class _RecommendationspageState extends State<Recommendationspage> {
   Position? _currentPosition;
   final double _maxDistance = 1;
   final Map<String, Map<String, double>> nablusCoordinates = {
-    'راس العين': {'latitude': 32.2230, 'longitude': 35.2590},
+    'راس العين': {'latitude': 32.21685644480782, 'longitude': 35.25926090350946},
     'شركة الكهرباء': {'latitude': 32.2220, 'longitude': 35.2544},
     'التعاون الاوسط': {'latitude': 32.2238, 'longitude': 35.2631},
     'شارع 24': {'latitude': 32.2230, 'longitude': 35.2570},
@@ -83,7 +83,7 @@ class _RecommendationspageState extends State<Recommendationspage> {
     'عراق التايه': {'latitude': 32.2225, 'longitude': 35.2655},
     'كلية الروضة': {'latitude': 32.2230, 'longitude': 35.2660},
     'طلعة الماطورات': {'latitude': 32.2235, 'longitude': 35.2665},
-    'بلاطة البلد': {'latitude': 32.2205, 'longitude': 35.2855},
+    'بلاطة البلد': {'latitude': 32.215096490337494, 'longitude': 35.286171888100334},
     'عسكر البلد': {'latitude': 32.2195, 'longitude': 35.2890},
     'مخيم عسكر القديم': {'latitude': 32.2190, 'longitude': 35.2885},
     'المسلخ': {'latitude': 32.2200, 'longitude': 35.2880},

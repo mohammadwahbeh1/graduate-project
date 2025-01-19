@@ -15,7 +15,7 @@ import 'package:flutter_rating_bar/flutter_rating_bar.dart'; // Import the ratin
 import 'package:google_fonts/google_fonts.dart'; // Import Google Fonts
 import 'package:flutter_staggered_animations/flutter_staggered_animations.dart'; // Import animations
 
-const String ip = "192.168.1.12";
+const String ip = "192.168.1.8";
 
 class homePage extends StatefulWidget {
   const homePage({super.key});
