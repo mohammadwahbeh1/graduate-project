@@ -12,7 +12,7 @@ import 'package:untitled/Pages/Location Service.dart';
 import 'package:web_socket_channel/web_socket_channel.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 
-const String ip = "192.168.1.12";
+const String ip = "192.168.1.8";
 const storage = FlutterSecureStorage();
 
 class DriverPage extends StatefulWidget {
