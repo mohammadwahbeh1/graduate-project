@@ -32,6 +32,10 @@ class _CallDriverPageState extends State<CallDriverPage> {
   bool isConnected = true;
   bool canReceiveCalls = true;
 
+  // ---------------- NEW: حالة البث الجماعي ----------------
+  bool isBroadcasting = false;
+  // --------------------------------------------------------
+
   @override
   void initState() {
     super.initState();
@@ -57,10 +61,10 @@ class _CallDriverPageState extends State<CallDriverPage> {
         return;
       }
       signaling = WebRTCSignaling(
-          WebSocketChannel.connect(
-              Uri.parse('ws://$ip:3000/ws/notifications?userId=$userId')
-          ),
-          ''
+        WebSocketChannel.connect(
+          Uri.parse('ws://$ip:3000/ws/notifications?userId=$userId'),
+        ),
+        '',
       );
 
       localStream = await navigator.mediaDevices.getUserMedia({
@@ -188,6 +192,60 @@ class _CallDriverPageState extends State<CallDriverPage> {
     }
   }
 
+  // ---------------- NEW: زر البث للجميع ----------------
+  Future<void> _toggleBroadcast() async {
+    // لو نبدأ البث الجماعي
+    if (!isBroadcasting) {
+      // تحقق من كوننا بحالة سماح للاتصال
+      if (!isConnected || !canReceiveCalls) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Calls are currently disabled')),
+        );
+        return;
+      }
+
+      // فعل البث في الواجهة
+      setState(() {
+        isBroadcasting = true;
+      });
+
+      // فعل الصوت
+      localStream.getAudioTracks().forEach((track) {
+        track.enabled = true;
+      });
+
+      // اتصل (أو ابدأ جلسة اتصال) مع كل Driver موجود في قائمة الفلترة
+      // ملاحظة: هذا نهج مبسط، في الواقع ستحتاج لعمل PeerConnection
+      // لكل مستخدم أو مؤتمر جماعي إن أمكن.
+      for (final driver in filteredDrivers!) {
+        final driverId = driver['user_id'].toString();
+        await signaling.startCall(localStream, driverId);
+      }
+
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Broadcast started...')),
+      );
+    } else {
+      // إيقاف البث
+      setState(() {
+        isBroadcasting = false;
+      });
+
+      // أطفئ الصوت
+      localStream.getAudioTracks().forEach((track) {
+        track.enabled = false;
+      });
+
+      // هذه stopCall ستنهي اتصالًا واحدًا، وللاتصالات المتعددة تحتاج إدارة أدق.
+      await signaling.stopCall();
+
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Broadcast ended')),
+      );
+    }
+  }
+  // ----------------------------------------------------
+
   void _toggleAvailability() async {
     setState(() {
       isConnected = !isConnected;
@@ -206,6 +264,8 @@ class _CallDriverPageState extends State<CallDriverPage> {
         isRecordingList = List<bool>.filled(drivers?.length ?? 0, false);
         isMicActive = false;
         isSpeakerActive = false;
+        // NEW: في حال أغلق الاتصال العام والمايك شغال
+        isBroadcasting = false;
       });
       signaling.setAvailability(false);
 
@@ -266,6 +326,7 @@ class _CallDriverPageState extends State<CallDriverPage> {
       ),
       body: Column(
         children: [
+          // حقل البحث
           Padding(
             padding: const EdgeInsets.all(8.0),
             child: TextField(
@@ -278,10 +339,24 @@ class _CallDriverPageState extends State<CallDriverPage> {
               onChanged: _filterDrivers,
             ),
           ),
+
+          // زر الاتصال الجماعي (بث صوتي)
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 8.0),
+            child: ElevatedButton.icon(
+              onPressed: _toggleBroadcast,
+              icon: Icon(isBroadcasting ? Icons.mic_off : Icons.mic),
+              label: Text(isBroadcasting ? 'Stop Broadcasting for All' : 'Audio Broadcast for All'),
+              style: ElevatedButton.styleFrom(
+                backgroundColor: isBroadcasting ? Colors.red : Colors.green,
+              ),
+            ),
+          ),
+
           Expanded(
             child: isLoading
                 ? const Center(child: CircularProgressIndicator())
-                : filteredDrivers == null || filteredDrivers!.isEmpty
+                : (filteredDrivers == null || filteredDrivers!.isEmpty)
                 ? const Center(child: Text('No drivers found.'))
                 : ListView.builder(
               itemCount: filteredDrivers!.length,
@@ -289,7 +364,9 @@ class _CallDriverPageState extends State<CallDriverPage> {
                 final driver = filteredDrivers![index];
                 return Padding(
                   padding: const EdgeInsets.symmetric(
-                      horizontal: 16.0, vertical: 8.0),
+                    horizontal: 16.0,
+                    vertical: 8.0,
+                  ),
                   child: Card(
                     elevation: 8,
                     shape: RoundedRectangleBorder(
@@ -304,7 +381,9 @@ class _CallDriverPageState extends State<CallDriverPage> {
                       title: Text(
                         driver['username'],
                         style: const TextStyle(
-                            fontWeight: FontWeight.bold, fontSize: 18),
+                          fontWeight: FontWeight.bold,
+                          fontSize: 18,
+                        ),
                       ),
                       subtitle:
                       Text('Phone: ${driver['phone_number']}'),
@@ -316,8 +395,7 @@ class _CallDriverPageState extends State<CallDriverPage> {
                             child: AnimatedContainer(
                               duration:
                               const Duration(milliseconds: 200),
-                              width:
-                              isRecordingList[index] ? 60 : 50,
+                              width: isRecordingList[index] ? 60 : 50,
                               height:
                               isRecordingList[index] ? 60 : 50,
                               decoration: BoxDecoration(
@@ -351,7 +429,8 @@ class _CallDriverPageState extends State<CallDriverPage> {
                             decoration: BoxDecoration(
                               color: isSpeakerActive &&
                                   targetId ==
-                                      driver['user_id'].toString()
+                                      driver['user_id']
+                                          .toString()
                                   ? Colors.green
                                   : Colors.grey,
                               borderRadius:

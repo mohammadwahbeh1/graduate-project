@@ -83,7 +83,7 @@ class _ServiceDashboardPageState extends State<ServiceDashboardPage> {
           .toList();
 
       final supporterId = await storage.read(key: 'user_id');
-      final supporterIdInt = int.parse(supporterId ?? '13');
+      final supporterIdInt = int.parse(supporterId ?? '6');
 
       Map<int, Conversation> conversations = {};
 

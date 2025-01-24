@@ -9,7 +9,7 @@ import 'dart:math' as math;
 
 import 'mapServiceDirectionTime.dart';
 
-const String ip = "192.168.1.8";
+const String ip = "192.168.1.12";
 const storage = FlutterSecureStorage();
 
 class Recommendationspage extends StatefulWidget {

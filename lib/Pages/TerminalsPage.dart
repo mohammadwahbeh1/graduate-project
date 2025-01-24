@@ -154,7 +154,7 @@ class _TerminalPageState extends State<TerminalPage> {
 
   // Create new terminal (send latitude and longitude separately)
   Future<void> createTerminal(
-      String terminalName, double? latitude, double? longitude, String totalVehicles, String userId) async {
+      String terminalName, double? latitude, double? longitude,  String userId) async {
     setState(() {
       isLoading = true;
     });
@@ -316,7 +316,7 @@ class _TerminalPageState extends State<TerminalPage> {
   // Show Add Terminal Dialog
   void _showAddTerminalDialog() {
     final terminalNameController = TextEditingController();
-    final totalVehiclesController = TextEditingController();
+
     String? selectedAdminId;
     double? selectedLatitude;
     double? selectedLongitude;
@@ -410,14 +410,12 @@ class _TerminalPageState extends State<TerminalPage> {
           ElevatedButton(
             onPressed: () {
               if (terminalNameController.text.isNotEmpty &&
-                  totalVehiclesController.text.isNotEmpty &&
                   selectedAdminId != null) {
                 createTerminal(
                   terminalNameController.text,
                   selectedLatitude,
                   selectedLongitude,
-                  totalVehiclesController.text,
-                  selectedAdminId!,
+                  selectedAdminId!
                 );
                 Navigator.of(context).pop();
               } else {
